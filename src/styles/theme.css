@@ -133,17 +133,19 @@ body::before {
   inset: 0;
   z-index: -2;
   background:
-    /* Top-left: warm amber bloom */
-    radial-gradient(ellipse 70vw 55vh at 0%  0%,   rgba(251,191, 36,0.11) 0%, transparent 65%),
-    /* Top-right: cool indigo drift */
-    radial-gradient(ellipse 55vw 70vh at 100% 0%,  rgba(99, 102,241,0.07) 0%, transparent 65%),
-    /* Center: neutral warmth */
-    radial-gradient(ellipse 80vw 40vh at 50% 50%,  rgba(214,211,209,0.12) 0%, transparent 70%),
-    /* Bottom-left: muted teal */
-    radial-gradient(ellipse 50vw 60vh at 0%  100%, rgba( 20,184,166,0.06) 0%, transparent 65%),
-    /* Bottom-right: soft rose */
-    radial-gradient(ellipse 45vw 50vh at 100% 100%,rgba(244,114,182,0.05) 0%, transparent 65%);
-  animation: ambient-drift 40s ease-in-out infinite alternate;
+    /* Top-left: warm amber bloom — the primary warmth anchor */
+    radial-gradient(ellipse 65vw 50vh at 5% 5%,     rgba(251,191,36,0.18) 0%, transparent 60%),
+    /* Top-right: soft lavender/blue glow — VRCloud-inspired spatial depth */
+    radial-gradient(ellipse 50vw 60vh at 90% 8%,    rgba(139,92,246,0.10) 0%, transparent 55%),
+    /* Center-right: cool indigo drift — subtle tech accent */
+    radial-gradient(ellipse 45vw 55vh at 85% 35%,   rgba(99,102,241,0.08) 0%, transparent 55%),
+    /* Center: neutral warm haze */
+    radial-gradient(ellipse 80vw 40vh at 50% 50%,   rgba(214,211,209,0.15) 0%, transparent 65%),
+    /* Bottom-left: muted teal — creates depth in lower quadrant */
+    radial-gradient(ellipse 50vw 55vh at 8% 88%,    rgba(20,184,166,0.09) 0%, transparent 55%),
+    /* Bottom-right: soft rose — warm counterpoint */
+    radial-gradient(ellipse 40vw 45vh at 92% 90%,   rgba(244,114,182,0.07) 0%, transparent 55%);
+  animation: ambient-drift 55s ease-in-out infinite alternate;
   pointer-events: none;
 }
 

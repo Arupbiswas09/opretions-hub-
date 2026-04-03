@@ -61,7 +61,8 @@ export default function App() {
       {currentPage === 'forms' && <Forms />}
       {currentPage === 'unified' && <UnifiedPrototype />}
 
-      {/* Minimal Dev Menu - Bottom Right Pill */}
+      {/* Dev Menu - Only visible in development */}
+      {process.env.NODE_ENV === 'development' && (
       <div className="fixed bottom-4 right-4 z-[100]">
         <AnimatePresence>
           {devMenuOpen && (
@@ -98,6 +99,7 @@ export default function App() {
           <ChevronUp className={`w-3 h-3 transition-transform ${devMenuOpen ? 'rotate-180' : ''}`} />
         </motion.button>
       </div>
+      )}
     </div>
   );
 }

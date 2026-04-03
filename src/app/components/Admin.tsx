@@ -1,7 +1,7 @@
 'use client';
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Settings, Shield, Database, Link as LinkIcon, Check, X, Globe, FileText, ClipboardCheck, Layers, GitBranch, MapPin, UserCog, Eye, EyeOff, GripVertical, Plus, Trash2, Edit, Archive, AlertCircle } from 'lucide-react';
+import { Settings, Shield, Database, Link as LinkIcon, Check, X, Globe, FileText, ClipboardCheck, Layers, GitBranch, MapPin, UserCog, Eye, EyeOff, GripVertical, Plus, Trash2, Edit, Archive, AlertCircle, BarChart3, Briefcase, Users, Building2, FolderOpen, User, Headphones, ClipboardList, Mail, Square } from 'lucide-react';
 import { BonsaiButton } from './bonsai/BonsaiButton';
 import { BonsaiStatusPill } from './bonsai/BonsaiStatusPill';
 import { BonsaiTabs } from './bonsai/BonsaiTabs';
@@ -238,15 +238,15 @@ function ModulesSettings({ onNavigate }: { onNavigate: (screen: Screen) => void 
 
 // AD-02a: Sidebar Preview State
 function ModulesSidebarPreview({ onNavigate }: { onNavigate: (screen: Screen) => void }) {
-  const enabledModules = [
-    { id: 'dashboard', name: 'Dashboard', icon: '📊' },
-    { id: 'sales', name: 'Sales', icon: '💼' },
-    { id: 'contacts', name: 'Contacts', icon: '👥' },
-    { id: 'clients', name: 'Clients', icon: '🏢' },
-    { id: 'projects', name: 'Projects', icon: '📁' },
-    { id: 'people', name: 'People', icon: '👤' },
-    { id: 'support', name: 'Support', icon: '🎧' },
-    { id: 'forms', name: 'Forms', icon: '📝' },
+  const enabledModules: { id: string; name: string; icon: React.ElementType }[] = [
+    { id: 'dashboard', name: 'Dashboard', icon: BarChart3 },
+    { id: 'sales', name: 'Sales', icon: Briefcase },
+    { id: 'contacts', name: 'Contacts', icon: Users },
+    { id: 'clients', name: 'Clients', icon: Building2 },
+    { id: 'projects', name: 'Projects', icon: FolderOpen },
+    { id: 'people', name: 'People', icon: User },
+    { id: 'support', name: 'Support', icon: Headphones },
+    { id: 'forms', name: 'Forms', icon: ClipboardList },
   ];
 
   return (
@@ -266,12 +266,15 @@ function ModulesSidebarPreview({ onNavigate }: { onNavigate: (screen: Screen) =>
       <div className="bg-white rounded-lg border border-stone-200 p-6 max-w-xs">
         <h3 className="font-semibold text-stone-800 mb-4">Operations Hub</h3>
         <div className="space-y-2">
-          {enabledModules.map((module) => (
+          {enabledModules.map((module) => {
+            const Icon = module.icon;
+            return (
             <div key={module.id} className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-stone-50">
-              <span className="text-lg">{module.icon}</span>
+              <Icon className="w-4 h-4 text-stone-500" style={{ strokeWidth: 1.7 }} />
               <span className="text-sm font-medium text-stone-800">{module.name}</span>
             </div>
-          ))}
+            );
+          })}
         </div>
         <div className="mt-6 pt-6 border-t border-stone-200">
           <p className="text-xs text-stone-500">
@@ -896,9 +899,9 @@ function ApprovalsConfiguration({ onNavigate }: { onNavigate: (screen: Screen) =
 // AD-07: Integrations Settings
 function IntegrationsSettings() {
   const [integrations, setIntegrations] = useState([
-    { id: 'teams', name: 'Microsoft Teams', connected: false, logo: '🟦', channels: false, notifications: false },
-    { id: 'outlook', name: 'Outlook', connected: false, logo: '📧', emailSync: false, calendarSync: false },
-    { id: 'google', name: 'Google Workspace', connected: true, logo: '🔷', emailSync: true, calendarSync: true },
+    { id: 'teams', name: 'Microsoft Teams', connected: false, logo: 'teams', channels: false, notifications: false },
+    { id: 'outlook', name: 'Outlook', connected: false, logo: 'outlook', emailSync: false, calendarSync: false },
+    { id: 'google', name: 'Google Workspace', connected: true, logo: 'google', emailSync: true, calendarSync: true },
   ]);
 
   const toggleConnection = (id: string) => {
@@ -919,8 +922,8 @@ function IntegrationsSettings() {
           <div key={integration.id} className="bg-white rounded-lg border border-stone-200 p-6">
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-lg bg-stone-100 flex items-center justify-center text-2xl">
-                  {integration.logo}
+                <div className="w-12 h-12 rounded-lg bg-stone-100 flex items-center justify-center">
+                  <span className="text-sm font-bold text-stone-600">{integration.name.charAt(0)}</span>
                 </div>
                 <div>
                   <h3 className="font-semibold text-stone-800">{integration.name}</h3>

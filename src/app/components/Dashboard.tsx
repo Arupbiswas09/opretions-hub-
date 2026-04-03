@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowUpRight, ChevronRight, Circle, Zap, TrendingUp } from 'lucide-react';
+import { ArrowUpRight, ChevronRight, Zap, TrendingUp, Briefcase, Clock, Mail, BarChart3 } from 'lucide-react';
 import { easeOutQuart, EASE_OUT_EXPO, staggerContainer, fadeInUp, springSnap } from '../lib/motion';
 
 /* ─── Animated number counter ───────────────────────────── */
@@ -103,15 +103,19 @@ function ActivityRow({
 }
 
 /* ─── Quick-action pill ──────────────────────────────────── */
-function QuickAction({ label, desc, emoji }: { label: string; desc: string; emoji: string }) {
+function QuickAction({ label, desc, icon: Icon }: { label: string; desc: string; icon: React.ElementType }) {
   return (
     <motion.button
-      className="flex items-center gap-3 px-4 py-3 bg-white/60 hover:bg-white/85 border border-stone-200/50 rounded-xl text-left transition-all group"
-      whileHover={{ y: -1, boxShadow: '0 4px 16px rgba(0,0,0,0.07)' }}
-      whileTap={{ scale: 0.97 }}
+      className="glass-card flex items-center gap-3 px-4 py-3.5 text-left group"
+      whileHover={{ y: -1, boxShadow: '0 6px 20px rgba(0,0,0,0.06)', backgroundColor: 'rgba(255,255,255,0.82)' }}
+      whileTap={{ scale: 0.98 }}
       transition={springSnap}
     >
-      <span className="text-lg flex-shrink-0">{emoji}</span>
+      <div className="w-8 h-8 rounded-[10px] flex items-center justify-center flex-shrink-0 transition-colors"
+        style={{ background: 'rgba(28,25,23,0.06)' }}
+      >
+        <Icon className="w-4 h-4 text-stone-600 group-hover:text-stone-800 transition-colors" style={{ strokeWidth: 1.8 }} />
+      </div>
       <div className="min-w-0">
         <p className="text-[12px] font-semibold text-stone-800 leading-tight">{label}</p>
         <p className="text-[11px] text-stone-400 leading-tight mt-0.5 truncate">{desc}</p>
@@ -140,10 +144,10 @@ export default function Dashboard() {
   ];
 
   const quickActions = [
-    { label: 'New Deal',       desc: 'Add to sales pipeline',   emoji: '💼' },
-    { label: 'Log Timesheet',  desc: 'Submit this week',         emoji: '🕐' },
-    { label: 'Invite Client',  desc: 'Send portal access',       emoji: '📧' },
-    { label: 'Run Report',     desc: 'Finance or project',       emoji: '📊' },
+    { label: 'New Deal',       desc: 'Add to sales pipeline',   icon: Briefcase },
+    { label: 'Log Timesheet',  desc: 'Submit this week',         icon: Clock },
+    { label: 'Invite Client',  desc: 'Send portal access',       icon: Mail },
+    { label: 'Run Report',     desc: 'Finance or project',       icon: BarChart3 },
   ];
 
   return (
@@ -238,7 +242,7 @@ export default function Dashboard() {
         className="mb-10"
       >
         <div className="flex items-center gap-3 mb-4">
-          <h2 className="text-[13px] font-semibold text-stone-800 tracking-[-0.01em]">Needs your attention</h2>
+          <h2 className="text-[15px] font-semibold text-stone-800 tracking-[-0.015em]">Needs your attention</h2>
           <motion.span
             className="relative w-5 h-5 rounded-full bg-stone-800 text-white text-[9px] font-bold flex items-center justify-center"
             animate={{ scale: [1, 1.15, 1] }}
@@ -274,7 +278,7 @@ export default function Dashboard() {
           transition={{ delay: 0.5, duration: 0.4, ease: EASE_OUT_EXPO }}
         >
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-[13px] font-semibold text-stone-800 tracking-[-0.01em]">Today</h2>
+            <h2 className="text-[15px] font-semibold text-stone-800 tracking-[-0.015em]">Today</h2>
             <button className="text-[11px] text-stone-400 hover:text-stone-700 transition-colors flex items-center gap-1 group">
               View all <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
             </button>
