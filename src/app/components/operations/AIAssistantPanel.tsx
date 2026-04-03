@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles, X, Send, ChevronRight } from 'lucide-react';
+import { Sparkles, X, Send, ChevronRight, Lightbulb, BarChart3, Mail } from 'lucide-react';
 import { cn } from '../ui/utils';
 
 interface AIAssistantPanelProps {
@@ -50,14 +50,14 @@ export function AIAssistantPanel({ collapsed = false, onToggle, className }: AIA
       <div className="p-4 border-b border-stone-200">
         <p className="text-xs font-medium text-stone-600 mb-2">Quick Actions</p>
         <div className="space-y-2">
-          <button className="w-full text-left px-3 py-2 text-sm bg-stone-50 hover:bg-stone-100 rounded-lg text-stone-700 transition-colors">
-            💡 Summarize this record
+          <button className="w-full text-left px-3 py-2 text-sm bg-stone-50 hover:bg-stone-100 rounded-lg text-stone-700 transition-colors flex items-center gap-2">
+            <Lightbulb className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" /> Summarize this record
           </button>
-          <button className="w-full text-left px-3 py-2 text-sm bg-stone-50 hover:bg-stone-100 rounded-lg text-stone-700 transition-colors">
-            📊 Generate insights
+          <button className="w-full text-left px-3 py-2 text-sm bg-stone-50 hover:bg-stone-100 rounded-lg text-stone-700 transition-colors flex items-center gap-2">
+            <BarChart3 className="w-3.5 h-3.5 text-indigo-500 flex-shrink-0" /> Generate insights
           </button>
-          <button className="w-full text-left px-3 py-2 text-sm bg-stone-50 hover:bg-stone-100 rounded-lg text-stone-700 transition-colors">
-            ✉️ Draft follow-up email
+          <button className="w-full text-left px-3 py-2 text-sm bg-stone-50 hover:bg-stone-100 rounded-lg text-stone-700 transition-colors flex items-center gap-2">
+            <Mail className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" /> Draft follow-up email
           </button>
         </div>
       </div>

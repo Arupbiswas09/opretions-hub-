@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Edit, Trash2, MoreVertical, Filter, Star, Calendar } from 'lucide-react';
+import { Plus, Edit, Trash2, MoreVertical, Filter, Star, Calendar, DollarSign, BarChart3, CheckCircle, Users } from 'lucide-react';
 import { BonsaiSidebar } from './bonsai/BonsaiSidebar';
 import { BonsaiTopBar } from './bonsai/BonsaiTopBar';
 import { BonsaiPageHeader } from './bonsai/BonsaiPageHeader';
@@ -79,7 +79,7 @@ export default function LayoutTemplates() {
                     <p className="text-2xl font-semibold text-stone-800 mt-1">$127,500</p>
                   </div>
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <span className="text-primary">💰</span>
+                    <DollarSign className="w-5 h-5 text-stone-700" />
                   </div>
                 </div>
                 <p className="text-xs text-green-600">+12% from last month</p>
@@ -92,7 +92,7 @@ export default function LayoutTemplates() {
                     <p className="text-2xl font-semibold text-stone-800 mt-1">8</p>
                   </div>
                   <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                    <span className="text-blue-600">📊</span>
+                    <BarChart3 className="w-5 h-5 text-blue-600" />
                   </div>
                 </div>
                 <p className="text-xs text-stone-500">2 due this week</p>
@@ -105,7 +105,7 @@ export default function LayoutTemplates() {
                     <p className="text-2xl font-semibold text-stone-800 mt-1">24</p>
                   </div>
                   <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
-                    <span className="text-green-600">✅</span>
+                    <CheckCircle className="w-5 h-5 text-green-600" />
                   </div>
                 </div>
                 <p className="text-xs text-stone-500">This quarter</p>
@@ -118,7 +118,7 @@ export default function LayoutTemplates() {
                     <p className="text-2xl font-semibold text-stone-800 mt-1">12</p>
                   </div>
                   <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
-                    <span className="text-purple-600">👥</span>
+                    <Users className="w-5 h-5 text-purple-600" />
                   </div>
                 </div>
                 <p className="text-xs text-stone-500">Across 8 projects</p>
