@@ -13,14 +13,15 @@ interface Contact {
   name: string;
   email: string;
   phone: string;
-  company: string;
-  jobTitle: string;
+  company?: string;
+  jobTitle?: string;
   type: string;
   linkedClient: string;
   consent: 'Given' | 'Pending' | 'Withdrawn';
   gdprStatus: 'Active' | 'Export Requested' | 'Deletion Requested';
   source: string;
   tags: string[];
+  lastContact?: string;
 }
 
 interface CO03ContactDetailProps {
@@ -125,7 +126,7 @@ export function CO03ContactDetail({ contact, onEdit, onLinkClient }: CO03Contact
             <div className="flex items-center gap-3 mb-2">
               <h1 className="text-2xl font-semibold text-stone-800">{contact.name}</h1>
               <BonsaiStatusPill
-                status={contact.consent === 'Given' ? 'active' : contact.consent === 'Pending' ? 'pending' : 'inactive'}
+                status={contact.consent === 'Given' ? 'active' : contact.consent === 'Pending' ? 'pending' : 'draft'}
                 label={`Consent: ${contact.consent}`}
               />
               {contact.gdprStatus !== 'Active' && (
@@ -265,7 +266,7 @@ export function CO03ContactDetail({ contact, onEdit, onLinkClient }: CO03Contact
                 <div>
                   <p className="text-xs text-stone-600 mb-1">Consent Status</p>
                   <BonsaiStatusPill
-                    status={contact.consent === 'Given' ? 'active' : contact.consent === 'Pending' ? 'pending' : 'inactive'}
+                    status={contact.consent === 'Given' ? 'active' : contact.consent === 'Pending' ? 'pending' : 'draft'}
                     label={contact.consent}
                   />
                 </div>
@@ -327,7 +328,6 @@ export function CO03ContactDetail({ contact, onEdit, onLinkClient }: CO03Contact
               <BonsaiEmptyState
                 title="No projects yet"
                 description="This contact is not associated with any projects"
-                compact
               />
             </div>
 
@@ -340,7 +340,6 @@ export function CO03ContactDetail({ contact, onEdit, onLinkClient }: CO03Contact
               <BonsaiEmptyState
                 title="No jobs yet"
                 description="This contact is not associated with any talent placements"
-                compact
               />
             </div>
 
@@ -353,7 +352,6 @@ export function CO03ContactDetail({ contact, onEdit, onLinkClient }: CO03Contact
               <BonsaiEmptyState
                 title="No support requests"
                 description="This contact hasn't submitted any support requests"
-                compact
               />
             </div>
           </div>

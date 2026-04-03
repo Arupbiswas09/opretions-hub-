@@ -12,10 +12,11 @@ type Screen = 'list' | 'detail';
 
 interface Contact {
   id: string; name: string; email: string; phone: string;
-  company: string; jobTitle: string; type: string; linkedClient: string;
+  company?: string; jobTitle?: string; type: string; linkedClient: string;
   consent: 'Given' | 'Pending' | 'Withdrawn';
   gdprStatus: 'Active' | 'Export Requested' | 'Deletion Requested';
   source: string; tags: string[];
+  lastContact?: string;
 }
 
 const SCREENS: { id: Screen; label: string }[] = [

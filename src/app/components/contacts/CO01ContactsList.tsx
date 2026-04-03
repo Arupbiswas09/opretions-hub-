@@ -10,13 +10,15 @@ interface Contact {
   name: string;
   email: string;
   phone: string;
+  company?: string;
+  jobTitle?: string;
   type: string;
   linkedClient: string;
   consent: 'Given' | 'Pending' | 'Withdrawn';
   gdprStatus: 'Active' | 'Export Requested' | 'Deletion Requested';
   source: string;
   tags: string[];
-  lastContact: string;
+  lastContact?: string;
 }
 
 interface CO01ContactsListProps {
@@ -376,7 +378,7 @@ export function CO01ContactsList({ onContactClick, onCreateContact, onBulkAction
             ),
             consent: (
               <BonsaiStatusPill
-                status={contact.consent === 'Given' ? 'active' : contact.consent === 'Pending' ? 'pending' : 'inactive'}
+                status={contact.consent === 'Given' ? 'active' : contact.consent === 'Pending' ? 'pending' : 'draft'}
                 label={contact.consent}
               />
             ),

@@ -18,6 +18,7 @@ interface EnhancedTableProps {
   filterable?: boolean;
   pagination?: boolean;
   selectable?: boolean;
+  onSelectionChange?: (selectedIds: string[]) => void;
   className?: string;
 }
 
@@ -29,6 +30,7 @@ export function EnhancedTable({
   filterable = true,
   pagination = true,
   selectable = true,
+  onSelectionChange,
   className,
 }: EnhancedTableProps) {
   const [searchQuery, setSearchQuery] = useState('');
@@ -53,8 +55,10 @@ export function EnhancedTable({
     if (e.target.checked) {
       const allIds = new Set(data.map((_, idx) => idx.toString()));
       setSelectedRows(allIds);
+      onSelectionChange?.(Array.from(allIds));
     } else {
       setSelectedRows(new Set());
+      onSelectionChange?.([]);
     }
   };
 
@@ -66,6 +70,7 @@ export function EnhancedTable({
       newSelected.add(id);
     }
     setSelectedRows(newSelected);
+    onSelectionChange?.(Array.from(newSelected));
   };
 
   const visibleColumns = columns.filter(col => selectedColumns.includes(col.key));
