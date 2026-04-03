@@ -25,15 +25,15 @@ import Portals from './Portals';
 type View = 'internal' | 'client-portal' | 'employee-portal' | 'freelancer-portal';
 type Module = 'dashboard' | 'sales' | 'contacts' | 'clients' | 'projects' | 'talent' | 'people' | 'finance' | 'support' | 'forms' | 'admin';
 
-const NAV: { id: Module; label: string; icon: React.ElementType }[] = [
+const NAV: { id: Module; label: string; icon: React.ElementType; badge?: number }[] = [
   { id: 'dashboard', label: 'Dashboard',  icon: Home },
-  { id: 'sales',     label: 'Sales',      icon: Briefcase },
+  { id: 'sales',     label: 'Sales',      icon: Briefcase,    badge: 5 },
   { id: 'contacts',  label: 'Contacts',   icon: Users },
   { id: 'clients',   label: 'Clients',    icon: Building2 },
-  { id: 'projects',  label: 'Projects',   icon: FolderKanban },
+  { id: 'projects',  label: 'Projects',   icon: FolderKanban, badge: 3 },
   { id: 'talent',    label: 'Talent',     icon: UserPlus },
-  { id: 'people',    label: 'People',     icon: Users },
-  { id: 'finance',   label: 'Finance',    icon: DollarSign },
+  { id: 'people',    label: 'People',     icon: Users,        badge: 2 },
+  { id: 'finance',   label: 'Finance',    icon: DollarSign,   badge: 1 },
   { id: 'support',   label: 'Support',    icon: Headphones },
   { id: 'forms',     label: 'Forms',      icon: ClipboardList },
   { id: 'admin',     label: 'Admin',      icon: Settings },
@@ -155,9 +155,15 @@ export default function UnifiedPrototype() {
                     style={{ width: 16, height: 16, strokeWidth: active ? 2.2 : 1.7 }}
                   />
                   {!collapsed && (
-                    <span className={`text-[13px] truncate ${active ? 'font-medium text-stone-800' : 'text-stone-500'}`}>
+                    <span className={`text-[13px] truncate flex-1 ${active ? 'font-medium text-stone-800' : 'text-stone-500'}`}>
                       {item.label}
                     </span>
+                  )}
+                  {/* Subtle activity dot — monochrome */}
+                  {item.badge && !active && (
+                    <div className={`w-[5px] h-[5px] rounded-full bg-stone-700 flex-shrink-0 ${
+                      collapsed ? 'absolute top-1.5 right-1.5' : ''
+                    }`} />
                   )}
                 </motion.button>
               );
