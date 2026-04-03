@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence, MotionConfig } from 'motion/react';
@@ -23,9 +23,12 @@ import {
   PanelLeft,
   Command,
   ArrowUpRight,
+  LogOut,
+  User,
 } from 'lucide-react';
 import { pageTransition } from '../lib/motion';
 import { HUB_MODULES, type HubModule } from '../lib/hub-modules';
+import { NotificationDrawer } from './bonsai/NotificationDrawer';
 
 export { HUB_MODULES, type HubModule };
 
@@ -97,6 +100,20 @@ function portalLabelFromPath(pathname: string): string | null {
 export default function HubShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close user menu on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   const isPortalView = pathname.startsWith('/hub/portals');
   const mod = moduleFromPath(pathname);
@@ -387,24 +404,89 @@ export default function HubShell({ children }: { children: React.ReactNode }) {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 type="button"
+                onClick={() => setNotifOpen(true)}
                 className="relative p-[7px] rounded-[10px] text-stone-500 transition-colors"
                 onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(28,25,23,0.07)')}
                 onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
               >
                 <Bell className="w-4 h-4" />
-                <span className="absolute top-[7px] right-[7px] w-[6px] h-[6px] bg-stone-1000 rounded-full" />
+                <span className="absolute top-[7px] right-[7px] w-[6px] h-[6px] bg-red-500 rounded-full" />
               </motion.button>
 
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                className="w-7 h-7 rounded-full flex items-center justify-center cursor-pointer"
-                style={{
-                  background: 'linear-gradient(145deg, #44403c, #1c1917)',
-                  boxShadow: '0 1px 4px rgba(0,0,0,0.2)',
-                }}
-              >
-                <span className="text-[10px] font-semibold text-white">JD</span>
-              </motion.div>
+              {/* User avatar + dropdown */}
+              <div className="relative" ref={userMenuRef}>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  className="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer text-[20px] relative"
+                  style={{
+                    background: 'linear-gradient(145deg, #44403c, #1c1917)',
+                    boxShadow: '0 1px 4px rgba(0,0,0,0.2)',
+                  }}
+                >
+                  <span className="text-[10px] font-semibold text-white">JD</span>
+                  {/* Online indicator */}
+                  <span className="absolute -bottom-0.5 -right-0.5 w-[10px] h-[10px] bg-emerald-500 border-2 border-white rounded-full" />
+                </motion.button>
+
+                {/* User dropdown — glassmorphic */}
+                <AnimatePresence>
+                  {userMenuOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95, y: 4 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.97, y: 4 }}
+                      transition={{ type: 'spring', damping: 28, stiffness: 380 }}
+                      className="absolute right-0 top-full mt-2 w-56 rounded-xl overflow-hidden z-50"
+                      style={{
+                        background: 'rgba(255,255,255,0.88)',
+                        backdropFilter: 'blur(48px) saturate(200%)',
+                        WebkitBackdropFilter: 'blur(48px) saturate(200%)',
+                        boxShadow: '0 16px 48px -8px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.04)',
+                        border: '1px solid rgba(255,255,255,0.5)',
+                      }}
+                    >
+                      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/60 to-transparent" />
+                      <div className="px-4 py-3 border-b border-stone-200/30">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-full flex items-center justify-center text-[18px]"
+                            style={{ background: 'linear-gradient(145deg, #44403c, #1c1917)' }}
+                          >
+                            <span className="text-[11px] font-bold text-white">JD</span>
+                          </div>
+                          <div>
+                            <p className="text-[13px] font-semibold text-stone-800">John Doe</p>
+                            <p className="text-[11px] text-stone-500">john.doe@company.com</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="py-1">
+                        {[
+                          { label: 'My Profile', icon: User, href: '/hub/people' },
+                          { label: 'Settings', icon: Settings, href: '/hub/admin' },
+                        ].map(item => (
+                          <Link
+                            key={item.label}
+                            href={item.href}
+                            onClick={() => setUserMenuOpen(false)}
+                            className="flex items-center gap-2.5 px-4 py-2.5 text-[13px] text-stone-600 hover:bg-stone-100/60 transition-colors"
+                          >
+                            <item.icon className="w-4 h-4 text-stone-400" />
+                            {item.label}
+                          </Link>
+                        ))}
+                      </div>
+                      <div className="border-t border-stone-200/30 py-1">
+                        <button className="w-full flex items-center gap-2.5 px-4 py-2.5 text-[13px] text-stone-500 hover:text-red-600 hover:bg-red-50/40 transition-colors">
+                          <LogOut className="w-4 h-4" />
+                          Sign Out
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             </div>
           </motion.header>
 
@@ -416,6 +498,9 @@ export default function HubShell({ children }: { children: React.ReactNode }) {
             </AnimatePresence>
           </main>
         </div>
+
+        {/* Notification Drawer */}
+        <NotificationDrawer open={notifOpen} onClose={() => setNotifOpen(false)} />
       </div>
     </MotionConfig>
   );

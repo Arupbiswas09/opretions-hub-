@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { Plus, List, LayoutGrid, Columns3, Settings, Filter, Mail, Tag, UserCheck, Download, Trash2 } from 'lucide-react';
 import { BonsaiButton } from '../bonsai/BonsaiButton';
 import { BonsaiStatusPill } from '../bonsai/BonsaiStatusPill';
@@ -19,6 +20,7 @@ interface Contact {
   source: string;
   tags: string[];
   lastContact?: string;
+  avatar: string;
 }
 
 interface CO01ContactsListProps {
@@ -55,6 +57,7 @@ export function CO01ContactsList({ onContactClick, onCreateContact, onBulkAction
       source: 'Website',
       tags: ['VIP', 'Decision Maker'],
       lastContact: 'Jan 10, 2026',
+      avatar: '👩‍💼',
     },
     {
       id: '2',
@@ -68,6 +71,7 @@ export function CO01ContactsList({ onContactClick, onCreateContact, onBulkAction
       source: 'Referral',
       tags: ['Qualified'],
       lastContact: 'Jan 8, 2026',
+      avatar: '👨‍💻',
     },
     {
       id: '3',
@@ -81,6 +85,7 @@ export function CO01ContactsList({ onContactClick, onCreateContact, onBulkAction
       source: 'LinkedIn',
       tags: ['Designer', 'Senior'],
       lastContact: 'Jan 5, 2026',
+      avatar: '👩‍🎨',
     },
     {
       id: '4',
@@ -94,6 +99,7 @@ export function CO01ContactsList({ onContactClick, onCreateContact, onBulkAction
       source: 'Cold Outreach',
       tags: ['Active'],
       lastContact: 'Jan 3, 2026',
+      avatar: '👨‍💼',
     },
     {
       id: '5',
@@ -107,6 +113,7 @@ export function CO01ContactsList({ onContactClick, onCreateContact, onBulkAction
       source: 'Event',
       tags: ['Partnership'],
       lastContact: 'Dec 28, 2025',
+      avatar: '👩',
     },
   ];
 
@@ -179,7 +186,15 @@ export function CO01ContactsList({ onContactClick, onCreateContact, onBulkAction
               Columns
             </BonsaiButton>
             {showColumnChooser && (
-              <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-lg shadow-xl border border-stone-200 p-4 z-10">
+              <div className="absolute right-0 top-full mt-2 w-64 rounded-xl p-4 z-10"
+                style={{
+                  background: 'rgba(255,255,255,0.9)',
+                  backdropFilter: 'blur(48px) saturate(200%)',
+                  WebkitBackdropFilter: 'blur(48px) saturate(200%)',
+                  boxShadow: '0 16px 48px -8px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.04)',
+                  border: '1px solid rgba(255,255,255,0.5)',
+                }}
+              >
                 <h3 className="font-medium text-stone-800 mb-3">Show Columns</h3>
                 <div className="space-y-2 max-h-64 overflow-y-auto">
                   {visibleColumns.map((col) => (
@@ -220,28 +235,27 @@ export function CO01ContactsList({ onContactClick, onCreateContact, onBulkAction
         </div>
       </div>
 
-      {/* Stats */}
+      {/* Stats — glassmorphic */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
-        <div className="bg-white rounded-lg border border-stone-200 p-4">
-          <p className="text-sm text-stone-600">Total Contacts</p>
-          <p className="text-2xl font-semibold text-stone-800 mt-1">{contacts.length}</p>
-        </div>
-        <div className="bg-white rounded-lg border border-stone-200 p-4">
-          <p className="text-sm text-stone-600">Consent Given</p>
-          <p className="text-2xl font-semibold text-stone-600 mt-1">3</p>
-        </div>
-        <div className="bg-white rounded-lg border border-stone-200 p-4">
-          <p className="text-sm text-stone-600">Pending Consent</p>
-          <p className="text-2xl font-semibold text-stone-600 mt-1">1</p>
-        </div>
-        <div className="bg-white rounded-lg border border-stone-200 p-4">
-          <p className="text-sm text-stone-600">Export Requests</p>
-          <p className="text-2xl font-semibold text-stone-600 mt-1">1</p>
-        </div>
-        <div className="bg-white rounded-lg border border-stone-200 p-4">
-          <p className="text-sm text-stone-600">Deletion Requests</p>
-          <p className="text-2xl font-semibold text-stone-700 mt-1">1</p>
-        </div>
+        {[
+          { label: 'Total Contacts', val: contacts.length },
+          { label: 'Consent Given', val: contacts.filter(c => c.consent === 'Given').length },
+          { label: 'Pending Consent', val: contacts.filter(c => c.consent === 'Pending').length },
+          { label: 'Export Requests', val: contacts.filter(c => c.gdprStatus === 'Export Requested').length },
+          { label: 'Deletion Requests', val: contacts.filter(c => c.gdprStatus === 'Deletion Requested').length },
+        ].map((s, i) => (
+          <motion.div
+            key={s.label}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.05 }}
+            className="rounded-xl border border-stone-200/50 p-4"
+            style={{ background: 'rgba(255,255,255,0.6)', backdropFilter: 'blur(20px) saturate(180%)' }}
+          >
+            <p className="text-[11px] font-semibold text-stone-400 uppercase tracking-[0.08em]">{s.label}</p>
+            <p className="text-[24px] font-bold text-stone-800 mt-1 tracking-[-0.02em]">{s.val}</p>
+          </motion.div>
+        ))}
       </div>
 
       {/* Filters Panel */}
@@ -371,6 +385,17 @@ export function CO01ContactsList({ onContactClick, onCreateContact, onBulkAction
             .map(col => ({ key: col.key, label: col.label, sortable: true }))}
           data={contacts.map(contact => ({
             ...contact,
+            name: (
+              <div className="flex items-center gap-3">
+                <span className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-[16px] flex-shrink-0">
+                  {contact.avatar}
+                </span>
+                <div>
+                  <p className="text-[13px] font-medium text-stone-800">{contact.name}</p>
+                  <p className="text-[10px] text-stone-400">{contact.email}</p>
+                </div>
+              </div>
+            ),
             type: (
               <span className="inline-flex px-2 py-1 text-xs rounded-full bg-stone-100 text-stone-600">
                 {contact.type}
@@ -378,13 +403,13 @@ export function CO01ContactsList({ onContactClick, onCreateContact, onBulkAction
             ),
             consent: (
               <BonsaiStatusPill
-                status={contact.consent === 'Given' ? 'active' : contact.consent === 'Pending' ? 'pending' : 'draft'}
+                status={contact.consent === 'Given' ? 'completed' : contact.consent === 'Pending' ? 'pending' : 'overdue'}
                 label={contact.consent}
               />
             ),
             gdprStatus: (
               <BonsaiStatusPill
-                status={contact.gdprStatus === 'Active' ? 'active' : 'pending'}
+                status={contact.gdprStatus === 'Active' ? 'active' : contact.gdprStatus === 'Deletion Requested' ? 'overdue' : 'pending'}
                 label={contact.gdprStatus}
               />
             ),

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { Plus, List, LayoutGrid, Settings, Filter, Download, Tag, Power } from 'lucide-react';
 import { BonsaiButton } from '../bonsai/BonsaiButton';
 import { BonsaiStatusPill } from '../bonsai/BonsaiStatusPill';
@@ -16,6 +17,7 @@ interface Person {
   skills: string[];
   availability: 'Available' | 'Busy' | 'On Leave';
   startDate: string;
+  avatar: string;
 }
 
 interface PE01PeopleDirectoryProps {
@@ -42,6 +44,7 @@ export function PE01PeopleDirectory({ onPersonClick, onCreatePerson, onBulkActio
       skills: ['Project Management', 'Agile', 'Leadership'],
       availability: 'Available',
       startDate: 'Jan 15, 2024',
+      avatar: '👨‍💼',
     },
     {
       id: '2',
@@ -54,6 +57,7 @@ export function PE01PeopleDirectory({ onPersonClick, onCreatePerson, onBulkActio
       skills: ['UI/UX Design', 'Figma', 'Branding'],
       availability: 'Busy',
       startDate: 'Mar 1, 2023',
+      avatar: '👩‍🎨',
     },
     {
       id: '3',
@@ -66,6 +70,7 @@ export function PE01PeopleDirectory({ onPersonClick, onCreatePerson, onBulkActio
       skills: ['UI Design', 'Illustration', 'Animation'],
       availability: 'Available',
       startDate: 'Nov 10, 2025',
+      avatar: '👩‍💻',
     },
     {
       id: '4',
@@ -78,6 +83,33 @@ export function PE01PeopleDirectory({ onPersonClick, onCreatePerson, onBulkActio
       skills: ['React', 'Node.js', 'TypeScript'],
       availability: 'On Leave',
       startDate: 'Jun 1, 2022',
+      avatar: '👨‍💻',
+    },
+    {
+      id: '5',
+      name: 'Priya Patel',
+      type: 'Employee',
+      role: 'Marketing Lead',
+      department: 'Marketing',
+      status: 'Active',
+      email: 'priya.p@company.com',
+      skills: ['SEO', 'Content Strategy', 'Analytics'],
+      availability: 'Available',
+      startDate: 'Aug 20, 2023',
+      avatar: '👩‍🦰',
+    },
+    {
+      id: '6',
+      name: 'Alex Rivera',
+      type: 'Freelancer',
+      role: 'Backend Developer',
+      department: 'Engineering',
+      status: 'Active',
+      email: 'alex.r@freelance.com',
+      skills: ['Python', 'Django', 'PostgreSQL'],
+      availability: 'Busy',
+      startDate: 'Dec 5, 2025',
+      avatar: '🧑‍💻',
     },
   ];
 
@@ -104,13 +136,19 @@ export function PE01PeopleDirectory({ onPersonClick, onCreatePerson, onBulkActio
     }
   };
 
-  const getAvailabilityColor = (availability: string) => {
+  const getAvailabilityStyle = (availability: string) => {
     switch (availability) {
-      case 'Available': return 'bg-stone-100 text-stone-700';
-      case 'Busy': return 'bg-stone-100 text-stone-600';
-      case 'On Leave': return 'bg-stone-100 text-stone-700';
-      default: return 'bg-stone-100 text-stone-700';
+      case 'Available': return 'bg-emerald-50 text-emerald-700 border border-emerald-100';
+      case 'Busy':      return 'bg-amber-50 text-amber-700 border border-amber-100';
+      case 'On Leave':  return 'bg-stone-100 text-stone-600';
+      default:          return 'bg-stone-100 text-stone-700';
     }
+  };
+
+  const presenceDot: Record<string, string> = {
+    'Available': 'bg-emerald-500',
+    'Busy': 'bg-amber-500',
+    'On Leave': 'bg-stone-400',
   };
 
   return (
@@ -143,8 +181,22 @@ export function PE01PeopleDirectory({ onPersonClick, onCreatePerson, onBulkActio
             <BonsaiButton variant="ghost" size="sm" icon={<Settings />} onClick={() => setShowColumnChooser(!showColumnChooser)}>
               Columns
             </BonsaiButton>
-            {showColumnChooser && (
-              <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-lg shadow-xl border border-stone-200 p-4 z-10">
+            <AnimatePresence>
+              {showColumnChooser && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.96, y: 4 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.97, y: 4 }}
+                  transition={{ type: 'spring', damping: 28, stiffness: 380 }}
+                  className="absolute right-0 top-full mt-2 w-64 rounded-xl p-4 z-10"
+                  style={{
+                    background: 'rgba(255,255,255,0.9)',
+                    backdropFilter: 'blur(48px) saturate(200%)',
+                    WebkitBackdropFilter: 'blur(48px) saturate(200%)',
+                    boxShadow: '0 16px 48px -8px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.04)',
+                    border: '1px solid rgba(255,255,255,0.5)',
+                  }}
+                >
                 <h3 className="font-medium text-stone-800 mb-3">Show Columns</h3>
                 <div className="space-y-2">
                   {visibleColumns.map((col) => (
@@ -163,8 +215,9 @@ export function PE01PeopleDirectory({ onPersonClick, onCreatePerson, onBulkActio
                     </label>
                   ))}
                 </div>
-              </div>
-            )}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           <BonsaiButton variant="ghost" size="sm" icon={<Filter />} onClick={() => setShowFilters(!showFilters)}>
@@ -177,28 +230,28 @@ export function PE01PeopleDirectory({ onPersonClick, onCreatePerson, onBulkActio
         </div>
       </div>
 
-      {/* Stats */}
+      {/* Stats — glassmorphic */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
-        <div className="bg-white rounded-lg border border-stone-200 p-4">
-          <p className="text-sm text-stone-600">Total People</p>
-          <p className="text-2xl font-semibold text-stone-800 mt-1">{people.length}</p>
-        </div>
-        <div className="bg-white rounded-lg border border-stone-200 p-4">
-          <p className="text-sm text-stone-600">Employees</p>
-          <p className="text-2xl font-semibold text-primary mt-1">2</p>
-        </div>
-        <div className="bg-white rounded-lg border border-stone-200 p-4">
-          <p className="text-sm text-stone-600">Freelancers</p>
-          <p className="text-2xl font-semibold text-stone-600 mt-1">2</p>
-        </div>
-        <div className="bg-white rounded-lg border border-stone-200 p-4">
-          <p className="text-sm text-stone-600">Available</p>
-          <p className="text-2xl font-semibold text-stone-600 mt-1">2</p>
-        </div>
-        <div className="bg-white rounded-lg border border-stone-200 p-4">
-          <p className="text-sm text-stone-600">On Leave</p>
-          <p className="text-2xl font-semibold text-stone-600 mt-1">1</p>
-        </div>
+        {[
+          { label: 'Total People', val: people.length, sub: 'All team' },
+          { label: 'Employees',    val: people.filter(p => p.type === 'Employee').length, sub: 'Full-time' },
+          { label: 'Freelancers',  val: people.filter(p => p.type === 'Freelancer').length, sub: 'Contract' },
+          { label: 'Available',    val: people.filter(p => p.availability === 'Available').length, sub: 'Ready to assign' },
+          { label: 'On Leave',     val: people.filter(p => p.status === 'On Leave').length, sub: 'Currently away' },
+        ].map((s, i) => (
+          <motion.div
+            key={s.label}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.05 }}
+            className="rounded-xl border border-stone-200/50 p-4"
+            style={{ background: 'rgba(255,255,255,0.6)', backdropFilter: 'blur(20px) saturate(180%)' }}
+          >
+            <p className="text-[11px] font-semibold text-stone-400 uppercase tracking-[0.08em]">{s.label}</p>
+            <p className="text-[24px] font-bold text-stone-800 mt-1 tracking-[-0.02em]">{s.val}</p>
+            <p className="text-[10px] text-stone-400 mt-0.5">{s.sub}</p>
+          </motion.div>
+        ))}
       </div>
 
       {/* Filters Panel */}
@@ -284,6 +337,20 @@ export function PE01PeopleDirectory({ onPersonClick, onCreatePerson, onBulkActio
             .map(col => ({ key: col.key, label: col.label, sortable: true }))}
           data={people.map(person => ({
             ...person,
+            name: (
+              <div className="flex items-center gap-3">
+                <div className="relative flex-shrink-0">
+                  <span className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-[16px]">
+                    {person.avatar}
+                  </span>
+                  <span className={`absolute -bottom-0.5 -right-0.5 w-[10px] h-[10px] rounded-full border-2 border-white ${presenceDot[person.availability] || 'bg-stone-400'}`} />
+                </div>
+                <div>
+                  <p className="text-[13px] font-medium text-stone-800">{person.name}</p>
+                  <p className="text-[10px] text-stone-400">{person.role}</p>
+                </div>
+              </div>
+            ),
             type: (
               <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
                 person.type === 'Employee' ? 'bg-stone-100 text-stone-600' : 'bg-stone-100 text-stone-700'
@@ -298,7 +365,8 @@ export function PE01PeopleDirectory({ onPersonClick, onCreatePerson, onBulkActio
               />
             ),
             availability: (
-              <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getAvailabilityColor(person.availability)}`}>
+              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium rounded-full ${getAvailabilityStyle(person.availability)}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${presenceDot[person.availability]}`} />
                 {person.availability}
               </span>
             ),

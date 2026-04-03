@@ -1,8 +1,10 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
+import Link from 'next/link';
 import { ChevronRight, Briefcase, Clock, Mail, BarChart3, ArrowUpRight, Plus } from 'lucide-react';
 import { easeOutQuart, EASE_OUT_EXPO, staggerContainer, fadeInUp, springSnap } from '../lib/motion';
+import { useToast } from './bonsai/ToastSystem';
 
 /* ─── Animated number counter ───────────────────────────── */
 function Num({ to, prefix = '', suffix = '' }: { to: number; prefix?: string; suffix?: string }) {
@@ -37,10 +39,10 @@ function Bar({ pct, delay = 0 }: { pct: number; delay?: number }) {
      Monochrome. Priority through typography weight only.
      No colored pills, no colored dots. Linear-style. */
 function AttentionRow({
-  kind, title, meta, due, urgent, idx, actionLabel
+  kind, title, meta, due, urgent, idx, actionLabel, onAction
 }: {
   kind: string; title: string; meta: string; due: string;
-  urgent: boolean; idx: number; actionLabel: string;
+  urgent: boolean; idx: number; actionLabel: string; onAction?: () => void;
 }) {
   return (
     <motion.div
@@ -68,6 +70,7 @@ function AttentionRow({
       <motion.button
         whileHover={{ scale: 1.03 }}
         whileTap={{ scale: 0.97 }}
+        onClick={onAction}
         className="text-[11px] font-semibold text-stone-500 hover:text-stone-900 transition-colors flex-shrink-0 flex items-center gap-1"
       >
         {actionLabel}
@@ -179,6 +182,7 @@ function WorkflowStage({ stage, count, items, idx }: {
    Inspired by: Linear, Vercel, Notion.
 ═══════════════════════════════════════════════════════════ */
 export default function Dashboard() {
+  const { addToast } = useToast();
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
   const dateStr = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
@@ -286,9 +290,9 @@ export default function Dashboard() {
               <h2 className="text-[14px] font-semibold text-stone-800 tracking-[-0.01em]">Active Workflows</h2>
               <span className="text-[10px] font-bold text-stone-400">12</span>
             </div>
-            <button className="text-[11px] text-stone-400 hover:text-stone-700 transition-colors flex items-center gap-1 group">
+            <Link href="/hub/projects" className="text-[11px] text-stone-400 hover:text-stone-700 transition-colors flex items-center gap-1 group">
               Board <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
-            </button>
+            </Link>
           </div>
           <div
             className="rounded-2xl overflow-hidden p-4"
@@ -342,7 +346,17 @@ export default function Dashboard() {
             }}
           >
             {approvals.map((a, i) => (
-              <AttentionRow key={a.id} {...a} idx={i} />
+              <AttentionRow
+                key={a.id}
+                {...a}
+                idx={i}
+                onAction={() => addToast(
+                  a.actionLabel === 'Approve'
+                    ? `${a.title} approved successfully`
+                    : `Opened ${a.title} for review`,
+                  'success'
+                )}
+              />
             ))}
           </div>
         </motion.div>
@@ -374,9 +388,9 @@ export default function Dashboard() {
         >
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-[14px] font-semibold text-stone-800 tracking-[-0.01em]">Today</h2>
-            <button className="text-[11px] text-stone-400 hover:text-stone-700 transition-colors flex items-center gap-1 group">
+            <Link href="/hub/admin" className="text-[11px] text-stone-400 hover:text-stone-700 transition-colors flex items-center gap-1 group">
               View all <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
-            </button>
+            </Link>
           </div>
           <div>
             {activity.map((a, i) => <ActivityRow key={a.id} {...a} idx={i} />)}
