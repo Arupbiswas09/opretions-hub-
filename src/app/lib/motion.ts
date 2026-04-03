@@ -59,26 +59,29 @@ export const sectionEntry = {
 
 // ─── Stagger containers ────────────────────────────────────────────────────
 
+/** 40ms per child — KPI cards, quick actions (spec: 40–160ms window) */
 export const staggerFast = {
   hidden:  { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.045, delayChildren: 0.05 } },
+  visible: { opacity: 1, transition: { staggerChildren: 0.04, delayChildren: 0.04 } },
 };
 
+/** 70ms per child — section-level lists */
 export const staggerContainer = {
   hidden:  { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.07, delayChildren: 0.1 } },
+  visible: { opacity: 1, transition: { staggerChildren: 0.07, delayChildren: 0.08 } },
 };
 
+/** 120ms per child — large content blocks */
 export const staggerSlow = {
   hidden:  { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.12, delayChildren: 0.15 } },
+  visible: { opacity: 1, transition: { staggerChildren: 0.12, delayChildren: 0.12 } },
 };
 
 // ─── Child item variants ───────────────────────────────────────────────────
 
 export const fadeInUp = {
-  hidden:  { opacity: 0, y: 18 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: EASE_OUT_EXPO } },
+  hidden:  { opacity: 0, y: 12 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.38, ease: EASE_OUT_EXPO } },
 };
 
 export const fadeIn = {

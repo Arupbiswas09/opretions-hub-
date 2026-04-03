@@ -56,50 +56,61 @@ export default function Sales({ initialScreen = 'dashboard', hideNav = false }: 
   return (
     <div className="min-h-full">
       {/* Screen nav — minimal pill bar */}
-      {!hideNav && <div className="px-8 py-3 border-b border-stone-100/60">
-        <div className="flex items-center gap-1">
-          {SCREENS.map((s) => (
+      {!hideNav && (
+        <div className="px-8 py-3" style={{ borderBottom: '1px solid var(--border)' }}>
+          <div className="flex items-center gap-1">
+            {SCREENS.map((s) => (
+              <button
+                key={s.id}
+                onClick={() => {
+                  if (s.id === 'deal-detail' && !selectedDeal) {
+                    setSelectedDeal({
+                      id: '1', name: 'Website Redesign Project', client: 'Acme Corp',
+                      type: 'Project', value: '$45,000', stage: 'Proposal Sent', owner: 'John Doe',
+                    });
+                  }
+                  setCurrentScreen(s.id);
+                }}
+                className={`px-3 py-1.5 text-[12px] rounded-md transition-all duration-200 ${
+                  currentScreen === s.id
+                    ? 'bg-stone-800 dark:bg-white/10 text-white dark:text-stone-100 font-medium'
+                    : 'text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-200 hover:bg-stone-100/60 dark:hover:bg-white/[0.06]'
+                }`}
+              >
+                {s.label}
+              </button>
+            ))}
+            <div className="w-px h-3.5 bg-stone-200/60 dark:bg-white/10 mx-1.5" />
             <button
-              key={s.id}
-              onClick={() => {
-                if (s.id === 'deal-detail' && !selectedDeal) {
-                  setSelectedDeal({
-                    id: '1', name: 'Website Redesign Project', client: 'Acme Corp',
-                    type: 'Project', value: '$45,000', stage: 'Proposal Sent', owner: 'John Doe',
-                  });
-                }
-                setCurrentScreen(s.id);
-              }}
-              className={`px-3 py-1.5 text-[12px] rounded-md transition-all duration-200 ${
-                currentScreen === s.id
-                  ? 'bg-stone-800 text-white font-medium shadow-sm'
-                  : 'text-stone-400 hover:text-stone-600 hover:bg-stone-50'
-              }`}
+              onClick={() => setShowDealDrawer(true)}
+              className="px-3 py-1.5 text-[12px] rounded-md transition-colors
+                         text-stone-400 dark:text-stone-500
+                         hover:text-stone-600 dark:hover:text-stone-200
+                         hover:bg-stone-100/60 dark:hover:bg-white/[0.06]"
             >
-              {s.label}
+              + Deal
             </button>
-          ))}
-          <div className="w-px h-3.5 bg-stone-200/60 mx-1.5" />
-          <button
-            onClick={() => setShowDealDrawer(true)}
-            className="px-3 py-1.5 text-[12px] text-stone-400 hover:text-stone-600 hover:bg-stone-50 rounded-md transition-colors"
-          >
-            + Deal
-          </button>
-          <button
-            onClick={() => setShowProposalDrawer(true)}
-            className="px-3 py-1.5 text-[12px] text-stone-400 hover:text-stone-600 hover:bg-stone-50 rounded-md transition-colors"
-          >
-            + Proposal
-          </button>
-          <button
-            onClick={() => setShowWonLostModal(true)}
-            className="px-3 py-1.5 text-[12px] text-stone-400 hover:text-stone-600 hover:bg-stone-50 rounded-md transition-colors"
-          >
-            Won/Lost
-          </button>
+            <button
+              onClick={() => setShowProposalDrawer(true)}
+              className="px-3 py-1.5 text-[12px] rounded-md transition-colors
+                         text-stone-400 dark:text-stone-500
+                         hover:text-stone-600 dark:hover:text-stone-200
+                         hover:bg-stone-100/60 dark:hover:bg-white/[0.06]"
+            >
+              + Proposal
+            </button>
+            <button
+              onClick={() => setShowWonLostModal(true)}
+              className="px-3 py-1.5 text-[12px] rounded-md transition-colors
+                         text-stone-400 dark:text-stone-500
+                         hover:text-stone-600 dark:hover:text-stone-200
+                         hover:bg-stone-100/60 dark:hover:bg-white/[0.06]"
+            >
+              Won/Lost
+            </button>
+          </div>
         </div>
-      </div>}
+      )}
 
       {/* Content with page transitions */}
       <AnimatePresence mode="wait">

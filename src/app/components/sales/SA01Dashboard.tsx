@@ -1,9 +1,14 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { ArrowUpRight, Plus, ChevronRight, TrendingUp, TrendingDown } from 'lucide-react';
+import { ArrowUpRight, Plus, ChevronRight, TrendingUp, TrendingDown, Target, Zap } from 'lucide-react';
+import {
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
+  LineChart, Line, CartesianGrid,
+} from 'recharts';
 import { BonsaiButton } from '../bonsai/BonsaiButton';
 import { staggerContainer, fadeInUp, cardInteraction, easeOutQuart, EASE_OUT_EXPO } from '../../lib/motion';
+import { useTheme } from '../../lib/theme';
 
 /* ── Animated stat number ──────────────────────────────── */
 function AnimatedStat({ to, prefix = '', suffix = '' }: { to: number; prefix?: string; suffix?: string }) {
@@ -20,16 +25,27 @@ function AnimatedStat({ to, prefix = '', suffix = '' }: { to: number; prefix?: s
   return <>{prefix}{v.toLocaleString()}{suffix}</>;
 }
 
-/* ── Thin animated progress bar ───────────────────────── */
-function ProgressBar({ pct, delay = 0, color = 'bg-stone-800' }: { pct: number; delay?: number; color?: string }) {
+/* ── Chart tooltip ─────────────────────────────────────── */
+function ChartTooltip({ active, payload, label, formatter }: any) {
+  if (!active || !payload?.length) return null;
   return (
-    <div className="h-[2px] w-full bg-stone-100 rounded-full overflow-hidden mt-3">
-      <motion.div
-        className={`h-full ${color} rounded-full`}
-        initial={{ width: 0 }}
-        animate={{ width: `${pct}%` }}
-        transition={{ delay, duration: 1.0, ease: EASE_OUT_EXPO }}
-      />
+    <div className="rounded-xl px-3 py-2.5 text-[11px]"
+      style={{
+        background: 'var(--user-menu-bg)',
+        backdropFilter: 'blur(20px)',
+        border: '1px solid var(--border)',
+        boxShadow: 'var(--shadow-md)',
+      }}>
+      <p className="font-semibold mb-1" style={{ color: 'var(--foreground)' }}>{label}</p>
+      {payload.map((p: any) => (
+        <div key={p.name} className="flex items-center gap-1.5">
+          <div className="w-1.5 h-1.5 rounded-full" style={{ background: p.fill ?? p.color }} />
+          <span style={{ color: 'var(--muted-foreground)' }} className="capitalize">{p.name}:</span>
+          <span className="font-medium" style={{ color: 'var(--foreground)' }}>
+            {formatter ? formatter(p.value) : p.value}
+          </span>
+        </div>
+      ))}
     </div>
   );
 }
@@ -47,197 +63,317 @@ const STATS = [
   { label: 'Avg Close Time',  val: 42,   pre: '',  suf: 'd',  delta: '-3d',  up: true,  sub: 'Target ≤ 45 days' },
 ];
 
-const PROJECT_STAGES = [
-  { stage: 'New Lead',             count: 5, value: '$125K', pct: 100 },
-  { stage: 'Qualified',            count: 3, value: '$85K',  pct: 68  },
-  { stage: 'Discovery Scheduled',  count: 4, value: '$110K', pct: 88  },
-  { stage: 'Proposal Sent',        count: 3, value: '$95K',  pct: 76  },
-  { stage: 'Negotiation',          count: 3, value: '$75K',  pct: 60  },
+/* Pipeline funnel data — each stage with deal count + value */
+const PIPELINE_STAGES = [
+  { stage: 'New Lead',            count: 8,  value: 195, width: 100, type: 'mixed' },
+  { stage: 'Qualified',           count: 5,  value: 130, width: 80,  type: 'mixed' },
+  { stage: 'Discovery',           count: 4,  value: 110, width: 68,  type: 'mixed' },
+  { stage: 'Proposal Sent',       count: 3,  value: 95,  width: 52,  type: 'mixed' },
+  { stage: 'Negotiation',         count: 2,  value: 50,  width: 34,  type: 'mixed' },
 ];
 
-const TALENT_STAGES = [
-  { stage: 'New Request',   count: 2, value: '$45K', pct: 100 },
-  { stage: 'Qualified',     count: 1, value: '$25K', pct: 56  },
-  { stage: 'Profiles Sent', count: 1, value: '$30K', pct: 67  },
-  { stage: 'Interviewing',  count: 0, value: '—',    pct: 0   },
-  { stage: 'Placement',     count: 1, value: '$28K', pct: 62  },
+/* Win/loss monthly data */
+const MONTHLY_PERFORMANCE = [
+  { month: 'Aug', won: 8,  lost: 3, value: 182 },
+  { month: 'Sep', won: 11, lost: 2, value: 234 },
+  { month: 'Oct', won: 7,  lost: 4, value: 156 },
+  { month: 'Nov', won: 14, lost: 1, value: 312 },
+  { month: 'Dec', won: 9,  lost: 3, value: 198 },
+  { month: 'Jan', won: 12, lost: 2, value: 275 },
 ];
 
 const RECENT_DEALS = [
-  { name: 'Website Redesign Project',   client: 'Acme Corp',    value: '$45,000', stage: 'Proposal Sent',        hot: true  },
-  { name: 'Senior Designer Placement',  client: 'Tech Startup', value: '$28,000', stage: 'Interviewing',         hot: false },
-  { name: 'Brand Identity Package',     client: 'Local Retail', value: '$15,000', stage: 'Discovery Scheduled',  hot: false },
-  { name: 'React Developer Search',     client: 'SaaS Co.',     value: '$35,000', stage: 'Profiles Shared',      hot: false },
+  { name: 'Website Redesign Project',   client: 'Acme Corp',    value: '$45,000', stage: 'Proposal Sent',        hot: true,  type: 'Project' },
+  { name: 'Senior Designer Placement',  client: 'Tech Startup', value: '$28,000', stage: 'Interviewing',         hot: false, type: 'Talent'  },
+  { name: 'Brand Identity Package',     client: 'Local Retail', value: '$15,000', stage: 'Discovery Scheduled',  hot: false, type: 'Project' },
+  { name: 'React Developer Search',     client: 'SaaS Co.',     value: '$35,000', stage: 'Profiles Shared',      hot: false, type: 'Talent'  },
 ];
 
 export function SA01Dashboard({ onNavigateToDeals, onNavigateToPipeline, onCreateDeal }: SA01DashboardProps) {
+  const { isDark } = useTheme();
+
+  const wonColor   = isDark ? 'rgba(251,191,36,0.85)' : '#1c1917';
+  const lostColor  = isDark ? 'rgba(255,255,255,0.20)' : '#d6d3d1';
+  const valueColor = isDark ? 'rgba(52,211,153,0.70)'  : '#059669';
+  const gridColor  = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)';
+  const tickColor  = isDark ? '#57534e' : '#a8a29e';
+
+  /* Pipeline bar fill — warmer amber gradient in dark */
+  const stageBarColor = (idx: number) => {
+    if (isDark) {
+      const alphas = [0.80, 0.65, 0.52, 0.40, 0.28];
+      return `rgba(251,191,36,${alphas[idx] ?? 0.20})`;
+    }
+    const alphas = [0.85, 0.65, 0.48, 0.34, 0.22];
+    return `rgba(28,25,23,${alphas[idx] ?? 0.20})`;
+  };
+
+  const glassPanel: React.CSSProperties = {
+    background: 'var(--glass-bg)',
+    backdropFilter: 'blur(24px) saturate(180%)',
+    WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+    border: '1px solid var(--border)',
+  };
+
   return (
     <motion.div
-      className="px-8 py-8 max-w-[1080px]"
+      className="px-8 py-8 max-w-[1100px]"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.25 }}
     >
-      {/* ── Header ─────────────────────────────────────── */}
+      {/* ── Header ──────────────────────────────────────── */}
       <motion.div
-        className="flex items-end justify-between mb-10"
+        className="flex items-end justify-between mb-8"
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, ease: EASE_OUT_EXPO }}
       >
         <div>
-          <p className="text-[11px] font-semibold text-stone-400 uppercase tracking-[0.1em] mb-1">Sales</p>
-          <h1 className="text-[28px] font-semibold text-stone-900 tracking-[-0.025em]">Pipeline Overview</h1>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.1em] mb-1
+                        text-stone-400 dark:text-stone-500">Sales</p>
+          <h1 className="text-[28px] font-semibold tracking-[-0.025em]
+                         text-stone-900 dark:text-stone-50">Pipeline Overview</h1>
         </div>
-        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}>
-          <BonsaiButton variant="primary" icon={<Plus className="w-4 h-4" />} onClick={onCreateDeal}>
-            New Deal
-          </BonsaiButton>
-        </motion.div>
+        <BonsaiButton variant="primary" icon={<Plus className="w-4 h-4" />} onClick={onCreateDeal}>
+          New Deal
+        </BonsaiButton>
       </motion.div>
 
-      {/* ── Stats ─── typography-only, no icon circles ─── */}
+      {/* ── Stats row ─── */}
       <motion.div
-        className="grid grid-cols-4 gap-px bg-stone-200/60 rounded-2xl overflow-hidden mb-8"
+        className="grid grid-cols-4 gap-px rounded-2xl overflow-hidden mb-7"
+        style={{ background: 'var(--border)' }}
         variants={staggerContainer}
         initial="hidden"
         animate="visible"
       >
-        {STATS.map((s, i) => (
+        {STATS.map((s) => (
           <motion.div
             key={s.label}
-            className="bg-white/80 backdrop-blur-sm px-6 py-6 flex flex-col gap-1"
+            className="flex flex-col gap-1 px-6 py-6"
+            style={{
+              background: 'var(--glass-bg)',
+              backdropFilter: 'blur(20px) saturate(180%)',
+            }}
             variants={fadeInUp}
             {...cardInteraction}
           >
-            <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-[0.1em]">{s.label}</p>
-            <p className="text-[34px] font-bold text-stone-900 tracking-[-0.03em] leading-none mt-2">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.1em]
+                          text-stone-400 dark:text-stone-500">{s.label}</p>
+            <p className="text-[32px] font-bold tracking-[-0.03em] leading-none mt-1.5
+                          text-stone-900 dark:text-stone-50">
               <AnimatedStat to={s.val} prefix={s.pre} suffix={s.suf} />
             </p>
-            <div className="flex items-center gap-2 mt-1.5">
+            <div className="flex items-center gap-2 mt-1">
               {s.up
-                ? <TrendingUp className="w-3 h-3 text-stone-600 flex-shrink-0" />
-                : <TrendingDown className="w-3 h-3 text-stone-400 flex-shrink-0" />
-              }
-              <span className={`text-[11px] font-medium ${s.up ? 'text-stone-700' : 'text-stone-400'}`}>{s.delta}</span>
-              <span className="text-[11px] text-stone-400">{s.sub}</span>
+                ? <TrendingUp className="w-3 h-3 flex-shrink-0 text-emerald-500 dark:text-emerald-400" />
+                : <TrendingDown className="w-3 h-3 flex-shrink-0 text-stone-400 dark:text-stone-500" />}
+              <span className={`text-[11px] font-medium ${s.up ? 'text-stone-700 dark:text-stone-200' : 'text-stone-400 dark:text-stone-500'}`}>
+                {s.delta}
+              </span>
+              <span className="text-[11px] text-stone-400 dark:text-stone-500">{s.sub}</span>
             </div>
           </motion.div>
         ))}
       </motion.div>
 
-      {/* ── Pipeline tables — 2 col ─────────────────────── */}
-      <div className="grid grid-cols-2 gap-5 mb-8">
-        {/* Project Pipeline */}
+      {/* ── Pipeline funnel + Monthly performance ── */}
+      <div className="grid grid-cols-[1fr_280px] gap-5 mb-7">
+
+        {/* Visual funnel */}
         <motion.div
-          className="rounded-2xl border border-stone-200/60 bg-white/70 backdrop-blur-sm overflow-hidden"
+          className="rounded-2xl overflow-hidden"
+          style={glassPanel}
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.18, duration: 0.4, ease: EASE_OUT_EXPO }}
         >
-          <div className="flex items-center justify-between px-5 py-4 border-b border-stone-100">
-            <h3 className="text-[13px] font-semibold text-stone-800">Project Pipeline</h3>
-            <button onClick={onNavigateToPipeline} className="text-[12px] text-stone-400 hover:text-stone-700 transition-colors flex items-center gap-1 group">
-              View all <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+          <div className="flex items-center justify-between px-5 py-4"
+            style={{ borderBottom: '1px solid var(--border)' }}>
+            <div className="flex items-center gap-2.5">
+              <Target className="w-4 h-4 text-stone-400 dark:text-stone-500" />
+              <h3 className="text-[13px] font-semibold text-stone-800 dark:text-stone-100">Pipeline Funnel</h3>
+            </div>
+            <button onClick={onNavigateToPipeline}
+              className="text-[12px] flex items-center gap-1 group transition-colors
+                         text-stone-400 dark:text-stone-500 hover:text-stone-700 dark:hover:text-stone-200">
+              View board <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
             </button>
           </div>
-          <div className="px-5 py-4 space-y-4">
-            {PROJECT_STAGES.map((item, i) => (
+
+          {/* Horizontal bar funnel */}
+          <div className="px-5 py-5 space-y-3">
+            {PIPELINE_STAGES.map((stage, i) => (
               <motion.div
-                key={item.stage}
-                initial={{ opacity: 0, x: -6 }}
+                key={stage.stage}
+                initial={{ opacity: 0, x: -8 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.22 + i * 0.05, duration: 0.3, ease: EASE_OUT_EXPO }}
+                transition={{ delay: 0.22 + i * 0.06, duration: 0.35, ease: EASE_OUT_EXPO }}
+                className="group cursor-pointer"
+                onClick={onNavigateToPipeline}
               >
-                <div className="flex items-center justify-between">
-                  <p className="text-[13px] font-medium text-stone-700">{item.stage}</p>
-                  <div className="flex items-center gap-3">
-                    <span className="text-[11px] text-stone-400">{item.count} deals</span>
-                    <span className="text-[13px] font-semibold text-stone-800 tabular-nums">{item.value}</span>
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-[10px] font-bold tabular-nums w-3 text-right
+                                     text-stone-400 dark:text-stone-500">{stage.count}</span>
+                    <span className="text-[12px] font-medium text-stone-700 dark:text-stone-200">{stage.stage}</span>
                   </div>
+                  <span className="text-[12px] font-semibold tabular-nums text-stone-700 dark:text-stone-200">
+                    ${stage.value}K
+                  </span>
                 </div>
-                <ProgressBar pct={item.pct} delay={0.3 + i * 0.06} />
+                <div className="h-[6px] rounded-full overflow-hidden" style={{ background: 'var(--border)' }}>
+                  <motion.div
+                    className="h-full rounded-full"
+                    style={{ background: stageBarColor(i) }}
+                    initial={{ width: 0 }}
+                    animate={{ width: `${stage.width}%` }}
+                    transition={{ delay: 0.28 + i * 0.07, duration: 0.9, ease: EASE_OUT_EXPO }}
+                  />
+                </div>
               </motion.div>
             ))}
+
+            {/* Conversion summary */}
+            <div className="flex items-center gap-4 pt-3 mt-1"
+              style={{ borderTop: '1px solid var(--border)' }}>
+              <div className="flex items-center gap-1.5">
+                <Zap className="w-3 h-3 text-stone-400 dark:text-stone-500" />
+                <span className="text-[11px] text-stone-400 dark:text-stone-500">Lead → Close:</span>
+                <span className="text-[11px] font-bold text-stone-700 dark:text-stone-200">25.6%</span>
+              </div>
+              <span className="text-stone-200 dark:text-stone-700">·</span>
+              <div className="text-[11px] text-stone-400 dark:text-stone-500">
+                Avg deal: <span className="font-bold text-stone-700 dark:text-stone-200">$21.1K</span>
+              </div>
+            </div>
           </div>
         </motion.div>
 
-        {/* Talent Pipeline */}
+        {/* Monthly won/lost performance */}
         <motion.div
-          className="rounded-2xl border border-stone-200/60 bg-white/70 backdrop-blur-sm overflow-hidden"
+          className="rounded-2xl overflow-hidden"
+          style={glassPanel}
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.24, duration: 0.4, ease: EASE_OUT_EXPO }}
+          transition={{ delay: 0.22, duration: 0.4, ease: EASE_OUT_EXPO }}
         >
-          <div className="flex items-center justify-between px-5 py-4 border-b border-stone-100">
-            <h3 className="text-[13px] font-semibold text-stone-800">Talent Pipeline</h3>
-            <button onClick={onNavigateToPipeline} className="text-[12px] text-stone-400 hover:text-stone-700 transition-colors flex items-center gap-1 group">
-              View all <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
-            </button>
+          <div className="px-5 py-4" style={{ borderBottom: '1px solid var(--border)' }}>
+            <h3 className="text-[13px] font-semibold text-stone-800 dark:text-stone-100">Deals Closed</h3>
+            <p className="text-[11px] mt-0.5 text-stone-400 dark:text-stone-500">Last 6 months</p>
           </div>
-          <div className="px-5 py-4 space-y-4">
-            {TALENT_STAGES.map((item, i) => (
-              <motion.div
-                key={item.stage}
-                initial={{ opacity: 0, x: -6 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.28 + i * 0.05, duration: 0.3, ease: EASE_OUT_EXPO }}
-              >
-                <div className="flex items-center justify-between">
-                  <p className="text-[13px] font-medium text-stone-700">{item.stage}</p>
-                  <div className="flex items-center gap-3">
-                    <span className="text-[11px] text-stone-400">{item.count} deals</span>
-                    <span className={`text-[13px] font-semibold tabular-nums ${item.pct === 0 ? 'text-stone-300' : 'text-stone-800'}`}>{item.value}</span>
-                  </div>
-                </div>
-                {item.pct > 0
-                  ? <ProgressBar pct={item.pct} delay={0.35 + i * 0.06} color="bg-stone-600" />
-                  : <div className="h-[2px] w-full bg-stone-100 rounded-full mt-3" />
-                }
-              </motion.div>
-            ))}
+
+          <div className="px-2 pb-2">
+            <ResponsiveContainer width="100%" height={110}>
+              <BarChart data={MONTHLY_PERFORMANCE} barSize={10} barCategoryGap="30%">
+                <XAxis
+                  dataKey="month" tickLine={false} axisLine={false}
+                  tick={{ fontSize: 9, fill: tickColor, fontWeight: 500 }} dy={4}
+                />
+                <Tooltip
+                  content={(props) => <ChartTooltip {...props} />}
+                  cursor={false}
+                />
+                <Bar dataKey="won"  stackId="a" fill={wonColor}  radius={[0, 0, 0, 0]} />
+                <Bar dataKey="lost" stackId="a" fill={lostColor} radius={[3, 3, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Pipeline value trend */}
+          <div className="px-5 pb-0" style={{ borderTop: '1px solid var(--border)' }}>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.08em] pt-3 mb-1
+                          text-stone-400 dark:text-stone-500">Value ($K)</p>
+            <ResponsiveContainer width="100%" height={60}>
+              <LineChart data={MONTHLY_PERFORMANCE}>
+                <CartesianGrid strokeDasharray="2 4" stroke={gridColor} vertical={false} />
+                <XAxis dataKey="month" hide />
+                <Tooltip
+                  content={(props) => <ChartTooltip {...props} formatter={(v: number) => `$${v}K`} />}
+                  cursor={false}
+                />
+                <Line
+                  type="monotone" dataKey="value" stroke={valueColor}
+                  strokeWidth={1.5} dot={false}
+                  activeDot={{ r: 3, fill: valueColor, strokeWidth: 0 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Legend */}
+          <div className="flex items-center gap-3 px-5 py-3">
+            <div className="flex items-center gap-1.5">
+              <div className="w-2 h-2 rounded-full" style={{ background: wonColor }} />
+              <span className="text-[10px] text-stone-400 dark:text-stone-500">Won</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-2 h-2 rounded-full" style={{ background: lostColor }} />
+              <span className="text-[10px] text-stone-400 dark:text-stone-500">Lost</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-2 h-2 rounded-full" style={{ background: valueColor }} />
+              <span className="text-[10px] text-stone-400 dark:text-stone-500">Value</span>
+            </div>
           </div>
         </motion.div>
       </div>
 
-      {/* ── Recent Deals — editorial list ──────────────── */}
+      {/* ── Recent Deals ─────────────────────────────── */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.32, duration: 0.4, ease: EASE_OUT_EXPO }}
-        className="rounded-2xl border border-stone-200/60 bg-white/70 backdrop-blur-sm overflow-hidden"
+        className="rounded-2xl overflow-hidden"
+        style={glassPanel}
       >
-        <div className="flex items-center justify-between px-6 py-4 border-b border-stone-100">
-          <h3 className="text-[13px] font-semibold text-stone-800">Recent Deals</h3>
-          <button onClick={onNavigateToDeals} className="text-[12px] text-stone-400 hover:text-stone-700 transition-colors flex items-center gap-1 group">
+        <div className="flex items-center justify-between px-6 py-4"
+          style={{ borderBottom: '1px solid var(--border)' }}>
+          <h3 className="text-[13px] font-semibold text-stone-800 dark:text-stone-100">Hot Deals</h3>
+          <button onClick={onNavigateToDeals}
+            className="text-[12px] flex items-center gap-1 group transition-colors
+                       text-stone-400 dark:text-stone-500 hover:text-stone-700 dark:hover:text-stone-200">
             View all <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
           </button>
         </div>
-        <div className="divide-y divide-stone-100/80">
+
+        <div style={{ borderBottom: 'none' }}>
           {RECENT_DEALS.map((deal, i) => (
             <motion.button
               key={deal.name}
-              className="w-full flex items-center gap-4 px-6 py-4 text-left group"
+              className="w-full flex items-center gap-4 px-6 py-4 text-left group transition-colors"
+              style={{ borderBottom: i < RECENT_DEALS.length - 1 ? '1px solid var(--border)' : 'none' }}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.38 + i * 0.05 }}
-              whileHover={{ backgroundColor: 'rgba(28,25,23,0.025)', x: 2 }}
+              whileHover={{ backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)', x: 2 }}
               whileTap={{ scale: 0.998 }}
               onClick={onNavigateToDeals}
             >
-              {/* Urgency indicator */}
-              <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${deal.hot ? 'bg-stone-800' : 'bg-stone-200'}`} />
+              {/* Type badge */}
+              <span className={`text-[9px] font-bold uppercase tracking-[0.08em] px-1.5 py-0.5 rounded-md flex-shrink-0 ${
+                deal.type === 'Project'
+                  ? 'bg-stone-800 dark:bg-white/10 text-white dark:text-stone-100'
+                  : 'bg-stone-200 dark:bg-white/[0.07] text-stone-600 dark:text-stone-300'
+              }`}>
+                {deal.type}
+              </span>
 
               <div className="flex-1 min-w-0">
-                <p className="text-[13px] font-medium text-stone-800 truncate">{deal.name}</p>
-                <p className="text-[12px] text-stone-400 mt-0.5">{deal.client}</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-[13px] font-medium text-stone-800 dark:text-stone-100 truncate">{deal.name}</p>
+                  {deal.hot && (
+                    <span className="text-[9px] font-bold uppercase tracking-[0.06em] px-1.5 py-0.5 rounded-full flex-shrink-0
+                                     bg-amber-100 dark:bg-amber-400/15 text-amber-700 dark:text-amber-300">Hot</span>
+                  )}
+                </div>
+                <p className="text-[11px] mt-0.5 text-stone-400 dark:text-stone-500">{deal.client}</p>
               </div>
 
-              <span className="text-[12px] text-stone-400 flex-shrink-0 hidden md:block">{deal.stage}</span>
-
-              <span className="text-[13px] font-semibold text-stone-800 tabular-nums flex-shrink-0">{deal.value}</span>
-
-              <ArrowUpRight className="w-4 h-4 text-stone-200 group-hover:text-stone-500 transition-colors flex-shrink-0" />
+              <span className="text-[11px] flex-shrink-0 hidden md:block text-stone-400 dark:text-stone-500">{deal.stage}</span>
+              <span className="text-[13px] font-semibold tabular-nums flex-shrink-0 text-stone-800 dark:text-stone-100">{deal.value}</span>
+              <ArrowUpRight className="w-4 h-4 flex-shrink-0 transition-colors text-stone-200 dark:text-stone-700 group-hover:text-stone-500 dark:group-hover:text-stone-300" />
             </motion.button>
           ))}
         </div>

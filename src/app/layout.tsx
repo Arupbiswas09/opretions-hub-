@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import '../styles/index.css';
 
 export const metadata: Metadata = {
-  title: 'High-Fidelity UI Kit',
-  description: 'Operations Hub Prototypes',
+  title: 'Operations Hub',
+  description: 'Operations Hub — Prototype',
 };
 
 export default function RootLayout({
@@ -13,6 +13,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      {/* Runs synchronously before React hydrates — eliminates theme flash */}
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('hub-theme');if(t!=='light')document.documentElement.classList.add('dark');}catch(e){}})();`,
+          }}
+        />
+      </head>
       <body>{children}</body>
     </html>
   );

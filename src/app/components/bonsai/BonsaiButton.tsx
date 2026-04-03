@@ -4,15 +4,29 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '../ui/utils';
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/30 disabled:opacity-40 disabled:pointer-events-none active:scale-[0.97]",
+  "inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-stone-400/30 dark:focus-visible:ring-white/20 disabled:opacity-40 disabled:pointer-events-none active:scale-[0.97]",
   {
     variants: {
       variant: {
-        primary: "bg-stone-800 text-white hover:bg-stone-700 shadow-sm hover:shadow-md",
-        secondary: "bg-stone-100 text-stone-700 hover:bg-stone-200/80",
-        ghost: "text-stone-500 hover:text-stone-700 hover:bg-stone-100/60",
-        destructive: "bg-stone-100 text-stone-700 hover:bg-stone-100 hover:text-stone-700",
-        outline: "border border-stone-200 bg-white/60 text-stone-700 hover:bg-stone-50 hover:border-stone-300",
+        primary:
+          "bg-stone-800 dark:bg-white/10 text-white dark:text-stone-100 " +
+          "hover:bg-stone-700 dark:hover:bg-white/15 shadow-sm hover:shadow-md " +
+          "border border-transparent dark:border-white/[0.08]",
+        secondary:
+          "bg-stone-100 dark:bg-white/[0.07] text-stone-700 dark:text-stone-200 " +
+          "hover:bg-stone-200/80 dark:hover:bg-white/[0.11]",
+        ghost:
+          "text-stone-500 dark:text-stone-400 " +
+          "hover:text-stone-700 dark:hover:text-stone-200 " +
+          "hover:bg-stone-100/60 dark:hover:bg-white/[0.06]",
+        destructive:
+          "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 " +
+          "hover:bg-red-100 dark:hover:bg-red-900/30",
+        outline:
+          "border border-stone-200 dark:border-white/[0.10] " +
+          "bg-white/60 dark:bg-white/[0.05] " +
+          "text-stone-700 dark:text-stone-200 " +
+          "hover:bg-stone-50 dark:hover:bg-white/[0.08] hover:border-stone-300 dark:hover:border-white/15",
       },
       size: {
         sm: "px-3 py-1.5 text-[12px]",

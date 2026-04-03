@@ -29,21 +29,37 @@ export default function Projects({ initialScreen = 'projects', hideNav = false }
 
   return (
     <div className="min-h-full">
-      {!hideNav && <div className="px-8 py-3 border-b border-stone-100/60">
-        <div className="flex items-center gap-1">
-          {SCREENS.map((s) => (
-            <button key={s.id} onClick={() => {
-              if (s.id === 'timesheet-detail' && !selectedTimesheet) setSelectedTimesheet({ id: '1', weekOf: 'Jan 13, 2026', employee: 'John Doe', status: 'Draft' });
-              if (s.id === 'approval-detail' && !selectedApproval) setSelectedApproval({ id: '1', employee: 'Sarah Johnson', weekOf: 'Jan 13, 2026', totalHours: 42, status: 'Submitted', submittedDate: 'Jan 17, 2026', requiresClientApproval: true });
-              setCurrentScreen(s.id);
-            }} className={`px-3 py-1.5 text-[12px] rounded-md transition-all duration-200 ${currentScreen === s.id ? 'bg-stone-800 text-white font-medium shadow-sm' : 'text-stone-400 hover:text-stone-600 hover:bg-stone-50'}`}>{s.label}</button>
-          ))}
-          <div className="w-px h-3.5 bg-stone-200/60 mx-1.5" />
-          <button onClick={() => setShowProjectDrawer(true)} className="px-3 py-1.5 text-[12px] text-stone-400 hover:text-stone-600 hover:bg-stone-50 rounded-md transition-colors">+ Project</button>
-          <button onClick={() => setCurrentScreen('client-portal')} className={`px-3 py-1.5 text-[12px] rounded-md transition-colors ${currentScreen === 'client-portal' ? 'bg-stone-800 text-white font-medium' : 'text-stone-400 hover:text-stone-600 hover:bg-stone-50'}`}>Client Portal</button>
-          <button onClick={() => setCurrentScreen('freelancer-portal')} className={`px-3 py-1.5 text-[12px] rounded-md transition-colors ${currentScreen === 'freelancer-portal' ? 'bg-stone-800 text-white font-medium' : 'text-stone-400 hover:text-stone-600 hover:bg-stone-50'}`}>Freelancer Portal</button>
+      {!hideNav && (
+        <div className="px-8 py-3" style={{ borderBottom: '1px solid var(--border)' }}>
+          <div className="flex items-center gap-1">
+            {SCREENS.map((s) => (
+              <button key={s.id} onClick={() => {
+                if (s.id === 'timesheet-detail' && !selectedTimesheet) setSelectedTimesheet({ id: '1', weekOf: 'Jan 13, 2026', employee: 'John Doe', status: 'Draft' });
+                if (s.id === 'approval-detail' && !selectedApproval) setSelectedApproval({ id: '1', employee: 'Sarah Johnson', weekOf: 'Jan 13, 2026', totalHours: 42, status: 'Submitted', submittedDate: 'Jan 17, 2026', requiresClientApproval: true });
+                setCurrentScreen(s.id);
+              }} className={`px-3 py-1.5 text-[12px] rounded-md transition-all duration-200 ${
+                currentScreen === s.id
+                  ? 'bg-stone-800 dark:bg-white/10 text-white dark:text-stone-100 font-medium'
+                  : 'text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-200 hover:bg-stone-100/60 dark:hover:bg-white/[0.06]'
+              }`}>{s.label}</button>
+            ))}
+            <div className="w-px h-3.5 bg-stone-200/60 dark:bg-white/10 mx-1.5" />
+            <button onClick={() => setShowProjectDrawer(true)}
+              className="px-3 py-1.5 text-[12px] rounded-md transition-colors
+                         text-stone-400 dark:text-stone-500
+                         hover:text-stone-600 dark:hover:text-stone-200
+                         hover:bg-stone-100/60 dark:hover:bg-white/[0.06]">+ Project</button>
+            {(['client-portal', 'freelancer-portal'] as const).map((id) => (
+              <button key={id} onClick={() => setCurrentScreen(id)}
+                className={`px-3 py-1.5 text-[12px] rounded-md transition-all duration-200 ${
+                  currentScreen === id
+                    ? 'bg-stone-800 dark:bg-white/10 text-white dark:text-stone-100 font-medium'
+                    : 'text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-200 hover:bg-stone-100/60 dark:hover:bg-white/[0.06]'
+                }`}>{id === 'client-portal' ? 'Client Portal' : 'Freelancer Portal'}</button>
+            ))}
+          </div>
         </div>
-      </div>}
+      )}
 
       <AnimatePresence mode="wait">
         <motion.div key={currentScreen} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}>
