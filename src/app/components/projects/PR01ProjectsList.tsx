@@ -4,6 +4,7 @@ import { BonsaiButton } from '../bonsai/BonsaiButton';
 import { BonsaiStatusPill } from '../bonsai/BonsaiStatusPill';
 import { EnhancedTable } from '../operations/EnhancedTable';
 import { BonsaiGridCards } from '../bonsai/BonsaiGridCards';
+import { HubStatTile } from '../ops';
 
 interface Project {
   id: string;
@@ -102,27 +103,30 @@ export function PR01ProjectsList({ onProjectClick, onCreateProject }: PR01Projec
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-stone-800">Projects</h1>
-          <p className="text-sm text-stone-500">Manage all projects, tasks, and timesheets</p>
+          <h1 className="text-2xl font-semibold text-stone-800 dark:text-stone-100">Projects</h1>
+          <p className="text-sm text-stone-500 dark:text-stone-400">Manage all projects, tasks, and timesheets</p>
         </div>
         <div className="flex items-center gap-3">
           {/* View Switcher */}
-          <div className="flex items-center gap-1 bg-white border border-stone-200 rounded-lg p-1">
+          <div
+            className="flex items-center gap-1 rounded-lg p-1"
+            style={{ background: 'var(--table-header-bg)', border: '1px solid var(--border)' }}
+          >
             <button
               onClick={() => setViewMode('list')}
-              className={`p-2 rounded ${viewMode === 'list' ? 'bg-primary/10 text-primary' : 'text-stone-600 hover:bg-stone-100'}`}
+              className={`p-2 rounded transition-[background-color] duration-[120ms] ${viewMode === 'list' ? 'bg-primary/10 text-primary' : 'text-stone-600 dark:text-stone-400 hover:bg-[var(--row-hover-bg)]'}`}
             >
               <List className="w-4 h-4" />
             </button>
             <button
               onClick={() => setViewMode('kanban')}
-              className={`p-2 rounded ${viewMode === 'kanban' ? 'bg-primary/10 text-primary' : 'text-stone-600 hover:bg-stone-100'}`}
+              className={`p-2 rounded transition-[background-color] duration-[120ms] ${viewMode === 'kanban' ? 'bg-primary/10 text-primary' : 'text-stone-600 dark:text-stone-400 hover:bg-[var(--row-hover-bg)]'}`}
             >
               <Columns3 className="w-4 h-4" />
             </button>
             <button
               onClick={() => setViewMode('grid')}
-              className={`p-2 rounded ${viewMode === 'grid' ? 'bg-primary/10 text-primary' : 'text-stone-600 hover:bg-stone-100'}`}
+              className={`p-2 rounded transition-[background-color] duration-[120ms] ${viewMode === 'grid' ? 'bg-primary/10 text-primary' : 'text-stone-600 dark:text-stone-400 hover:bg-[var(--row-hover-bg)]'}`}
             >
               <LayoutGrid className="w-4 h-4" />
             </button>
@@ -166,28 +170,21 @@ export function PR01ProjectsList({ onProjectClick, onCreateProject }: PR01Projec
         </div>
       </div>
 
-      {/* Stats */}
+      {/* Stats — same glass hierarchy as Dashboard KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
-        <div className="bg-white rounded-lg border border-stone-200 p-4">
-          <p className="text-sm text-stone-600">Total Projects</p>
-          <p className="text-2xl font-semibold text-stone-800 mt-1">{projects.length}</p>
-        </div>
-        <div className="bg-white rounded-lg border border-stone-200 p-4">
-          <p className="text-sm text-stone-600">In Progress</p>
-          <p className="text-2xl font-semibold text-stone-600 mt-1">1</p>
-        </div>
-        <div className="bg-white rounded-lg border border-stone-200 p-4">
-          <p className="text-sm text-stone-600">Planning</p>
-          <p className="text-2xl font-semibold text-stone-600 mt-1">1</p>
-        </div>
-        <div className="bg-white rounded-lg border border-stone-200 p-4">
-          <p className="text-sm text-stone-600">Total Budget</p>
-          <p className="text-2xl font-semibold text-primary mt-1">$145K</p>
-        </div>
-        <div className="bg-white rounded-lg border border-stone-200 p-4">
-          <p className="text-sm text-stone-600">Total Spent</p>
-          <p className="text-2xl font-semibold text-stone-800 mt-1">$48.5K</p>
-        </div>
+        <HubStatTile label="Total Projects" value={projects.length} delay={0} />
+        <HubStatTile
+          label="In Progress"
+          value={projects.filter(p => p.status === 'In Progress').length}
+          delay={0.05}
+        />
+        <HubStatTile
+          label="Planning"
+          value={projects.filter(p => p.status === 'Planning').length}
+          delay={0.1}
+        />
+        <HubStatTile label="Total Budget" value="$145K" delay={0.15} />
+        <HubStatTile label="Total Spent" value="$48.5K" delay={0.2} />
       </div>
 
       {/* Content */}

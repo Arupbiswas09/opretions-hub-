@@ -388,10 +388,11 @@ export default function Dashboard() {
             className="flex-1 flex flex-col justify-between px-5 py-5 group cursor-pointer
                        hover:bg-white/[0.04] dark:hover:bg-white/[0.03] transition-colors"
             style={{
-              background: 'var(--glass-bg)',
-              backdropFilter: 'blur(20px) saturate(180%)',
-              WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+              background: 'var(--dashboard-kpi-cell-bg)',
+              backdropFilter: 'blur(20px) saturate(160%)',
+              WebkitBackdropFilter: 'blur(20px) saturate(160%)',
               borderRight: i < KPI_CARDS.length - 1 ? '1px solid var(--border)' : 'none',
+              boxShadow: 'inset 0 1px 0 var(--hub-stat-tile-highlight)',
             }}
             variants={fadeInUp}
             onClick={() => s.href && (window.location.href = s.href)}

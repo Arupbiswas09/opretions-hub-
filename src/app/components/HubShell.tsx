@@ -206,6 +206,13 @@ export default function HubShell({ children }: { children: React.ReactNode }) {
                       style={{
                         background: active ? 'var(--nav-active-bg)' : 'transparent',
                         color: active ? 'var(--nav-active-color)' : 'var(--nav-inactive-color)',
+                        ...(active
+                          ? {
+                              backdropFilter: 'blur(24px) saturate(160%)',
+                              WebkitBackdropFilter: 'blur(24px) saturate(160%)',
+                              boxShadow: 'inset 0 1px 0 var(--nav-active-inset)',
+                            }
+                          : {}),
                       }}
                     >
                       {active && (

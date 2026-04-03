@@ -5,6 +5,7 @@ import { BonsaiButton } from '../bonsai/BonsaiButton';
 import { BonsaiStatusPill } from '../bonsai/BonsaiStatusPill';
 import { EnhancedTable } from '../operations/EnhancedTable';
 import { BonsaiGridCards } from '../bonsai/BonsaiGridCards';
+import { HubStatTile, OpsAvatar } from '../ops';
 
 interface Person {
   id: string;
@@ -17,7 +18,6 @@ interface Person {
   skills: string[];
   availability: 'Available' | 'Busy' | 'On Leave';
   startDate: string;
-  avatar: string;
 }
 
 interface PE01PeopleDirectoryProps {
@@ -44,7 +44,6 @@ export function PE01PeopleDirectory({ onPersonClick, onCreatePerson, onBulkActio
       skills: ['Project Management', 'Agile', 'Leadership'],
       availability: 'Available',
       startDate: 'Jan 15, 2024',
-      avatar: '👨‍💼',
     },
     {
       id: '2',
@@ -57,7 +56,6 @@ export function PE01PeopleDirectory({ onPersonClick, onCreatePerson, onBulkActio
       skills: ['UI/UX Design', 'Figma', 'Branding'],
       availability: 'Busy',
       startDate: 'Mar 1, 2023',
-      avatar: '👩‍🎨',
     },
     {
       id: '3',
@@ -70,7 +68,6 @@ export function PE01PeopleDirectory({ onPersonClick, onCreatePerson, onBulkActio
       skills: ['UI Design', 'Illustration', 'Animation'],
       availability: 'Available',
       startDate: 'Nov 10, 2025',
-      avatar: '👩‍💻',
     },
     {
       id: '4',
@@ -83,7 +80,6 @@ export function PE01PeopleDirectory({ onPersonClick, onCreatePerson, onBulkActio
       skills: ['React', 'Node.js', 'TypeScript'],
       availability: 'On Leave',
       startDate: 'Jun 1, 2022',
-      avatar: '👨‍💻',
     },
     {
       id: '5',
@@ -96,7 +92,6 @@ export function PE01PeopleDirectory({ onPersonClick, onCreatePerson, onBulkActio
       skills: ['SEO', 'Content Strategy', 'Analytics'],
       availability: 'Available',
       startDate: 'Aug 20, 2023',
-      avatar: '👩‍🦰',
     },
     {
       id: '6',
@@ -109,7 +104,6 @@ export function PE01PeopleDirectory({ onPersonClick, onCreatePerson, onBulkActio
       skills: ['Python', 'Django', 'PostgreSQL'],
       availability: 'Busy',
       startDate: 'Dec 5, 2025',
-      avatar: '🧑‍💻',
     },
   ];
 
@@ -145,10 +139,10 @@ export function PE01PeopleDirectory({ onPersonClick, onCreatePerson, onBulkActio
     }
   };
 
-  const presenceDot: Record<string, string> = {
-    'Available': 'bg-emerald-500',
-    'Busy': 'bg-amber-500',
-    'On Leave': 'bg-stone-400',
+  const presenceForAvatar = (a: Person['availability']): 'online' | 'away' | 'offline' => {
+    if (a === 'Available') return 'online';
+    if (a === 'Busy') return 'away';
+    return 'offline';
   };
 
   return (
@@ -156,21 +150,24 @@ export function PE01PeopleDirectory({ onPersonClick, onCreatePerson, onBulkActio
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-stone-800">People</h1>
-          <p className="text-sm text-stone-500">Manage team members and freelancers</p>
+          <h1 className="text-2xl font-semibold text-stone-800 dark:text-stone-100">People</h1>
+          <p className="text-sm text-stone-500 dark:text-stone-400">Manage team members and freelancers</p>
         </div>
         <div className="flex items-center gap-3">
           {/* View Switcher */}
-          <div className="flex items-center gap-1 bg-white border border-stone-200 rounded-lg p-1">
+          <div
+            className="flex items-center gap-1 rounded-lg p-1"
+            style={{ background: 'var(--table-header-bg)', border: '1px solid var(--border)' }}
+          >
             <button
               onClick={() => setViewMode('list')}
-              className={`p-2 rounded ${viewMode === 'list' ? 'bg-primary/10 text-primary' : 'text-stone-600 hover:bg-stone-100'}`}
+              className={`p-2 rounded transition-[background-color] duration-[120ms] ${viewMode === 'list' ? 'bg-primary/10 text-primary' : 'text-stone-600 dark:text-stone-400 hover:bg-[var(--row-hover-bg)]'}`}
             >
               <List className="w-4 h-4" />
             </button>
             <button
               onClick={() => setViewMode('grid')}
-              className={`p-2 rounded ${viewMode === 'grid' ? 'bg-primary/10 text-primary' : 'text-stone-600 hover:bg-stone-100'}`}
+              className={`p-2 rounded transition-[background-color] duration-[120ms] ${viewMode === 'grid' ? 'bg-primary/10 text-primary' : 'text-stone-600 dark:text-stone-400 hover:bg-[var(--row-hover-bg)]'}`}
             >
               <LayoutGrid className="w-4 h-4" />
             </button>
@@ -230,7 +227,6 @@ export function PE01PeopleDirectory({ onPersonClick, onCreatePerson, onBulkActio
         </div>
       </div>
 
-      {/* Stats — glassmorphic */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
         {[
           { label: 'Total People', val: people.length, sub: 'All team' },
@@ -239,18 +235,7 @@ export function PE01PeopleDirectory({ onPersonClick, onCreatePerson, onBulkActio
           { label: 'Available',    val: people.filter(p => p.availability === 'Available').length, sub: 'Ready to assign' },
           { label: 'On Leave',     val: people.filter(p => p.status === 'On Leave').length, sub: 'Currently away' },
         ].map((s, i) => (
-          <motion.div
-            key={s.label}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.05 }}
-            className="rounded-xl border border-stone-200/50 p-4"
-            style={{ background: 'rgba(255,255,255,0.6)', backdropFilter: 'blur(20px) saturate(180%)' }}
-          >
-            <p className="text-[11px] font-semibold text-stone-400 uppercase tracking-[0.08em]">{s.label}</p>
-            <p className="text-[24px] font-bold text-stone-800 mt-1 tracking-[-0.02em]">{s.val}</p>
-            <p className="text-[10px] text-stone-400 mt-0.5">{s.sub}</p>
-          </motion.div>
+          <HubStatTile key={s.label} label={s.label} value={s.val} sub={s.sub} delay={i * 0.05} />
         ))}
       </div>
 
@@ -339,15 +324,10 @@ export function PE01PeopleDirectory({ onPersonClick, onCreatePerson, onBulkActio
             ...person,
             name: (
               <div className="flex items-center gap-3">
-                <div className="relative flex-shrink-0">
-                  <span className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-[16px]">
-                    {person.avatar}
-                  </span>
-                  <span className={`absolute -bottom-0.5 -right-0.5 w-[10px] h-[10px] rounded-full border-2 border-white ${presenceDot[person.availability] || 'bg-stone-400'}`} />
-                </div>
+                <OpsAvatar name={person.name} size="md" presence={presenceForAvatar(person.availability)} />
                 <div>
-                  <p className="text-[13px] font-medium text-stone-800">{person.name}</p>
-                  <p className="text-[10px] text-stone-400">{person.role}</p>
+                  <p className="text-[13px] font-medium text-stone-800 dark:text-stone-100">{person.name}</p>
+                  <p className="text-[10px] text-stone-400 dark:text-stone-500">{person.role}</p>
                 </div>
               </div>
             ),
@@ -366,7 +346,9 @@ export function PE01PeopleDirectory({ onPersonClick, onCreatePerson, onBulkActio
             ),
             availability: (
               <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium rounded-full ${getAvailabilityStyle(person.availability)}`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${presenceDot[person.availability]}`} />
+                <span className={`w-1.5 h-1.5 rounded-full ${
+                  person.availability === 'Available' ? 'bg-emerald-500' : person.availability === 'Busy' ? 'bg-amber-500' : 'bg-stone-400'
+                }`} />
                 {person.availability}
               </span>
             ),

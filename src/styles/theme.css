@@ -88,6 +88,7 @@
   --nav-active-color:   #1c1917;
   --nav-inactive-color: #78716c;
   --nav-indicator:      #1c1917;
+  --nav-active-inset:   rgba(255, 255, 255, 0.55);
   --nav-badge:          #3f3c39;
   --new-btn-bg:         rgba(28, 25, 23, 0.08);
   --new-btn-bg-hover:   rgba(28, 25, 23, 0.12);
@@ -103,6 +104,15 @@
   --user-menu-shadow:   0 16px 48px -8px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.04);
   --user-menu-item-hover: rgba(0, 0, 0, 0.05);
   --row-hover-bg:       rgba(28, 25, 23, 0.02);
+  /* Module stat tiles + dashboard KPI strip — same glass hierarchy */
+  --hub-stat-tile-bg:       rgba(255, 255, 255, 0.62);
+  --hub-stat-tile-highlight: rgba(255, 255, 255, 0.85);
+  --dashboard-kpi-cell-bg:   rgba(255, 255, 255, 0.72);
+  --table-shell-bg:          rgba(255, 255, 255, 0.88);
+  --table-header-bg:         rgba(245, 245, 244, 0.95);
+  --notif-drawer-bg:         rgba(255, 255, 255, 0.86);
+  --notif-drawer-border:     rgba(0, 0, 0, 0.06);
+  --notif-drawer-edge:       rgba(255, 255, 255, 0.5);
   --stat-bar-track:     rgba(0, 0, 0, 0.08);
   --stat-bar-fill:      #292524;
   --toggle-bg:          rgba(28, 25, 23, 0.08);
@@ -188,10 +198,12 @@
   --sidebar-glass:      rgba(255, 255, 255, 0.05);
   --sidebar-edge:       rgba(255, 255, 255, 0.08);
   --sidebar-divider:    rgba(255, 255, 255, 0.06);
-  --nav-active-bg:      rgba(255, 255, 255, 0.10);
+  /* Frosted nav pill — not a solid paint bucket; accent is the 3px bar only */
+  --nav-active-bg:      rgba(255, 255, 255, 0.055);
   --nav-active-color:   #F2F0EC;
   --nav-inactive-color: #6B6660;
-  --nav-indicator:      rgba(251, 191, 36, 0.90);
+  --nav-indicator:      rgba(251, 191, 36, 0.92);
+  --nav-active-inset:   rgba(255, 255, 255, 0.12);
   --nav-badge:          rgba(255, 255, 255, 0.35);
   --new-btn-bg:         rgba(255, 255, 255, 0.09);
   --new-btn-bg-hover:   rgba(255, 255, 255, 0.14);
@@ -207,6 +219,14 @@
   --user-menu-shadow:   0 16px 48px -8px rgba(0,0,0,0.60), 0 0 0 1px rgba(255,255,255,0.08);
   --user-menu-item-hover: rgba(255, 255, 255, 0.06);
   --row-hover-bg:       rgba(255, 255, 255, 0.04);
+  --hub-stat-tile-bg:       rgba(255, 255, 255, 0.10);
+  --hub-stat-tile-highlight: rgba(255, 255, 255, 0.14);
+  --dashboard-kpi-cell-bg:  rgba(255, 255, 255, 0.12);
+  --table-shell-bg:          rgba(255, 255, 255, 0.06);
+  --table-header-bg:         rgba(255, 255, 255, 0.04);
+  --notif-drawer-bg:         rgba(12, 10, 9, 0.72);
+  --notif-drawer-border:     rgba(255, 255, 255, 0.08);
+  --notif-drawer-edge:       rgba(255, 255, 255, 0.12);
   --stat-bar-track:     rgba(255, 255, 255, 0.08);
   --stat-bar-fill:      rgba(255, 255, 255, 0.80);
   --toggle-bg:          rgba(255, 255, 255, 0.08);

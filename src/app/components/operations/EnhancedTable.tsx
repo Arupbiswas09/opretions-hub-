@@ -90,21 +90,37 @@ export function EnhancedTable({
         />
       )}
 
-      <div className={cn("bg-white rounded-lg border border-stone-200", className)}>
+      <div
+        className={cn('rounded-xl overflow-hidden', className)}
+        style={{
+          background: 'var(--table-shell-bg)',
+          backdropFilter: 'blur(20px) saturate(160%)',
+          WebkitBackdropFilter: 'blur(20px) saturate(160%)',
+          border: '1px solid var(--border)',
+          boxShadow: 'inset 0 1px 0 var(--hub-stat-tile-highlight)',
+        }}
+      >
         {/* Table Header */}
         {(searchable || filterable) && (
-          <div className="p-4 border-b border-stone-200 flex items-center justify-between gap-4">
+          <div
+            className="p-4 flex items-center justify-between gap-4"
+            style={{ borderBottom: '1px solid var(--border)' }}
+          >
             {/* Search */}
             {searchable && (
               <div className="flex-1 max-w-sm">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400 dark:text-stone-500" />
                   <input
                     type="text"
                     placeholder="Search..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                    className="w-full pl-10 pr-4 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-stone-800 dark:text-stone-200 placeholder:text-stone-400 dark:placeholder:text-stone-500"
+                    style={{
+                      background: 'var(--input-background)',
+                      border: '1px solid var(--border)',
+                    }}
                   />
                 </div>
               </div>
@@ -113,25 +129,41 @@ export function EnhancedTable({
             {/* Actions */}
             <div className="flex items-center gap-2">
               {filterable && (
-                <button className="flex items-center gap-2 px-3 py-2 text-sm text-stone-600 hover:bg-stone-50 rounded-lg border border-stone-200">
+                <button
+                  type="button"
+                  className="flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-[background-color] duration-[120ms] ease-out text-stone-600 dark:text-stone-400 hover:bg-[var(--row-hover-bg)]"
+                  style={{ border: '1px solid var(--border)' }}
+                >
                   <Filter className="w-4 h-4" />
                   <span>Filter</span>
                 </button>
               )}
-              
+
               <div className="relative">
-                <button 
+                <button
+                  type="button"
                   onClick={() => setShowColumnChooser(!showColumnChooser)}
-                  className="flex items-center gap-2 px-3 py-2 text-sm text-stone-600 hover:bg-stone-50 rounded-lg border border-stone-200"
+                  className="flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-[background-color] duration-[120ms] ease-out text-stone-600 dark:text-stone-400 hover:bg-[var(--row-hover-bg)]"
+                  style={{ border: '1px solid var(--border)' }}
                 >
                   <Settings className="w-4 h-4" />
                   <span>Columns</span>
                 </button>
-                
+
                 {showColumnChooser && (
-                  <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg border border-stone-200 shadow-lg p-2 z-10">
+                  <div
+                    className="absolute right-0 top-full mt-1 w-48 rounded-lg shadow-lg p-2 z-10"
+                    style={{
+                      background: 'var(--user-menu-bg)',
+                      backdropFilter: 'blur(20px)',
+                      border: '1px solid var(--border)',
+                    }}
+                  >
                     {columns.map(col => (
-                      <label key={col.key} className="flex items-center gap-2 px-2 py-1.5 hover:bg-stone-50 rounded cursor-pointer">
+                      <label
+                        key={col.key}
+                        className="flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer transition-[background-color] duration-[120ms] hover:bg-[var(--row-hover-bg)]"
+                      >
                         <input
                           type="checkbox"
                           checked={selectedColumns.includes(col.key)}
@@ -142,16 +174,20 @@ export function EnhancedTable({
                               setSelectedColumns(selectedColumns.filter(k => k !== col.key));
                             }
                           }}
-                          className="w-4 h-4 rounded border-stone-300 text-primary"
+                          className="w-4 h-4 rounded border-stone-300 dark:border-stone-600 text-primary"
                         />
-                        <span className="text-sm text-stone-700">{col.label}</span>
+                        <span className="text-sm text-stone-700 dark:text-stone-300">{col.label}</span>
                       </label>
                     ))}
                   </div>
                 )}
               </div>
 
-              <button className="flex items-center gap-2 px-3 py-2 text-sm text-stone-600 hover:bg-stone-50 rounded-lg border border-stone-200">
+              <button
+                type="button"
+                className="flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-[background-color] duration-[120ms] ease-out text-stone-600 dark:text-stone-400 hover:bg-[var(--row-hover-bg)]"
+                style={{ border: '1px solid var(--border)' }}
+              >
                 <Download className="w-4 h-4" />
                 <span>Export</span>
               </button>
@@ -162,7 +198,7 @@ export function EnhancedTable({
         {/* Table */}
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-stone-50 border-b border-stone-200">
+            <thead style={{ background: 'var(--table-header-bg)', borderBottom: '1px solid var(--border)' }}>
               <tr>
                 {selectable && (
                   <th className="px-4 py-3 w-12">
@@ -170,7 +206,7 @@ export function EnhancedTable({
                       type="checkbox"
                       checked={selectedRows.size === data.length && data.length > 0}
                       onChange={handleSelectAll}
-                      className="w-4 h-4 rounded border-stone-300 text-primary"
+                      className="w-4 h-4 rounded border-stone-300 dark:border-stone-600 text-primary"
                     />
                   </th>
                 )}
@@ -178,8 +214,8 @@ export function EnhancedTable({
                   <th
                     key={column.key}
                     className={cn(
-                      "px-4 py-3 text-left text-xs font-medium text-stone-600 uppercase tracking-wider",
-                      column.sortable && "cursor-pointer hover:bg-stone-100",
+                      'px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-stone-600 dark:text-stone-400 transition-[background-color] duration-[120ms] ease-out',
+                      column.sortable && 'cursor-pointer hover:bg-[var(--row-hover-bg)]',
                       column.width
                     )}
                     onClick={() => column.sortable && handleSort(column.key)}
@@ -199,7 +235,7 @@ export function EnhancedTable({
                 <th className="px-4 py-3 w-12"></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-stone-200">
+            <tbody style={{ borderColor: 'var(--border)' }} className="divide-y divide-[color:var(--border)]">
               {data.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((row, index) => {
                 const rowId = index.toString();
                 const isSelected = selectedRows.has(rowId);
@@ -207,9 +243,9 @@ export function EnhancedTable({
                   <tr
                     key={index}
                     className={cn(
-                      "transition-colors",
-                      isSelected && "bg-primary/5",
-                      onRowClick && "cursor-pointer hover:bg-stone-50"
+                      'transition-[background-color] duration-[120ms] ease-out',
+                      isSelected && 'bg-primary/5 dark:bg-white/[0.04]',
+                      onRowClick && 'cursor-pointer hover:bg-[var(--row-hover-bg)]',
                     )}
                   >
                     {selectable && (
@@ -219,22 +255,23 @@ export function EnhancedTable({
                           checked={isSelected}
                           onChange={() => handleSelectRow(rowId)}
                           onClick={(e) => e.stopPropagation()}
-                          className="w-4 h-4 rounded border-stone-300 text-primary"
+                          className="w-4 h-4 rounded border-stone-300 dark:border-stone-600 text-primary"
                         />
                       </td>
                     )}
                     {visibleColumns.map((column) => (
-                      <td 
-                        key={column.key} 
-                        className="px-4 py-3 text-sm text-stone-800"
+                      <td
+                        key={column.key}
+                        className="px-4 py-3 text-sm text-stone-800 dark:text-stone-200"
                         onClick={() => onRowClick?.(row)}
                       >
                         {row[column.key]}
                       </td>
                     ))}
                     <td className="px-4 py-3">
-                      <button 
-                        className="p-1 text-stone-400 hover:text-stone-600 rounded"
+                      <button
+                        type="button"
+                        className="p-1 rounded text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-300 transition-[background-color] duration-[120ms] hover:bg-[var(--row-hover-bg)]"
                         onClick={(e) => {
                           e.stopPropagation();
                         }}
@@ -251,15 +288,20 @@ export function EnhancedTable({
 
         {/* Pagination */}
         {pagination && totalPages > 1 && (
-          <div className="p-4 border-t border-stone-200 flex items-center justify-between">
-            <div className="text-sm text-stone-600">
+          <div
+            className="p-4 flex items-center justify-between"
+            style={{ borderTop: '1px solid var(--border)' }}
+          >
+            <div className="text-sm text-stone-600 dark:text-stone-400">
               Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, data.length)} of {data.length} results
             </div>
             <div className="flex items-center gap-2">
               <button
+                type="button"
                 onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                 disabled={currentPage === 1}
-                className="px-3 py-1.5 text-sm text-stone-600 hover:bg-stone-100 rounded-lg border border-stone-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 py-1.5 text-sm rounded-lg transition-[background-color] duration-[120ms] ease-out text-stone-600 dark:text-stone-400 hover:bg-[var(--row-hover-bg)] disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ border: '1px solid var(--border)' }}
               >
                 Previous
               </button>
@@ -268,22 +310,30 @@ export function EnhancedTable({
                 return (
                   <button
                     key={page}
+                    type="button"
                     onClick={() => setCurrentPage(page)}
                     className={cn(
-                      "px-3 py-1.5 text-sm rounded-lg border",
+                      'px-3 py-1.5 text-sm rounded-lg border transition-[background-color] duration-[120ms] ease-out',
                       currentPage === page
-                        ? "bg-primary text-white border-primary"
-                        : "text-stone-600 hover:bg-stone-100 border-stone-200"
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'text-stone-600 dark:text-stone-400 hover:bg-[var(--row-hover-bg)]',
                     )}
+                    style={
+                      currentPage === page
+                        ? undefined
+                        : { borderColor: 'var(--border)' }
+                    }
                   >
                     {page}
                   </button>
                 );
               })}
               <button
+                type="button"
                 onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                 disabled={currentPage === totalPages}
-                className="px-3 py-1.5 text-sm text-stone-600 hover:bg-stone-100 rounded-lg border border-stone-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 py-1.5 text-sm rounded-lg transition-[background-color] duration-[120ms] ease-out text-stone-600 dark:text-stone-400 hover:bg-[var(--row-hover-bg)] disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ border: '1px solid var(--border)' }}
               >
                 Next
               </button>

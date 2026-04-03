@@ -1,16 +1,7 @@
 'use client';
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Bell, FileText, Clock, Users, CheckCircle, AlertTriangle, ArrowUpRight } from 'lucide-react';
-
-/* ═══════════════════════════════════════════════════════════
-   NOTIFICATION DRAWER — Apple-style slide panel
-   
-   - Glassmorphic drawer from right
-   - Notification items grouped by time
-   - Mark as read / mark all read
-   - Smooth spring animation
-═══════════════════════════════════════════════════════════ */
+import { X, FileText, Clock, Users, CheckCircle, AlertTriangle, ArrowUpRight } from 'lucide-react';
 
 type Notification = {
   id: string;
@@ -32,10 +23,26 @@ const INITIAL_NOTIFICATIONS: Notification[] = [
 ];
 
 const typeStyles: Record<string, { dot: string; iconBg: string; iconColor: string }> = {
-  approval: { dot: 'bg-amber-500', iconBg: 'bg-amber-50', iconColor: 'text-amber-600' },
-  warning:  { dot: 'bg-red-500',   iconBg: 'bg-red-50',   iconColor: 'text-red-600' },
-  info:     { dot: 'bg-stone-400', iconBg: 'bg-stone-100', iconColor: 'text-stone-600' },
-  success:  { dot: 'bg-emerald-500', iconBg: 'bg-emerald-50', iconColor: 'text-emerald-600' },
+  approval: {
+    dot: 'bg-amber-500 dark:bg-amber-400',
+    iconBg: 'bg-amber-500/15 dark:bg-amber-400/12',
+    iconColor: 'text-amber-700 dark:text-amber-300',
+  },
+  warning: {
+    dot: 'bg-red-500 dark:bg-red-400',
+    iconBg: 'bg-red-500/12 dark:bg-red-400/10',
+    iconColor: 'text-red-600 dark:text-red-300',
+  },
+  info: {
+    dot: 'bg-stone-400 dark:bg-stone-500',
+    iconBg: 'bg-stone-500/12 dark:bg-white/[0.08]',
+    iconColor: 'text-stone-600 dark:text-stone-300',
+  },
+  success: {
+    dot: 'bg-emerald-500 dark:bg-emerald-400',
+    iconBg: 'bg-emerald-500/12 dark:bg-emerald-400/10',
+    iconColor: 'text-emerald-700 dark:text-emerald-300',
+  },
 };
 
 interface NotificationDrawerProps {
@@ -59,7 +66,6 @@ export function NotificationDrawer({ open, onClose }: NotificationDrawerProps) {
     <AnimatePresence>
       {open && (
         <>
-          {/* Glassmorphic backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -68,10 +74,9 @@ export function NotificationDrawer({ open, onClose }: NotificationDrawerProps) {
             className="fixed inset-0 z-[80]"
             onClick={onClose}
           >
-            <div className="absolute inset-0 bg-stone-900/15 backdrop-blur-[6px]" />
+            <div className="absolute inset-0 bg-stone-900/25 dark:bg-black/50 backdrop-blur-[6px]" />
           </motion.div>
 
-          {/* Drawer panel */}
           <motion.div
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
@@ -79,22 +84,30 @@ export function NotificationDrawer({ open, onClose }: NotificationDrawerProps) {
             transition={{ type: 'spring', damping: 30, stiffness: 320 }}
             className="fixed right-0 top-0 h-full z-[81] w-full max-w-[400px] flex flex-col"
             style={{
-              background: 'rgba(255,255,255,0.82)',
-              backdropFilter: 'blur(48px) saturate(180%)',
-              WebkitBackdropFilter: 'blur(48px) saturate(180%)',
-              borderLeft: '1px solid rgba(255,255,255,0.4)',
-              boxShadow: '-8px 0 48px rgba(0,0,0,0.08)',
+              background: 'var(--notif-drawer-bg)',
+              backdropFilter: 'blur(44px) saturate(180%)',
+              WebkitBackdropFilter: 'blur(44px) saturate(180%)',
+              borderLeft: '1px solid var(--notif-drawer-border)',
+              boxShadow: '-12px 0 48px rgba(0,0,0,0.25)',
             }}
           >
-            {/* Top shimmer */}
-            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-stone-300/40 to-transparent" />
+            <div
+              className="absolute top-0 left-0 right-0 h-px pointer-events-none"
+              style={{
+                background: 'linear-gradient(90deg, transparent, var(--notif-drawer-edge), transparent)',
+              }}
+            />
 
-            {/* Header */}
-            <div className="px-6 py-4 border-b border-stone-200/30 flex items-center justify-between">
+            <div
+              className="px-6 py-4 flex items-center justify-between"
+              style={{ borderBottom: '1px solid var(--border)' }}
+            >
               <div className="flex items-center gap-3">
-                <h2 className="text-[15px] font-semibold text-stone-800 tracking-[-0.01em]">Notifications</h2>
+                <h2 className="text-[15px] font-semibold tracking-[-0.01em] text-stone-800 dark:text-stone-100">
+                  Notifications
+                </h2>
                 {unreadCount > 0 && (
-                  <span className="px-2 py-0.5 rounded-full bg-stone-800 text-white text-[10px] font-bold">
+                  <span className="px-2 py-0.5 rounded-full bg-stone-800 dark:bg-white/15 text-white dark:text-stone-100 text-[10px] font-bold">
                     {unreadCount}
                   </span>
                 )}
@@ -102,22 +115,23 @@ export function NotificationDrawer({ open, onClose }: NotificationDrawerProps) {
               <div className="flex items-center gap-2">
                 {unreadCount > 0 && (
                   <button
+                    type="button"
                     onClick={markAllRead}
-                    className="text-[11px] text-stone-500 hover:text-stone-700 transition-colors font-medium"
+                    className="text-[11px] font-medium transition-colors text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200"
                   >
                     Mark all read
                   </button>
                 )}
                 <button
+                  type="button"
                   onClick={onClose}
-                  className="p-1.5 text-stone-400 hover:text-stone-600 hover:bg-stone-100/50 rounded-lg transition-all active:scale-95"
+                  className="p-1.5 rounded-lg transition-all active:scale-95 text-stone-400 dark:text-stone-500 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
             </div>
 
-            {/* Notification list */}
             <div className="flex-1 overflow-y-auto">
               {notifications.map((notif, i) => {
                 const styles = typeStyles[notif.type];
@@ -125,39 +139,52 @@ export function NotificationDrawer({ open, onClose }: NotificationDrawerProps) {
                 return (
                   <motion.button
                     key={notif.id}
+                    type="button"
                     initial={{ opacity: 0, x: 12 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: i * 0.04 }}
                     onClick={() => markRead(notif.id)}
-                    className={`w-full flex items-start gap-3.5 px-6 py-4 text-left border-b border-stone-100/40 transition-colors ${
-                      notif.read ? 'opacity-60' : 'hover:bg-stone-50/40'
-                    }`}
+                    className="w-full flex items-start gap-3.5 px-6 py-4 text-left transition-[background-color] duration-[120ms] ease-out border-b border-[color:var(--border)] hover:bg-[var(--row-hover-bg)] data-[read=true]:opacity-60"
+                    data-read={notif.read}
                   >
-                    {/* Icon */}
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 ${styles.iconBg}`}>
                       <Icon className={`w-4 h-4 ${styles.iconColor}`} />
                     </div>
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
-                        <p className={`text-[13px] leading-tight ${notif.read ? 'text-stone-600' : 'font-medium text-stone-800'}`}>
+                        <p className={`text-[13px] leading-tight ${
+                          notif.read
+                            ? 'text-stone-600 dark:text-stone-400'
+                            : 'font-medium text-stone-800 dark:text-stone-100'
+                        }`}>
                           {notif.title}
                         </p>
                         {!notif.read && (
                           <div className={`w-2 h-2 rounded-full flex-shrink-0 mt-1 ${styles.dot}`} />
                         )}
                       </div>
-                      <p className="text-[11px] text-stone-500 mt-0.5 line-clamp-2">{notif.description}</p>
-                      <p className="text-[10px] text-stone-400 mt-1.5">{notif.time}</p>
+                      <p className="text-[11px] mt-0.5 line-clamp-2 text-stone-500 dark:text-stone-400">
+                        {notif.description}
+                      </p>
+                      <p className="text-[10px] mt-1.5 text-stone-400 dark:text-stone-500">{notif.time}</p>
                     </div>
                   </motion.button>
                 );
               })}
             </div>
 
-            {/* Footer */}
-            <div className="px-6 py-3 border-t border-stone-200/30 bg-stone-50/20">
-              <button className="w-full text-center text-[12px] text-stone-500 hover:text-stone-700 transition-colors font-medium flex items-center justify-center gap-1">
+            <div
+              className="px-6 py-3"
+              style={{
+                borderTop: '1px solid var(--border)',
+                background: 'var(--table-header-bg)',
+              }}
+            >
+              <button
+                type="button"
+                className="w-full text-center text-[12px] font-medium flex items-center justify-center gap-1 transition-colors text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200"
+              >
                 View all notifications <ArrowUpRight className="w-3 h-3" />
               </button>
             </div>

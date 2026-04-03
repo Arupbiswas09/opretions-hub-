@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
 import { Plus, List, LayoutGrid, Columns3, Settings, Filter, Mail, Tag, UserCheck, Download, Trash2 } from 'lucide-react';
 import { BonsaiButton } from '../bonsai/BonsaiButton';
 import { BonsaiStatusPill } from '../bonsai/BonsaiStatusPill';
 import { EnhancedTable } from '../operations/EnhancedTable';
 import { BonsaiGridCards } from '../bonsai/BonsaiGridCards';
+import { HubStatTile, OpsAvatar } from '../ops';
 
 interface Contact {
   id: string;
@@ -20,7 +20,6 @@ interface Contact {
   source: string;
   tags: string[];
   lastContact?: string;
-  avatar: string;
 }
 
 interface CO01ContactsListProps {
@@ -57,7 +56,6 @@ export function CO01ContactsList({ onContactClick, onCreateContact, onBulkAction
       source: 'Website',
       tags: ['VIP', 'Decision Maker'],
       lastContact: 'Jan 10, 2026',
-      avatar: '👩‍💼',
     },
     {
       id: '2',
@@ -71,7 +69,6 @@ export function CO01ContactsList({ onContactClick, onCreateContact, onBulkAction
       source: 'Referral',
       tags: ['Qualified'],
       lastContact: 'Jan 8, 2026',
-      avatar: '👨‍💻',
     },
     {
       id: '3',
@@ -85,7 +82,6 @@ export function CO01ContactsList({ onContactClick, onCreateContact, onBulkAction
       source: 'LinkedIn',
       tags: ['Designer', 'Senior'],
       lastContact: 'Jan 5, 2026',
-      avatar: '👩‍🎨',
     },
     {
       id: '4',
@@ -99,7 +95,6 @@ export function CO01ContactsList({ onContactClick, onCreateContact, onBulkAction
       source: 'Cold Outreach',
       tags: ['Active'],
       lastContact: 'Jan 3, 2026',
-      avatar: '👨‍💼',
     },
     {
       id: '5',
@@ -113,7 +108,6 @@ export function CO01ContactsList({ onContactClick, onCreateContact, onBulkAction
       source: 'Event',
       tags: ['Partnership'],
       lastContact: 'Dec 28, 2025',
-      avatar: '👩',
     },
   ];
 
@@ -146,29 +140,32 @@ export function CO01ContactsList({ onContactClick, onCreateContact, onBulkAction
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-stone-800">Contacts</h1>
-          <p className="text-sm text-stone-500">Manage all contacts with GDPR compliance</p>
+          <h1 className="text-2xl font-semibold text-stone-800 dark:text-stone-100">Contacts</h1>
+          <p className="text-sm text-stone-500 dark:text-stone-400">Manage all contacts with GDPR compliance</p>
         </div>
         <div className="flex items-center gap-3">
           {/* View Switcher */}
-          <div className="flex items-center gap-1 bg-white border border-stone-200 rounded-lg p-1">
+          <div
+            className="flex items-center gap-1 rounded-lg p-1"
+            style={{ background: 'var(--table-header-bg)', border: '1px solid var(--border)' }}
+          >
             <button
               onClick={() => setViewMode('list')}
-              className={`p-2 rounded ${viewMode === 'list' ? 'bg-primary/10 text-primary' : 'text-stone-600 hover:bg-stone-100'}`}
+              className={`p-2 rounded transition-[background-color] duration-[120ms] ${viewMode === 'list' ? 'bg-primary/10 text-primary' : 'text-stone-600 dark:text-stone-400 hover:bg-[var(--row-hover-bg)]'}`}
               title="List View"
             >
               <List className="w-4 h-4" />
             </button>
             <button
               onClick={() => setViewMode('kanban')}
-              className={`p-2 rounded ${viewMode === 'kanban' ? 'bg-primary/10 text-primary' : 'text-stone-600 hover:bg-stone-100'}`}
+              className={`p-2 rounded transition-[background-color] duration-[120ms] ${viewMode === 'kanban' ? 'bg-primary/10 text-primary' : 'text-stone-600 dark:text-stone-400 hover:bg-[var(--row-hover-bg)]'}`}
               title="Kanban View"
             >
               <Columns3 className="w-4 h-4" />
             </button>
             <button
               onClick={() => setViewMode('grid')}
-              className={`p-2 rounded ${viewMode === 'grid' ? 'bg-primary/10 text-primary' : 'text-stone-600 hover:bg-stone-100'}`}
+              className={`p-2 rounded transition-[background-color] duration-[120ms] ${viewMode === 'grid' ? 'bg-primary/10 text-primary' : 'text-stone-600 dark:text-stone-400 hover:bg-[var(--row-hover-bg)]'}`}
               title="Grid View"
             >
               <LayoutGrid className="w-4 h-4" />
@@ -235,7 +232,7 @@ export function CO01ContactsList({ onContactClick, onCreateContact, onBulkAction
         </div>
       </div>
 
-      {/* Stats — glassmorphic */}
+      {/* Stats — same glass hierarchy as Dashboard KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
         {[
           { label: 'Total Contacts', val: contacts.length },
@@ -244,17 +241,7 @@ export function CO01ContactsList({ onContactClick, onCreateContact, onBulkAction
           { label: 'Export Requests', val: contacts.filter(c => c.gdprStatus === 'Export Requested').length },
           { label: 'Deletion Requests', val: contacts.filter(c => c.gdprStatus === 'Deletion Requested').length },
         ].map((s, i) => (
-          <motion.div
-            key={s.label}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.05 }}
-            className="rounded-xl border border-stone-200/50 p-4"
-            style={{ background: 'rgba(255,255,255,0.6)', backdropFilter: 'blur(20px) saturate(180%)' }}
-          >
-            <p className="text-[11px] font-semibold text-stone-400 uppercase tracking-[0.08em]">{s.label}</p>
-            <p className="text-[24px] font-bold text-stone-800 mt-1 tracking-[-0.02em]">{s.val}</p>
-          </motion.div>
+          <HubStatTile key={s.label} label={s.label} value={s.val} delay={i * 0.05} />
         ))}
       </div>
 
@@ -387,12 +374,10 @@ export function CO01ContactsList({ onContactClick, onCreateContact, onBulkAction
             ...contact,
             name: (
               <div className="flex items-center gap-3">
-                <span className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-[16px] flex-shrink-0">
-                  {contact.avatar}
-                </span>
+                <OpsAvatar name={contact.name} size="md" />
                 <div>
-                  <p className="text-[13px] font-medium text-stone-800">{contact.name}</p>
-                  <p className="text-[10px] text-stone-400">{contact.email}</p>
+                  <p className="text-[13px] font-medium text-stone-800 dark:text-stone-100">{contact.name}</p>
+                  <p className="text-[10px] text-stone-400 dark:text-stone-500">{contact.email}</p>
                 </div>
               </div>
             ),
