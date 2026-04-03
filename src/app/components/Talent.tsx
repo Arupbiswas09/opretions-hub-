@@ -140,11 +140,11 @@ function JobOverview({ job }: any) {
         </div>
         <div className="bg-white rounded-lg border border-stone-200 p-4">
           <p className="text-xs text-stone-600 mb-1">Shortlisted</p>
-          <p className="text-2xl font-semibold text-green-600">3</p>
+          <p className="text-2xl font-semibold text-stone-600">3</p>
         </div>
         <div className="bg-white rounded-lg border border-stone-200 p-4">
           <p className="text-xs text-stone-600 mb-1">Interviews</p>
-          <p className="text-2xl font-semibold text-purple-600">2</p>
+          <p className="text-2xl font-semibold text-stone-600">2</p>
         </div>
       </div>
 
@@ -369,11 +369,11 @@ function CandidatesList({ onCandidateClick, onCreate }: any) {
         </div>
         <div className="bg-white rounded-lg border border-stone-200 p-4">
           <p className="text-sm text-stone-600">Active</p>
-          <p className="text-2xl font-semibold text-green-600 mt-1">2</p>
+          <p className="text-2xl font-semibold text-stone-600 mt-1">2</p>
         </div>
         <div className="bg-white rounded-lg border border-stone-200 p-4">
           <p className="text-sm text-stone-600">In Process</p>
-          <p className="text-2xl font-semibold text-blue-600 mt-1">0</p>
+          <p className="text-2xl font-semibold text-stone-600 mt-1">0</p>
         </div>
         <div className="bg-white rounded-lg border border-stone-200 p-4">
           <p className="text-sm text-stone-600">Placed</p>
@@ -548,10 +548,10 @@ function ReferralPortal() {
 // Client Portal Components
 function ClientPortalJobs({ onJobClick }: any) {
   return (
-    <div className="p-8 bg-indigo-50 min-h-screen">
+    <div className="p-8 bg-stone-100 min-h-screen">
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-indigo-900">Your Staffing Positions</h1>
-        <p className="text-sm text-indigo-700">Client Portal</p>
+        <p className="text-sm text-stone-700">Client Portal</p>
       </div>
 
       <div className="bg-white rounded-lg border border-indigo-200 p-6">
@@ -560,10 +560,10 @@ function ClientPortalJobs({ onJobClick }: any) {
             <button
               key={i}
               onClick={onJobClick}
-              className="w-full p-4 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors text-left"
+              className="w-full p-4 bg-stone-100 rounded-lg hover:bg-stone-100 transition-colors text-left"
             >
               <h3 className="font-semibold text-indigo-900">Senior React Developer</h3>
-              <p className="text-sm text-indigo-700 mt-1">3 candidates in shortlist • 2 interviews scheduled</p>
+              <p className="text-sm text-stone-700 mt-1">3 candidates in shortlist • 2 interviews scheduled</p>
             </button>
           ))}
         </div>
@@ -584,7 +584,7 @@ function ClientJobDetail({ onShortlistClick }: any) {
   ];
 
   return (
-    <div className="p-8 bg-indigo-50 min-h-screen">
+    <div className="p-8 bg-stone-100 min-h-screen">
       <h1 className="text-2xl font-semibold text-indigo-900 mb-6">Senior React Developer</h1>
 
       <BonsaiTabs tabs={tabs} value={activeTab} onValueChange={setActiveTab} />
@@ -600,10 +600,10 @@ function ClientJobDetail({ onShortlistClick }: any) {
           <div>
             <button
               onClick={onShortlistClick}
-              className="w-full bg-white rounded-lg border border-indigo-200 p-6 hover:bg-indigo-50 transition-colors text-left"
+              className="w-full bg-white rounded-lg border border-indigo-200 p-6 hover:bg-stone-100 transition-colors text-left"
             >
               <h3 className="font-semibold text-indigo-900">View Shortlisted Candidates (3)</h3>
-              <p className="text-sm text-indigo-700 mt-1">Review and provide feedback</p>
+              <p className="text-sm text-stone-700 mt-1">Review and provide feedback</p>
             </button>
           </div>
         )}
@@ -628,7 +628,7 @@ function ClientShortlistView({ onFeedbackSubmit }: any) {
   };
 
   return (
-    <div className="p-8 bg-indigo-50 min-h-screen">
+    <div className="p-8 bg-stone-100 min-h-screen">
       <h1 className="text-2xl font-semibold text-indigo-900 mb-6">Shortlisted Candidates</h1>
 
       <div className="grid grid-cols-1 gap-4">
@@ -637,7 +637,7 @@ function ClientShortlistView({ onFeedbackSubmit }: any) {
             <div className="flex items-start justify-between mb-4">
               <div>
                 <h3 className="font-semibold text-indigo-900">{candidate.name}</h3>
-                <p className="text-sm text-indigo-700">{candidate.role} • {candidate.experience}</p>
+                <p className="text-sm text-stone-700">{candidate.role} • {candidate.experience}</p>
               </div>
               {feedback[candidate.id] && (
                 <BonsaiStatusPill
@@ -846,7 +846,7 @@ function ClientFeedbackModal({ isOpen, onClose }: any) {
         </div>
         <div className="p-6">
           <p className="text-sm text-stone-600 mb-4">Feedback captured from client portal</p>
-          <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+          <div className="p-4 bg-stone-100 border border-stone-200 rounded-lg">
             <p className="text-sm text-green-800">
               <strong>Client approved Alice Chen</strong><br />
               Comment: "Great technical skills, good culture fit"

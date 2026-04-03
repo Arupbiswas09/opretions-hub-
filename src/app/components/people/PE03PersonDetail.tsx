@@ -66,7 +66,7 @@ export function PE03PersonDetail({ person, onEdit, onRequestLeave, onSubmitExpen
               <h1 className="text-2xl font-semibold text-stone-800">{person.name}</h1>
               <BonsaiStatusPill status={getStatusColor(person.status)} label={person.status} />
               <span className={`inline-flex px-3 py-1 text-xs font-medium rounded-full ${
-                person.type === 'Employee' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'
+                person.type === 'Employee' ? 'bg-stone-100 text-stone-600' : 'bg-stone-100 text-stone-700'
               }`}>
                 {person.type}
               </span>
@@ -116,7 +116,7 @@ export function PE03PersonDetail({ person, onEdit, onRequestLeave, onSubmitExpen
               </div>
               <div className="bg-white rounded-lg border border-stone-200 p-4">
                 <p className="text-xs text-stone-600 mb-1">Pending Requests</p>
-                <p className="text-2xl font-semibold text-amber-600">1</p>
+                <p className="text-2xl font-semibold text-stone-600">1</p>
               </div>
             </div>
 

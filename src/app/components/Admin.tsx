@@ -194,7 +194,7 @@ function ModulesSettings({ onNavigate }: { onNavigate: (screen: Screen) => void 
         </BonsaiButton>
       </div>
 
-      <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+      <div className="mb-4 p-4 bg-stone-100 border border-stone-200 rounded-lg">
         <p className="text-sm text-blue-800">
           <strong>Note:</strong> Disabled modules will be hidden from the sidebar and all user roles.
         </p>
@@ -380,7 +380,7 @@ function PermissionsMatrix({ onNavigate, showDrawer, setShowDrawer }: { onNaviga
         </table>
       </div>
 
-      <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+      <div className="mt-4 p-4 bg-stone-100 border border-stone-200 rounded-lg">
         <p className="text-sm text-blue-800">
           <strong>Tip:</strong> Click any module row to view fine-grained permissions and notes.
         </p>
@@ -480,7 +480,7 @@ function CustomFieldsBuilder({ onNavigate }: { onNavigate: (screen: Screen) => v
                 <button className="p-2 text-stone-600 hover:bg-stone-100 rounded">
                   <Edit className="w-4 h-4" />
                 </button>
-                <button className="p-2 text-red-600 hover:bg-red-50 rounded">
+                <button className="p-2 text-stone-700 hover:bg-stone-100 rounded">
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>
@@ -566,8 +566,8 @@ function PortalSettings({ onNavigate }: { onNavigate: (screen: Screen) => void }
           onClick={() => onNavigate('portals-client')}
           className="bg-white rounded-lg border border-indigo-200 p-6 hover:shadow-md transition-shadow text-left"
         >
-          <div className="w-12 h-12 rounded-lg bg-indigo-100 flex items-center justify-center mb-4">
-            <Globe className="w-6 h-6 text-indigo-600" />
+          <div className="w-12 h-12 rounded-lg bg-stone-100 flex items-center justify-center mb-4">
+            <Globe className="w-6 h-6 text-stone-600" />
           </div>
           <h3 className="font-semibold text-stone-800 mb-2">Client Portal</h3>
           <p className="text-sm text-stone-600">Configure proposals, approvals, invoices, meetings</p>
@@ -575,10 +575,10 @@ function PortalSettings({ onNavigate }: { onNavigate: (screen: Screen) => void }
 
         <button
           onClick={() => onNavigate('portals-employee')}
-          className="bg-white rounded-lg border border-blue-200 p-6 hover:shadow-md transition-shadow text-left"
+          className="bg-white rounded-lg border border-stone-200 p-6 hover:shadow-md transition-shadow text-left"
         >
-          <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center mb-4">
-            <Globe className="w-6 h-6 text-blue-600" />
+          <div className="w-12 h-12 rounded-lg bg-stone-100 flex items-center justify-center mb-4">
+            <Globe className="w-6 h-6 text-stone-600" />
           </div>
           <h3 className="font-semibold text-stone-800 mb-2">Employee Portal</h3>
           <p className="text-sm text-stone-600">Configure onboarding, training, performance, profile changes</p>
@@ -586,10 +586,10 @@ function PortalSettings({ onNavigate }: { onNavigate: (screen: Screen) => void }
 
         <button
           onClick={() => onNavigate('portals-freelancer')}
-          className="bg-white rounded-lg border border-green-200 p-6 hover:shadow-md transition-shadow text-left"
+          className="bg-white rounded-lg border border-stone-200 p-6 hover:shadow-md transition-shadow text-left"
         >
-          <div className="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center mb-4">
-            <Globe className="w-6 h-6 text-green-600" />
+          <div className="w-12 h-12 rounded-lg bg-stone-100 flex items-center justify-center mb-4">
+            <Globe className="w-6 h-6 text-stone-600" />
           </div>
           <h3 className="font-semibold text-stone-800 mb-2">Freelancer Portal</h3>
           <p className="text-sm text-stone-600">Configure onboarding, self-bills, profile changes</p>
@@ -730,7 +730,7 @@ function EmployeePortalSettings({ onNavigate }: { onNavigate: (screen: Screen) =
               <button
                 onClick={() => toggleFeature(key as keyof typeof features)}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  features[key as keyof typeof features] ? 'bg-blue-600' : 'bg-stone-300'
+                  features[key as keyof typeof features] ? 'bg-stone-700' : 'bg-stone-300'
                 }`}
               >
                 <span
@@ -795,7 +795,7 @@ function FreelancerPortalSettings({ onNavigate }: { onNavigate: (screen: Screen)
               <button
                 onClick={() => toggleFeature(key as keyof typeof features)}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  features[key as keyof typeof features] ? 'bg-green-600' : 'bg-stone-300'
+                  features[key as keyof typeof features] ? 'bg-stone-700' : 'bg-stone-300'
                 }`}
               >
                 <span
@@ -985,7 +985,7 @@ function IntegrationsSettings() {
         ))}
       </div>
 
-      <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+      <div className="mt-6 p-4 bg-stone-100 border border-stone-200 rounded-lg">
         <p className="text-sm text-blue-800">
           <strong>Coming Soon:</strong> Slack, Zoom, Jira, GitHub, and more integrations.
         </p>
@@ -1106,7 +1106,7 @@ function GDPRSettings({ onNavigate }: { onNavigate: (screen: Screen) => void }) 
           </p>
         </div>
 
-        <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <div className="p-4 bg-stone-100 border border-stone-200 rounded-lg">
           <p className="text-sm text-blue-800">
             <strong>Compliance:</strong> These settings help ensure GDPR, CCPA, and other data privacy regulation compliance.
           </p>
@@ -1199,7 +1199,7 @@ function EntityFieldsList({ onNavigate }: { onNavigate: (screen: Screen) => void
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-1">
                   <p className="font-medium text-stone-800">{field.name}</p>
-                  {field.required && <span className="px-2 py-0.5 bg-red-100 text-red-700 text-xs rounded">Required</span>}
+                  {field.required && <span className="px-2 py-0.5 bg-stone-100 text-stone-700 text-xs rounded">Required</span>}
                 </div>
                 <p className="text-sm text-stone-600">
                   {field.type} • {field.section} • {field.visibility}
@@ -1346,7 +1346,7 @@ function PipelineStageEditor({ onNavigate }: { onNavigate: (screen: Screen) => v
                   <p className="font-medium text-stone-800">{stage.name}</p>
                   <p className="text-sm text-stone-600">Category: {stage.category}</p>
                 </div>
-                {stage.isDefault && <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded">Default</span>}
+                {stage.isDefault && <span className="px-2 py-1 bg-stone-100 text-stone-600 text-xs rounded">Default</span>}
               </div>
               <div className="flex items-center gap-2">
                 <button className="p-2 text-stone-600 hover:bg-stone-100 rounded">
@@ -1468,7 +1468,7 @@ function FormMappingDetail({ onNavigate }: { onNavigate: (screen: Screen) => voi
         </div>
       </div>
 
-      <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+      <div className="mt-4 p-4 bg-stone-100 border border-stone-200 rounded-lg">
         <p className="text-sm text-blue-800">
           <strong>Tip:</strong> If a field already has a value, you can set conflict resolution rules (overwrite/append/ignore).
         </p>
@@ -1524,9 +1524,9 @@ function SubmissionMappingPreview({ onNavigate }: { onNavigate: (screen: Screen)
           <h3 className="font-semibold text-stone-800 mb-4">Mapped to System</h3>
           <div className="space-y-3">
             {mappedData.map((item, idx) => (
-              <div key={idx} className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                <p className="text-xs text-green-700 mb-1">{item.entity}.{item.field}</p>
-                <p className="text-sm font-medium text-green-900">{item.value}</p>
+              <div key={idx} className="p-3 bg-stone-100 border border-stone-200 rounded-lg">
+                <p className="text-xs text-stone-700 mb-1">{item.entity}.{item.field}</p>
+                <p className="text-sm font-medium text-stone-800">{item.value}</p>
               </div>
             ))}
           </div>
@@ -1621,7 +1621,7 @@ function AllowedFieldsConfig({ onNavigate }: { onNavigate: (screen: Screen) => v
                 <input type="checkbox" defaultChecked={field.allowed} className="w-4 h-4 rounded border-stone-300 text-primary" />
                 <div>
                   <p className="font-medium text-stone-800">{field.name}</p>
-                  {field.sensitive && <span className="text-xs text-amber-600">Sensitive field</span>}
+                  {field.sensitive && <span className="text-xs text-stone-600">Sensitive field</span>}
                 </div>
               </div>
             </div>

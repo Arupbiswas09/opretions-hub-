@@ -24,7 +24,7 @@ export function BonsaiInput({ label, error, helperText, className, ...props }: B
         )}
         {...props}
       />
-      {error && <p className="text-[11px] text-red-500">{error}</p>}
+      {error && <p className="text-[11px] text-stone-600">{error}</p>}
       {helperText && !error && <p className="text-[11px] text-stone-400">{helperText}</p>}
     </div>
   );
@@ -53,7 +53,7 @@ export function BonsaiTextarea({ label, error, helperText, className, ...props }
         rows={4}
         {...props}
       />
-      {error && <p className="text-[11px] text-red-500">{error}</p>}
+      {error && <p className="text-[11px] text-stone-600">{error}</p>}
       {helperText && !error && <p className="text-[11px] text-stone-400">{helperText}</p>}
     </div>
   );
@@ -84,7 +84,7 @@ export function BonsaiSelect({ label, error, options, className, ...props }: Bon
           <option key={opt.value} value={opt.value}>{opt.label}</option>
         ))}
       </select>
-      {error && <p className="text-[11px] text-red-500">{error}</p>}
+      {error && <p className="text-[11px] text-stone-600">{error}</p>}
     </div>
   );
 }

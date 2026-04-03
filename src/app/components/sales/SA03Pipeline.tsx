@@ -80,7 +80,7 @@ export function SA03Pipeline({ onDealClick, onCreateDeal }: SA03PipelineProps) {
       id: 'proposal',
       title: 'Proposal Sent',
       count: 3,
-      color: 'bg-purple-500',
+      color: 'bg-stone-1000',
       cards: [
         {
           id: '5',
@@ -96,7 +96,7 @@ export function SA03Pipeline({ onDealClick, onCreateDeal }: SA03PipelineProps) {
       id: 'negotiation',
       title: 'Negotiation',
       count: 3,
-      color: 'bg-amber-500',
+      color: 'bg-stone-1000',
       cards: [
         {
           id: '6',
@@ -111,7 +111,7 @@ export function SA03Pipeline({ onDealClick, onCreateDeal }: SA03PipelineProps) {
       id: 'won',
       title: 'Won',
       count: 8,
-      color: 'bg-green-500',
+      color: 'bg-stone-1000',
       cards: [],
     },
   ];
@@ -168,7 +168,7 @@ export function SA03Pipeline({ onDealClick, onCreateDeal }: SA03PipelineProps) {
       id: 'interviewing',
       title: 'Interviewing',
       count: 0,
-      color: 'bg-purple-500',
+      color: 'bg-stone-1000',
       cards: [
         {
           id: 't4',
@@ -183,14 +183,14 @@ export function SA03Pipeline({ onDealClick, onCreateDeal }: SA03PipelineProps) {
       id: 'placement',
       title: 'Placement',
       count: 1,
-      color: 'bg-amber-500',
+      color: 'bg-stone-1000',
       cards: [],
     },
     {
       id: 'won',
       title: 'Won',
       count: 4,
-      color: 'bg-green-500',
+      color: 'bg-stone-1000',
       cards: [],
     },
   ];

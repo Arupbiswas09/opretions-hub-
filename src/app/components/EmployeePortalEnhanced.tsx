@@ -41,46 +41,46 @@ function EmployeeOnboardingHome({ onNavigate }: { onNavigate: (screen: EmployeeS
 
   return (
     <div className="p-8">
-      <h1 className="text-2xl font-semibold text-blue-900 mb-2">Onboarding Checklist</h1>
-      <p className="text-sm text-blue-700 mb-6">Complete these tasks to finish your onboarding</p>
+      <h1 className="text-2xl font-semibold text-stone-800 mb-2">Onboarding Checklist</h1>
+      <p className="text-sm text-stone-600 mb-6">Complete these tasks to finish your onboarding</p>
 
-      <div className="bg-white rounded-lg border border-blue-200 p-6 mb-6">
+      <div className="bg-white rounded-lg border border-stone-200 p-6 mb-6">
         <div className="flex items-center justify-between mb-2">
-          <p className="text-sm font-medium text-blue-900">Progress</p>
-          <p className="text-sm font-semibold text-blue-900">{completed} of {tasks.length} completed</p>
+          <p className="text-sm font-medium text-stone-800">Progress</p>
+          <p className="text-sm font-semibold text-stone-800">{completed} of {tasks.length} completed</p>
         </div>
-        <div className="w-full bg-blue-100 rounded-full h-3">
+        <div className="w-full bg-stone-100 rounded-full h-3">
           <div
-            className="bg-blue-600 h-3 rounded-full transition-all"
+            className="bg-stone-700 h-3 rounded-full transition-all"
             style={{ width: `${progress}%` }}
           />
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-blue-200">
+      <div className="bg-white rounded-lg border border-stone-200">
         <div className="divide-y divide-blue-100">
           {tasks.map((task) => (
             <button
               key={task.id}
               onClick={() => onNavigate('onboarding-task')}
-              className="w-full p-6 hover:bg-blue-50 transition-colors text-left flex items-center justify-between"
+              className="w-full p-6 hover:bg-stone-100 transition-colors text-left flex items-center justify-between"
             >
               <div className="flex items-center gap-4">
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                  task.status === 'completed' ? 'bg-green-100' : task.status === 'pending' ? 'bg-amber-100' : 'bg-stone-100'
+                  task.status === 'completed' ? 'bg-stone-100' : task.status === 'pending' ? 'bg-stone-100' : 'bg-stone-100'
                 }`}>
                   {task.status === 'completed' ? (
-                    <Check className="w-5 h-5 text-green-600" />
+                    <Check className="w-5 h-5 text-stone-600" />
                   ) : (
                     <ClipboardList className="w-5 h-5 text-stone-600" />
                   )}
                 </div>
                 <div>
-                  <p className="font-medium text-blue-900">{task.title}</p>
-                  <p className="text-sm text-blue-700 capitalize">{task.type} • {task.status.replace('-', ' ')}</p>
+                  <p className="font-medium text-stone-800">{task.title}</p>
+                  <p className="text-sm text-stone-600 capitalize">{task.type} • {task.status.replace('-', ' ')}</p>
                 </div>
               </div>
-              <span className="text-blue-600">→</span>
+              <span className="text-stone-600">→</span>
             </button>
           ))}
         </div>
@@ -95,31 +95,31 @@ function EmployeeOnboardingTaskDetail({ onNavigate }: { onNavigate: (screen: Emp
     <div className="p-8 max-w-3xl mx-auto">
       <button
         onClick={() => onNavigate('onboarding')}
-        className="flex items-center gap-2 text-sm text-blue-700 hover:text-blue-900 mb-6"
+        className="flex items-center gap-2 text-sm text-stone-600 hover:text-stone-800 mb-6"
       >
         ← Back to Onboarding
       </button>
 
-      <div className="bg-white rounded-lg border border-blue-200 p-8">
-        <h1 className="text-2xl font-semibold text-blue-900 mb-2">Sign Employment Contract</h1>
-        <p className="text-sm text-blue-700 mb-6">Please review and sign your employment contract</p>
+      <div className="bg-white rounded-lg border border-stone-200 p-8">
+        <h1 className="text-2xl font-semibold text-stone-800 mb-2">Sign Employment Contract</h1>
+        <p className="text-sm text-stone-600 mb-6">Please review and sign your employment contract</p>
 
         <div className="space-y-6">
-          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="p-4 bg-stone-100 border border-stone-200 rounded-lg">
             <p className="text-sm text-blue-800">
               <strong>Document:</strong> Employment_Contract_2026.pdf
             </p>
-            <button className="mt-2 text-sm text-blue-600 hover:underline">Download & Review</button>
+            <button className="mt-2 text-sm text-stone-600 hover:underline">Download & Review</button>
           </div>
 
           <div>
             <label className="flex items-center gap-3">
-              <input type="checkbox" className="w-5 h-5 rounded border-blue-300 text-blue-600" />
-              <span className="text-sm text-blue-900">I have read and agree to the terms of the employment contract</span>
+              <input type="checkbox" className="w-5 h-5 rounded border-blue-300 text-stone-600" />
+              <span className="text-sm text-stone-800">I have read and agree to the terms of the employment contract</span>
             </label>
           </div>
 
-          <div className="flex gap-3 pt-4 border-t border-blue-200">
+          <div className="flex gap-3 pt-4 border-t border-stone-200">
             <BonsaiButton variant="ghost" onClick={() => onNavigate('onboarding')}>Cancel</BonsaiButton>
             <BonsaiButton variant="primary" onClick={() => { alert('Contract signed!\n\nTask marked as complete.'); onNavigate('onboarding'); }}>
               Sign & Submit
@@ -138,7 +138,7 @@ function EmployeeProfile({ onNavigate }: { onNavigate: (screen: EmployeeScreen) 
   return (
     <div className="p-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold text-blue-900">My Profile</h1>
+        <h1 className="text-2xl font-semibold text-stone-800">My Profile</h1>
         <BonsaiButton 
           variant={isEditing ? "primary" : "ghost"} 
           onClick={() => {
@@ -154,123 +154,123 @@ function EmployeeProfile({ onNavigate }: { onNavigate: (screen: EmployeeScreen) 
       </div>
 
       {!isEditing && (
-        <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-          <p className="text-sm text-amber-800">
+        <div className="mb-4 p-4 bg-stone-100 border border-stone-200 rounded-lg">
+          <p className="text-sm text-stone-700">
             <strong>Note:</strong> Profile changes require manager approval (GDPR compliance)
           </p>
         </div>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-lg border border-blue-200 p-6">
-          <h3 className="font-semibold text-blue-900 mb-4">Personal Information</h3>
+        <div className="bg-white rounded-lg border border-stone-200 p-6">
+          <h3 className="font-semibold text-stone-800 mb-4">Personal Information</h3>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-blue-700 mb-1">Full Name</label>
+              <label className="block text-sm font-medium text-stone-600 mb-1">Full Name</label>
               <input
                 type="text"
                 defaultValue="John Doe"
                 disabled={!isEditing}
-                className="w-full px-3 py-2 bg-white border border-blue-200 rounded-lg text-sm disabled:bg-blue-50 disabled:text-blue-900"
+                className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm disabled:bg-stone-100 disabled:text-stone-800"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-blue-700 mb-1">Email</label>
+              <label className="block text-sm font-medium text-stone-600 mb-1">Email</label>
               <input
                 type="email"
                 defaultValue="john.doe@company.com"
                 disabled={!isEditing}
-                className="w-full px-3 py-2 bg-white border border-blue-200 rounded-lg text-sm disabled:bg-blue-50 disabled:text-blue-900"
+                className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm disabled:bg-stone-100 disabled:text-stone-800"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-blue-700 mb-1">Phone</label>
+              <label className="block text-sm font-medium text-stone-600 mb-1">Phone</label>
               <input
                 type="tel"
                 defaultValue="+1 555-0123"
                 disabled={!isEditing}
-                className="w-full px-3 py-2 bg-white border border-blue-200 rounded-lg text-sm disabled:bg-blue-50 disabled:text-blue-900"
+                className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm disabled:bg-stone-100 disabled:text-stone-800"
               />
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-blue-200 p-6">
-          <h3 className="font-semibold text-blue-900 mb-4">Address</h3>
+        <div className="bg-white rounded-lg border border-stone-200 p-6">
+          <h3 className="font-semibold text-stone-800 mb-4">Address</h3>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-blue-700 mb-1">Street Address</label>
+              <label className="block text-sm font-medium text-stone-600 mb-1">Street Address</label>
               <input
                 type="text"
                 defaultValue="123 Main St"
                 disabled={!isEditing}
-                className="w-full px-3 py-2 bg-white border border-blue-200 rounded-lg text-sm disabled:bg-blue-50 disabled:text-blue-900"
+                className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm disabled:bg-stone-100 disabled:text-stone-800"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-blue-700 mb-1">City</label>
+              <label className="block text-sm font-medium text-stone-600 mb-1">City</label>
               <input
                 type="text"
                 defaultValue="San Francisco"
                 disabled={!isEditing}
-                className="w-full px-3 py-2 bg-white border border-blue-200 rounded-lg text-sm disabled:bg-blue-50 disabled:text-blue-900"
+                className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm disabled:bg-stone-100 disabled:text-stone-800"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-blue-700 mb-1">Postal Code</label>
+              <label className="block text-sm font-medium text-stone-600 mb-1">Postal Code</label>
               <input
                 type="text"
                 defaultValue="94105"
                 disabled={!isEditing}
-                className="w-full px-3 py-2 bg-white border border-blue-200 rounded-lg text-sm disabled:bg-blue-50 disabled:text-blue-900"
+                className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm disabled:bg-stone-100 disabled:text-stone-800"
               />
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-blue-200 p-6">
-          <h3 className="font-semibold text-blue-900 mb-4">Bank Details</h3>
+        <div className="bg-white rounded-lg border border-stone-200 p-6">
+          <h3 className="font-semibold text-stone-800 mb-4">Bank Details</h3>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-blue-700 mb-1">Bank Name</label>
+              <label className="block text-sm font-medium text-stone-600 mb-1">Bank Name</label>
               <input
                 type="text"
                 defaultValue="First National Bank"
                 disabled={!isEditing}
-                className="w-full px-3 py-2 bg-white border border-blue-200 rounded-lg text-sm disabled:bg-blue-50 disabled:text-blue-900"
+                className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm disabled:bg-stone-100 disabled:text-stone-800"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-blue-700 mb-1">Account Number</label>
+              <label className="block text-sm font-medium text-stone-600 mb-1">Account Number</label>
               <input
                 type="text"
                 defaultValue="****1234"
                 disabled={!isEditing}
-                className="w-full px-3 py-2 bg-white border border-blue-200 rounded-lg text-sm disabled:bg-blue-50 disabled:text-blue-900"
+                className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm disabled:bg-stone-100 disabled:text-stone-800"
               />
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-blue-200 p-6">
-          <h3 className="font-semibold text-blue-900 mb-4">Emergency Contact</h3>
+        <div className="bg-white rounded-lg border border-stone-200 p-6">
+          <h3 className="font-semibold text-stone-800 mb-4">Emergency Contact</h3>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-blue-700 mb-1">Contact Name</label>
+              <label className="block text-sm font-medium text-stone-600 mb-1">Contact Name</label>
               <input
                 type="text"
                 defaultValue="Jane Doe"
                 disabled={!isEditing}
-                className="w-full px-3 py-2 bg-white border border-blue-200 rounded-lg text-sm disabled:bg-blue-50 disabled:text-blue-900"
+                className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm disabled:bg-stone-100 disabled:text-stone-800"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-blue-700 mb-1">Contact Phone</label>
+              <label className="block text-sm font-medium text-stone-600 mb-1">Contact Phone</label>
               <input
                 type="tel"
                 defaultValue="+1 555-0456"
                 disabled={!isEditing}
-                className="w-full px-3 py-2 bg-white border border-blue-200 rounded-lg text-sm disabled:bg-blue-50 disabled:text-blue-900"
+                className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm disabled:bg-stone-100 disabled:text-stone-800"
               />
             </div>
           </div>
@@ -286,36 +286,36 @@ function EmployeeProfileChangeRequest({ onNavigate }: { onNavigate: (screen: Emp
     <div className="p-8">
       <button
         onClick={() => onNavigate('profile')}
-        className="flex items-center gap-2 text-sm text-blue-700 hover:text-blue-900 mb-6"
+        className="flex items-center gap-2 text-sm text-stone-600 hover:text-stone-800 mb-6"
       >
         ← Back to Profile
       </button>
 
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-blue-900">Profile Change Request</h1>
-          <p className="text-sm text-blue-700">Request #PCR-1234 • Submitted 2 hours ago</p>
+          <h1 className="text-2xl font-semibold text-stone-800">Profile Change Request</h1>
+          <p className="text-sm text-stone-600">Request #PCR-1234 • Submitted 2 hours ago</p>
         </div>
         <BonsaiStatusPill status="pending" label="Pending Approval" />
       </div>
 
-      <div className="bg-white rounded-lg border border-blue-200 p-6 mb-6">
-        <h3 className="font-semibold text-blue-900 mb-4">Requested Changes</h3>
+      <div className="bg-white rounded-lg border border-stone-200 p-6 mb-6">
+        <h3 className="font-semibold text-stone-800 mb-4">Requested Changes</h3>
         <div className="space-y-4">
           {[
             { field: 'Phone', oldValue: '+1 555-0123', newValue: '+1 555-9999' },
             { field: 'Street Address', oldValue: '123 Main St', newValue: '456 Oak Ave' },
           ].map((change, i) => (
-            <div key={i} className="p-4 bg-blue-50 rounded-lg">
-              <p className="text-sm font-medium text-blue-900 mb-2">{change.field}</p>
+            <div key={i} className="p-4 bg-stone-100 rounded-lg">
+              <p className="text-sm font-medium text-stone-800 mb-2">{change.field}</p>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-xs text-blue-700 mb-1">Current Value</p>
-                  <p className="text-sm text-blue-900 line-through">{change.oldValue}</p>
+                  <p className="text-xs text-stone-600 mb-1">Current Value</p>
+                  <p className="text-sm text-stone-800 line-through">{change.oldValue}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-blue-700 mb-1">New Value</p>
-                  <p className="text-sm font-medium text-green-700">{change.newValue}</p>
+                  <p className="text-xs text-stone-600 mb-1">New Value</p>
+                  <p className="text-sm font-medium text-stone-700">{change.newValue}</p>
                 </div>
               </div>
             </div>
@@ -323,8 +323,8 @@ function EmployeeProfileChangeRequest({ onNavigate }: { onNavigate: (screen: Emp
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-blue-200 p-6">
-        <h3 className="font-semibold text-blue-900 mb-4">Activity</h3>
+      <div className="bg-white rounded-lg border border-stone-200 p-6">
+        <h3 className="font-semibold text-stone-800 mb-4">Activity</h3>
         <BonsaiTimeline
           items={[
             { id: '1', title: 'Request submitted', description: 'Profile change request created', timestamp: '2 hours ago', user: { name: 'John Doe' } },
@@ -349,33 +349,33 @@ function EmployeeTraining({ onNavigate }: { onNavigate: (screen: EmployeeScreen)
 
   return (
     <div className="p-8">
-      <h1 className="text-2xl font-semibold text-blue-900 mb-6">Training & Knowledge Hub</h1>
+      <h1 className="text-2xl font-semibold text-stone-800 mb-6">Training & Knowledge Hub</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <div className="bg-white rounded-lg border border-blue-200 p-6">
-          <p className="text-sm text-blue-700 mb-1">Assigned Trainings</p>
-          <p className="text-3xl font-semibold text-blue-900">1</p>
+        <div className="bg-white rounded-lg border border-stone-200 p-6">
+          <p className="text-sm text-stone-600 mb-1">Assigned Trainings</p>
+          <p className="text-3xl font-semibold text-stone-800">1</p>
         </div>
-        <div className="bg-white rounded-lg border border-blue-200 p-6">
-          <p className="text-sm text-blue-700 mb-1">Completed Trainings</p>
-          <p className="text-3xl font-semibold text-green-600">1</p>
+        <div className="bg-white rounded-lg border border-stone-200 p-6">
+          <p className="text-sm text-stone-600 mb-1">Completed Trainings</p>
+          <p className="text-3xl font-semibold text-stone-600">1</p>
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-blue-200 mb-6">
+      <div className="bg-white rounded-lg border border-stone-200 mb-6">
         <div className="p-6 border-b border-blue-100">
-          <h3 className="font-semibold text-blue-900">My Trainings</h3>
+          <h3 className="font-semibold text-stone-800">My Trainings</h3>
         </div>
         <div className="divide-y divide-blue-100">
           {assignedTrainings.map((training) => (
             <button
               key={training.id}
               onClick={() => onNavigate('training-detail')}
-              className="w-full p-6 hover:bg-blue-50 transition-colors text-left flex items-center justify-between"
+              className="w-full p-6 hover:bg-stone-100 transition-colors text-left flex items-center justify-between"
             >
               <div>
-                <p className="font-medium text-blue-900">{training.title}</p>
-                <p className="text-sm text-blue-700">
+                <p className="font-medium text-stone-800">{training.title}</p>
+                <p className="text-sm text-stone-600">
                   {training.status === 'assigned' ? `Due ${training.dueDate}` : `Completed ${training.completedDate}`}
                 </p>
               </div>
@@ -388,21 +388,21 @@ function EmployeeTraining({ onNavigate }: { onNavigate: (screen: EmployeeScreen)
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-blue-200">
+      <div className="bg-white rounded-lg border border-stone-200">
         <div className="p-6 border-b border-blue-100">
-          <h3 className="font-semibold text-blue-900">Knowledge Articles</h3>
+          <h3 className="font-semibold text-stone-800">Knowledge Articles</h3>
         </div>
         <div className="divide-y divide-blue-100">
           {knowledgeArticles.map((article) => (
             <button
               key={article.id}
-              className="w-full p-6 hover:bg-blue-50 transition-colors text-left flex items-center justify-between"
+              className="w-full p-6 hover:bg-stone-100 transition-colors text-left flex items-center justify-between"
             >
               <div>
-                <p className="font-medium text-blue-900">{article.title}</p>
-                <p className="text-sm text-blue-700">{article.category}</p>
+                <p className="font-medium text-stone-800">{article.title}</p>
+                <p className="text-sm text-stone-600">{article.category}</p>
               </div>
-              <span className="text-blue-600">→</span>
+              <span className="text-stone-600">→</span>
             </button>
           ))}
         </div>
@@ -419,15 +419,15 @@ function EmployeeTrainingDetail({ onNavigate }: { onNavigate: (screen: EmployeeS
     <div className="p-8">
       <button
         onClick={() => onNavigate('training')}
-        className="flex items-center gap-2 text-sm text-blue-700 hover:text-blue-900 mb-6"
+        className="flex items-center gap-2 text-sm text-stone-600 hover:text-stone-800 mb-6"
       >
         ← Back to Training
       </button>
 
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-blue-900">Security Awareness Training</h1>
-          <p className="text-sm text-blue-700">Due Jan 30, 2026</p>
+          <h1 className="text-2xl font-semibold text-stone-800">Security Awareness Training</h1>
+          <p className="text-sm text-stone-600">Due Jan 30, 2026</p>
         </div>
         <BonsaiStatusPill status="pending" label="Assigned" />
       </div>
@@ -443,12 +443,12 @@ function EmployeeTrainingDetail({ onNavigate }: { onNavigate: (screen: EmployeeS
 
       <div className="mt-6">
         {activeTab === 'content' && (
-          <div className="bg-white rounded-lg border border-blue-200 p-6">
+          <div className="bg-white rounded-lg border border-stone-200 p-6">
             <div className="prose max-w-none">
               <p className="text-blue-800 mb-4">
                 This training covers essential security practices to keep company data safe.
               </p>
-              <h3 className="font-semibold text-blue-900 mb-2">Topics Covered:</h3>
+              <h3 className="font-semibold text-stone-800 mb-2">Topics Covered:</h3>
               <ul className="list-disc list-inside text-blue-800 space-y-2">
                 <li>Password best practices</li>
                 <li>Phishing detection</li>
@@ -456,7 +456,7 @@ function EmployeeTrainingDetail({ onNavigate }: { onNavigate: (screen: EmployeeS
                 <li>Device security</li>
               </ul>
             </div>
-            <div className="mt-6 pt-6 border-t border-blue-200">
+            <div className="mt-6 pt-6 border-t border-stone-200">
               <BonsaiButton variant="primary" onClick={() => { alert('Training marked as complete!'); onNavigate('training'); }}>
                 Mark as Complete
               </BonsaiButton>
@@ -464,8 +464,8 @@ function EmployeeTrainingDetail({ onNavigate }: { onNavigate: (screen: EmployeeS
           </div>
         )}
         {activeTab === 'resources' && (
-          <div className="bg-white rounded-lg border border-blue-200 p-6">
-            <p className="text-sm text-blue-700">Additional resources and materials</p>
+          <div className="bg-white rounded-lg border border-stone-200 p-6">
+            <p className="text-sm text-stone-600">Additional resources and materials</p>
           </div>
         )}
       </div>
@@ -482,9 +482,9 @@ function EmployeePerformanceReviews({ onNavigate }: { onNavigate: (screen: Emplo
 
   return (
     <div className="p-8">
-      <h1 className="text-2xl font-semibold text-blue-900 mb-6">Performance Reviews</h1>
+      <h1 className="text-2xl font-semibold text-stone-800 mb-6">Performance Reviews</h1>
 
-      <div className="bg-white rounded-lg border border-blue-200">
+      <div className="bg-white rounded-lg border border-stone-200">
         <EnhancedTable
           columns={[
             { key: 'period', label: 'Review Period', sortable: true },
@@ -494,7 +494,7 @@ function EmployeePerformanceReviews({ onNavigate }: { onNavigate: (screen: Emplo
           ]}
           data={reviews.map(review => ({
             ...review,
-            rating: <span className="font-semibold text-blue-900">{review.rating}</span>,
+            rating: <span className="font-semibold text-stone-800">{review.rating}</span>,
             status: (
               <BonsaiStatusPill
                 status={review.status === 'completed' ? 'active' : 'pending'}
@@ -519,20 +519,20 @@ function EmployeePerformanceReviewDetail({ onNavigate }: { onNavigate: (screen: 
     <div className="p-8">
       <button
         onClick={() => onNavigate('performance-reviews')}
-        className="flex items-center gap-2 text-sm text-blue-700 hover:text-blue-900 mb-6"
+        className="flex items-center gap-2 text-sm text-stone-600 hover:text-stone-800 mb-6"
       >
         ← Back to Performance Reviews
       </button>
 
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-blue-900">Q4 2025 Performance Review</h1>
-          <p className="text-sm text-blue-700">Completed Jan 5, 2026</p>
+          <h1 className="text-2xl font-semibold text-stone-800">Q4 2025 Performance Review</h1>
+          <p className="text-sm text-stone-600">Completed Jan 5, 2026</p>
         </div>
         <div className="flex items-center gap-3">
           <BonsaiStatusPill status="active" label="Completed" />
-          <div className="px-4 py-2 bg-blue-100 rounded-lg">
-            <p className="text-lg font-semibold text-blue-900">4.5/5</p>
+          <div className="px-4 py-2 bg-stone-100 rounded-lg">
+            <p className="text-lg font-semibold text-stone-800">4.5/5</p>
           </div>
         </div>
       </div>
@@ -549,8 +549,8 @@ function EmployeePerformanceReviewDetail({ onNavigate }: { onNavigate: (screen: 
 
       <div className="mt-6">
         {activeTab === 'overview' && (
-          <div className="bg-white rounded-lg border border-blue-200 p-6">
-            <h3 className="font-semibold text-blue-900 mb-4">Performance Areas</h3>
+          <div className="bg-white rounded-lg border border-stone-200 p-6">
+            <h3 className="font-semibold text-stone-800 mb-4">Performance Areas</h3>
             <div className="space-y-4">
               {[
                 { area: 'Technical Skills', rating: 5 },
@@ -558,14 +558,14 @@ function EmployeePerformanceReviewDetail({ onNavigate }: { onNavigate: (screen: 
                 { area: 'Teamwork', rating: 5 },
                 { area: 'Problem Solving', rating: 4 },
               ].map((item, i) => (
-                <div key={i} className="p-4 bg-blue-50 rounded-lg">
+                <div key={i} className="p-4 bg-stone-100 rounded-lg">
                   <div className="flex items-center justify-between mb-2">
-                    <p className="font-medium text-blue-900">{item.area}</p>
-                    <p className="font-semibold text-blue-900">{item.rating}/5</p>
+                    <p className="font-medium text-stone-800">{item.area}</p>
+                    <p className="font-semibold text-stone-800">{item.rating}/5</p>
                   </div>
-                  <div className="w-full bg-blue-200 rounded-full h-2">
+                  <div className="w-full bg-stone-200 rounded-full h-2">
                     <div
-                      className="bg-blue-600 h-2 rounded-full"
+                      className="bg-stone-700 h-2 rounded-full"
                       style={{ width: `${(item.rating / 5) * 100}%` }}
                     />
                   </div>
@@ -575,8 +575,8 @@ function EmployeePerformanceReviewDetail({ onNavigate }: { onNavigate: (screen: 
           </div>
         )}
         {activeTab === 'comments' && (
-          <div className="bg-white rounded-lg border border-blue-200 p-6">
-            <h3 className="font-semibold text-blue-900 mb-4">Manager Feedback</h3>
+          <div className="bg-white rounded-lg border border-stone-200 p-6">
+            <h3 className="font-semibold text-stone-800 mb-4">Manager Feedback</h3>
             <p className="text-blue-800">
               John has shown excellent technical skills and dedication this quarter. 
               His communication has improved significantly, and he's been a great team player.
@@ -584,8 +584,8 @@ function EmployeePerformanceReviewDetail({ onNavigate }: { onNavigate: (screen: 
           </div>
         )}
         {activeTab === 'goals' && (
-          <div className="bg-white rounded-lg border border-blue-200 p-6">
-            <h3 className="font-semibold text-blue-900 mb-4">Goals for Next Period</h3>
+          <div className="bg-white rounded-lg border border-stone-200 p-6">
+            <h3 className="font-semibold text-stone-800 mb-4">Goals for Next Period</h3>
             <ul className="list-disc list-inside text-blue-800 space-y-2">
               <li>Lead a major project initiative</li>
               <li>Mentor junior team members</li>
@@ -607,9 +607,9 @@ function EmployeeMeetingsList({ onNavigate }: { onNavigate: (screen: EmployeeScr
 
   return (
     <div className="p-8">
-      <h1 className="text-2xl font-semibold text-blue-900 mb-6">Meetings & 1:1s</h1>
+      <h1 className="text-2xl font-semibold text-stone-800 mb-6">Meetings & 1:1s</h1>
 
-      <div className="bg-white rounded-lg border border-blue-200">
+      <div className="bg-white rounded-lg border border-stone-200">
         <EnhancedTable
           columns={[
             { key: 'title', label: 'Meeting Title', sortable: true },
@@ -632,28 +632,28 @@ function EmployeeMeetingDetail({ onNavigate }: { onNavigate: (screen: EmployeeSc
     <div className="p-8">
       <button
         onClick={() => onNavigate('meetings')}
-        className="flex items-center gap-2 text-sm text-blue-700 hover:text-blue-900 mb-6"
+        className="flex items-center gap-2 text-sm text-stone-600 hover:text-stone-800 mb-6"
       >
         ← Back to Meetings
       </button>
 
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-blue-900">Weekly 1:1 with Manager</h1>
-          <p className="text-sm text-blue-700">Jan 15, 2026 • 30 minutes</p>
+          <h1 className="text-2xl font-semibold text-stone-800">Weekly 1:1 with Manager</h1>
+          <p className="text-sm text-stone-600">Jan 15, 2026 • 30 minutes</p>
         </div>
-        <div className="px-3 py-1 bg-green-100 text-green-700 rounded-lg text-sm font-medium">
+        <div className="px-3 py-1 bg-stone-100 text-stone-700 rounded-lg text-sm font-medium">
           Shared with you
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-blue-200 p-6 mb-6">
-        <h3 className="font-semibold text-blue-900 mb-4">Summary</h3>
+      <div className="bg-white rounded-lg border border-stone-200 p-6 mb-6">
+        <h3 className="font-semibold text-stone-800 mb-4">Summary</h3>
         <div className="prose max-w-none text-blue-800">
           <p className="mb-4">
             We discussed project progress and upcoming initiatives. John is doing great work on the redesign project.
           </p>
-          <h4 className="font-semibold text-blue-900 mb-2">Key Points:</h4>
+          <h4 className="font-semibold text-stone-800 mb-2">Key Points:</h4>
           <ul className="list-disc list-inside space-y-1">
             <li>Project redesign on track for Q1 delivery</li>
             <li>Interested in mentoring junior developers</li>
@@ -662,17 +662,17 @@ function EmployeeMeetingDetail({ onNavigate }: { onNavigate: (screen: EmployeeSc
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-blue-200 p-6">
-        <h3 className="font-semibold text-blue-900 mb-4">Action Items</h3>
+      <div className="bg-white rounded-lg border border-stone-200 p-6">
+        <h3 className="font-semibold text-stone-800 mb-4">Action Items</h3>
         <div className="space-y-2">
           {[
             'Complete code review by Friday',
             'Schedule mentoring session next week',
             'Submit conference request form',
           ].map((item, i) => (
-            <div key={i} className="p-3 bg-blue-50 rounded-lg flex items-center gap-3">
-              <CheckSquare className="w-5 h-5 text-blue-600" />
-              <p className="text-sm text-blue-900">{item}</p>
+            <div key={i} className="p-3 bg-stone-100 rounded-lg flex items-center gap-3">
+              <CheckSquare className="w-5 h-5 text-stone-600" />
+              <p className="text-sm text-stone-800">{item}</p>
             </div>
           ))}
         </div>
@@ -692,13 +692,13 @@ function EmployeeDocumentsEnhanced() {
   return (
     <div className="p-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold text-blue-900">My Documents</h1>
+        <h1 className="text-2xl font-semibold text-stone-800">My Documents</h1>
         <BonsaiButton variant="primary" onClick={() => setShowRequestModal(true)}>
           Request Document
         </BonsaiButton>
       </div>
 
-      <div className="bg-white rounded-lg border border-blue-200 p-6">
+      <div className="bg-white rounded-lg border border-stone-200 p-6">
         <BonsaiDocumentList
           documents={documents}
           onDownload={(doc) => alert(`Downloading ${doc.name}`)}
@@ -710,13 +710,13 @@ function EmployeeDocumentsEnhanced() {
       {showRequestModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg shadow-2xl w-full max-w-lg">
-            <div className="px-6 py-4 border-b border-blue-200">
-              <h2 className="text-xl font-semibold text-blue-900">Request Document</h2>
+            <div className="px-6 py-4 border-b border-stone-200">
+              <h2 className="text-xl font-semibold text-stone-800">Request Document</h2>
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-blue-700 mb-2">Document Type</label>
-                <select className="w-full px-3 py-2 bg-white border border-blue-200 rounded-lg text-sm">
+                <label className="block text-sm font-medium text-stone-600 mb-2">Document Type</label>
+                <select className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm">
                   <option>Employment Verification Letter</option>
                   <option>Tax Document (W-2)</option>
                   <option>Pay Stub</option>
@@ -724,11 +724,11 @@ function EmployeeDocumentsEnhanced() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-blue-700 mb-2">Reason (optional)</label>
-                <textarea rows={3} className="w-full px-3 py-2 bg-white border border-blue-200 rounded-lg text-sm" placeholder="Why do you need this document?" />
+                <label className="block text-sm font-medium text-stone-600 mb-2">Reason (optional)</label>
+                <textarea rows={3} className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm" placeholder="Why do you need this document?" />
               </div>
             </div>
-            <div className="px-6 py-4 border-t border-blue-200 flex justify-end gap-3">
+            <div className="px-6 py-4 border-t border-stone-200 flex justify-end gap-3">
               <BonsaiButton variant="ghost" onClick={() => setShowRequestModal(false)}>Cancel</BonsaiButton>
               <BonsaiButton variant="primary" onClick={() => { alert('Document request submitted!\n\nHR will process your request.'); setShowRequestModal(false); }}>
                 Submit Request

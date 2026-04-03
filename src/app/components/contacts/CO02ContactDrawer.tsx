@@ -249,8 +249,8 @@ export function CO02ContactDrawer({ isOpen, onClose, onSave, initialContact }: C
                 </label>
               </div>
 
-              <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                <p className="text-xs text-amber-800">
+              <div className="p-3 bg-stone-100 border border-stone-200 rounded-lg">
+                <p className="text-xs text-stone-700">
                   <strong>GDPR Notice:</strong> Ensure you have a lawful basis for processing this contact's data. 
                   Document the consent and keep records of when and how consent was obtained.
                 </p>

@@ -99,7 +99,7 @@ function FormsDashboard({ onNavigate, onCreate }: any) {
         </div>
         <div className="bg-white rounded-lg border border-stone-200 p-6">
           <p className="text-sm text-stone-600 mb-1">Published</p>
-          <p className="text-3xl font-semibold text-green-600">5</p>
+          <p className="text-3xl font-semibold text-stone-600">5</p>
         </div>
         <div className="bg-white rounded-lg border border-stone-200 p-6">
           <p className="text-sm text-stone-600 mb-1">Submissions (Month)</p>
@@ -107,7 +107,7 @@ function FormsDashboard({ onNavigate, onCreate }: any) {
         </div>
         <div className="bg-white rounded-lg border border-stone-200 p-6">
           <p className="text-sm text-stone-600 mb-1">Pending Review</p>
-          <p className="text-3xl font-semibold text-amber-600">3</p>
+          <p className="text-3xl font-semibold text-stone-600">3</p>
         </div>
       </div>
 
@@ -309,7 +309,7 @@ function FieldsTab() {
                 <button className="p-2 text-stone-600 hover:bg-stone-200 rounded">
                   <Settings className="w-4 h-4" />
                 </button>
-                <button className="p-2 text-red-600 hover:bg-red-50 rounded">
+                <button className="p-2 text-stone-700 hover:bg-stone-100 rounded">
                   <X className="w-4 h-4" />
                 </button>
               </div>
@@ -318,7 +318,7 @@ function FieldsTab() {
         ))}
       </div>
 
-      <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+      <div className="mt-6 p-4 bg-stone-100 border border-stone-200 rounded-lg">
         <p className="text-sm text-blue-800">
           <strong>Field Types:</strong> Text, Textarea, Select, Multi-select, Date, Checkbox, File Upload
         </p>
@@ -421,7 +421,7 @@ function FormPreview({ onBack }: any) {
           <BonsaiInput label="Company Name" required placeholder="Enter company name" />
           
           <div>
-            <label className="block text-sm font-medium text-stone-700 mb-2">Industry <span className="text-red-600">*</span></label>
+            <label className="block text-sm font-medium text-stone-700 mb-2">Industry <span className="text-stone-700">*</span></label>
             <select className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm">
               <option>Select industry</option>
               <option>Technology</option>
@@ -431,12 +431,12 @@ function FormPreview({ onBack }: any) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-stone-700 mb-2">Company Description <span className="text-red-600">*</span></label>
+            <label className="block text-sm font-medium text-stone-700 mb-2">Company Description <span className="text-stone-700">*</span></label>
             <textarea rows={4} className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm" placeholder="Tell us about your company..." />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-stone-700 mb-2">Incorporation Documents <span className="text-red-600">*</span></label>
+            <label className="block text-sm font-medium text-stone-700 mb-2">Incorporation Documents <span className="text-stone-700">*</span></label>
             <div className="border-2 border-dashed border-stone-300 rounded-lg p-6 text-center">
               <Upload className="w-8 h-8 text-stone-400 mx-auto mb-2" />
               <p className="text-sm text-stone-600">Drop files here or click to upload</p>
@@ -594,9 +594,9 @@ function SubmissionsList({ onNavigate }: any) {
 // Portal Views
 function PortalView({ portalType, screen, onNavigate }: any) {
   const themeColors = {
-    client: { bg: 'bg-indigo-50', border: 'border-indigo-200', text: 'text-indigo-900', accent: 'indigo' },
-    employee: { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-900', accent: 'blue' },
-    freelancer: { bg: 'bg-green-50', border: 'border-green-200', text: 'text-green-900', accent: 'green' },
+    client: { bg: 'bg-stone-100', border: 'border-indigo-200', text: 'text-indigo-900', accent: 'indigo' },
+    employee: { bg: 'bg-stone-100', border: 'border-stone-200', text: 'text-stone-800', accent: 'blue' },
+    freelancer: { bg: 'bg-stone-100', border: 'border-stone-200', text: 'text-stone-800', accent: 'green' },
   };
 
   const theme = themeColors[portalType];
@@ -659,7 +659,7 @@ function PortalFillForm({ portalType, theme, portalName, onNavigate }: any) {
           <BonsaiInput label="Company Name" required placeholder="Enter company name" />
           
           <div>
-            <label className="block text-sm font-medium text-stone-700 mb-2">Industry <span className="text-red-600">*</span></label>
+            <label className="block text-sm font-medium text-stone-700 mb-2">Industry <span className="text-stone-700">*</span></label>
             <select className={`w-full px-3 py-2 bg-white border ${theme.border} rounded-lg text-sm`}>
               <option>Select industry</option>
               <option>Technology</option>
@@ -668,12 +668,12 @@ function PortalFillForm({ portalType, theme, portalName, onNavigate }: any) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-stone-700 mb-2">Company Description <span className="text-red-600">*</span></label>
+            <label className="block text-sm font-medium text-stone-700 mb-2">Company Description <span className="text-stone-700">*</span></label>
             <textarea rows={4} className={`w-full px-3 py-2 bg-white border ${theme.border} rounded-lg text-sm`} placeholder="Tell us about your company..." />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-stone-700 mb-2">Incorporation Documents <span className="text-red-600">*</span></label>
+            <label className="block text-sm font-medium text-stone-700 mb-2">Incorporation Documents <span className="text-stone-700">*</span></label>
             <div className={`border-2 border-dashed ${theme.border} rounded-lg p-6 text-center`}>
               <Upload className="w-8 h-8 text-stone-400 mx-auto mb-2" />
               <p className="text-sm text-stone-600">Drop files here or click to upload</p>
@@ -694,8 +694,8 @@ function PortalConfirmation({ portalType, theme, portalName }: any) {
   return (
     <div className="max-w-2xl mx-auto text-center">
       <div className={`bg-white rounded-lg border ${theme.border} p-12`}>
-        <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
-          <CheckCircle className="w-8 h-8 text-green-600" />
+        <div className="w-16 h-16 rounded-full bg-stone-100 flex items-center justify-center mx-auto mb-4">
+          <CheckCircle className="w-8 h-8 text-stone-600" />
         </div>
         <h1 className="text-2xl font-semibold text-stone-800 mb-2">Form Submitted Successfully!</h1>
         <p className="text-stone-600 mb-6">
@@ -782,7 +782,7 @@ function SendFormModal({ isOpen, onClose }: any) {
             <label className="block text-sm font-medium text-stone-700 mb-2">Message (optional)</label>
             <textarea rows={3} className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm" placeholder="Add a message to the recipient..." />
           </div>
-          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="p-3 bg-stone-100 border border-stone-200 rounded-lg">
             <p className="text-sm text-blue-800">
               This will send an email notification and create an activity entry in the attached record.
             </p>

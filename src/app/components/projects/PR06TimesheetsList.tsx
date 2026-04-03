@@ -87,7 +87,7 @@ export function PR06TimesheetsList({ onTimesheetClick, onCreateTimesheet }: PR06
         </div>
         <div className="bg-white rounded-lg border border-stone-200 p-4">
           <p className="text-sm text-stone-600">Pending Approval</p>
-          <p className="text-2xl font-semibold text-amber-600 mt-1">1</p>
+          <p className="text-2xl font-semibold text-stone-600 mt-1">1</p>
         </div>
         <div className="bg-white rounded-lg border border-stone-200 p-4">
           <p className="text-sm text-stone-600">This Month</p>

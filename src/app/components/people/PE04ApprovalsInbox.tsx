@@ -90,11 +90,11 @@ export function PE04ApprovalsInbox({ onRequestClick }: PE04ApprovalsInboxProps) 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <div className="bg-white rounded-lg border border-stone-200 p-4">
           <p className="text-sm text-stone-600">Pending Leave</p>
-          <p className="text-2xl font-semibold text-blue-600 mt-1">{leaveRequests.length}</p>
+          <p className="text-2xl font-semibold text-stone-600 mt-1">{leaveRequests.length}</p>
         </div>
         <div className="bg-white rounded-lg border border-stone-200 p-4">
           <p className="text-sm text-stone-600">Pending Expenses</p>
-          <p className="text-2xl font-semibold text-green-600 mt-1">{expenseRequests.length}</p>
+          <p className="text-2xl font-semibold text-stone-600 mt-1">{expenseRequests.length}</p>
         </div>
         <div className="bg-white rounded-lg border border-stone-200 p-4">
           <p className="text-sm text-stone-600">Total Pending Amount</p>
@@ -131,8 +131,8 @@ export function PE04ApprovalsInbox({ onRequestClick }: PE04ApprovalsInboxProps) 
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4 flex-1">
-                      <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
-                        <Calendar className="w-6 h-6 text-blue-600" />
+                      <div className="w-12 h-12 rounded-lg bg-stone-100 flex items-center justify-center">
+                        <Calendar className="w-6 h-6 text-stone-600" />
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
@@ -156,7 +156,7 @@ export function PE04ApprovalsInbox({ onRequestClick }: PE04ApprovalsInboxProps) 
                           e.stopPropagation();
                           onRequestClick(request);
                         }}
-                        className="px-3 py-1.5 text-xs font-medium rounded-lg bg-green-100 text-green-700 hover:bg-green-200 flex items-center gap-1"
+                        className="px-3 py-1.5 text-xs font-medium rounded-lg bg-stone-100 text-stone-700 hover:bg-stone-200 flex items-center gap-1"
                       >
                         <CheckCircle className="w-3 h-3" />
                         Approve
@@ -166,7 +166,7 @@ export function PE04ApprovalsInbox({ onRequestClick }: PE04ApprovalsInboxProps) 
                           e.stopPropagation();
                           onRequestClick(request);
                         }}
-                        className="px-3 py-1.5 text-xs font-medium rounded-lg bg-red-100 text-red-700 hover:bg-red-200 flex items-center gap-1"
+                        className="px-3 py-1.5 text-xs font-medium rounded-lg bg-stone-100 text-stone-700 hover:bg-red-200 flex items-center gap-1"
                       >
                         <XCircle className="w-3 h-3" />
                         Reject
@@ -190,8 +190,8 @@ export function PE04ApprovalsInbox({ onRequestClick }: PE04ApprovalsInboxProps) 
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4 flex-1">
-                      <div className="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center">
-                        <DollarSign className="w-6 h-6 text-green-600" />
+                      <div className="w-12 h-12 rounded-lg bg-stone-100 flex items-center justify-center">
+                        <DollarSign className="w-6 h-6 text-stone-600" />
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
@@ -213,7 +213,7 @@ export function PE04ApprovalsInbox({ onRequestClick }: PE04ApprovalsInboxProps) 
                           e.stopPropagation();
                           onRequestClick(request);
                         }}
-                        className="px-3 py-1.5 text-xs font-medium rounded-lg bg-green-100 text-green-700 hover:bg-green-200 flex items-center gap-1"
+                        className="px-3 py-1.5 text-xs font-medium rounded-lg bg-stone-100 text-stone-700 hover:bg-stone-200 flex items-center gap-1"
                       >
                         <CheckCircle className="w-3 h-3" />
                         Approve
@@ -223,7 +223,7 @@ export function PE04ApprovalsInbox({ onRequestClick }: PE04ApprovalsInboxProps) 
                           e.stopPropagation();
                           onRequestClick(request);
                         }}
-                        className="px-3 py-1.5 text-xs font-medium rounded-lg bg-red-100 text-red-700 hover:bg-red-200 flex items-center gap-1"
+                        className="px-3 py-1.5 text-xs font-medium rounded-lg bg-stone-100 text-stone-700 hover:bg-red-200 flex items-center gap-1"
                       >
                         <XCircle className="w-3 h-3" />
                         Reject

@@ -202,7 +202,7 @@ export function BonsaiConfirmDialog({
                 className={cn(
                   "px-4 py-2 text-[13px] font-medium rounded-lg transition-all active:scale-[0.97] shadow-sm",
                   variant === 'destructive'
-                    ? "bg-red-50 text-red-600 hover:bg-red-100"
+                    ? "bg-stone-100 text-stone-700 hover:bg-stone-100"
                     : "bg-stone-800 text-white hover:bg-stone-700"
                 )}
               >

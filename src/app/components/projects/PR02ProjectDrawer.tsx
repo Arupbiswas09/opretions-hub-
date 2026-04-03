@@ -104,11 +104,11 @@ export function PR02ProjectDrawer({ isOpen, onClose, onSave, initialProject }: P
           </div>
 
           {/* Project Description - PROMINENT */}
-          <div className="p-4 bg-blue-50 border-2 border-blue-200 rounded-lg">
-            <label className="block text-sm font-semibold text-blue-900 mb-2">
+          <div className="p-4 bg-stone-100 border-2 border-stone-200 rounded-lg">
+            <label className="block text-sm font-semibold text-stone-800 mb-2">
               Project Description *
             </label>
-            <p className="text-xs text-blue-700 mb-3">
+            <p className="text-xs text-stone-600 mb-3">
               Provide a clear overview of project goals, deliverables, and success criteria
             </p>
             <textarea

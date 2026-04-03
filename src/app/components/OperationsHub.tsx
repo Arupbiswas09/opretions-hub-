@@ -173,7 +173,7 @@ export default function OperationsHub() {
               onClick={() => setCurrentView('client-portal')}
               className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
                 currentView === 'client-portal'
-                  ? 'bg-blue-500 text-white'
+                  ? 'bg-stone-1000 text-white'
                   : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
               }`}
             >
@@ -193,7 +193,7 @@ export default function OperationsHub() {
               onClick={() => setCurrentView('freelancer-portal')}
               className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
                 currentView === 'freelancer-portal'
-                  ? 'bg-purple-500 text-white'
+                  ? 'bg-stone-1000 text-white'
                   : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
               }`}
             >

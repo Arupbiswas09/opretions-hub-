@@ -42,8 +42,8 @@ export function PE05LeaveRequestDrawer({ isOpen, onClose, onSubmit }: PE05LeaveR
       <div className="fixed right-0 top-0 bottom-0 w-full max-w-xl bg-white shadow-2xl z-50 overflow-y-auto">
         <div className="sticky top-0 bg-white border-b border-stone-200 px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-              <Calendar className="w-5 h-5 text-blue-600" />
+            <div className="w-10 h-10 rounded-lg bg-stone-100 flex items-center justify-center">
+              <Calendar className="w-5 h-5 text-stone-600" />
             </div>
             <div>
               <h2 className="text-xl font-semibold text-stone-800">Request Time Off</h2>
@@ -93,10 +93,10 @@ export function PE05LeaveRequestDrawer({ isOpen, onClose, onSubmit }: PE05LeaveR
 
           {/* Duration Display */}
           {formData.startDate && formData.endDate && (
-            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="p-4 bg-stone-100 border border-stone-200 rounded-lg">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-blue-800">Total Duration</span>
-                <span className="text-lg font-semibold text-blue-900">
+                <span className="text-lg font-semibold text-stone-800">
                   {calculateDays()} {calculateDays() === 1 ? 'day' : 'days'}
                 </span>
               </div>

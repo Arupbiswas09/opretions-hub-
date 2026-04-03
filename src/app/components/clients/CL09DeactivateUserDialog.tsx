@@ -33,8 +33,8 @@ export function CL09DeactivateUserDialog({ isOpen, onClose, onConfirm, user }: C
           {/* Header */}
           <div className="px-6 py-4 border-b border-stone-200 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
-                <AlertTriangle className="w-5 h-5 text-red-600" />
+              <div className="w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-stone-700" />
               </div>
               <h2 className="text-xl font-semibold text-stone-800">Deactivate Portal User</h2>
             </div>
@@ -65,11 +65,11 @@ export function CL09DeactivateUserDialog({ isOpen, onClose, onConfirm, user }: C
               </div>
             </div>
 
-            <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
-              <p className="text-xs text-amber-800">
+            <div className="p-4 bg-stone-100 border border-stone-200 rounded-lg">
+              <p className="text-xs text-stone-700">
                 <strong>⚠️ This action will:</strong>
               </p>
-              <ul className="mt-2 space-y-1 text-xs text-amber-800">
+              <ul className="mt-2 space-y-1 text-xs text-stone-700">
                 <li className="flex items-start gap-2">
                   <span className="mt-1">•</span>
                   <span>Immediately revoke their portal access</span>

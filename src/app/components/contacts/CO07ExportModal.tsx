@@ -56,14 +56,14 @@ export function CO07ExportModal({ isOpen, onClose, onExport, contactName }: CO07
           {/* Content */}
           <div className="p-6 space-y-6">
             {/* GDPR Notice */}
-            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="p-4 bg-stone-100 border border-stone-200 rounded-lg">
               <div className="flex items-start gap-3">
-                <Download className="w-5 h-5 text-blue-600 mt-0.5" />
+                <Download className="w-5 h-5 text-stone-600 mt-0.5" />
                 <div>
-                  <p className="text-sm font-medium text-blue-900 mb-1">
+                  <p className="text-sm font-medium text-stone-800 mb-1">
                     GDPR Data Export Request
                   </p>
-                  <p className="text-xs text-blue-700">
+                  <p className="text-xs text-stone-600">
                     This export fulfills the data subject's right to data portability under Article 20 GDPR. 
                     The exported data will be in a structured, commonly used, and machine-readable format.
                   </p>
@@ -198,7 +198,7 @@ export function CO07ExportModal({ isOpen, onClose, onExport, contactName }: CO07
             {/* Summary */}
             <div className="p-4 bg-stone-50 rounded-lg">
               <div className="flex items-start gap-3">
-                <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5" />
+                <CheckCircle2 className="w-5 h-5 text-stone-600 mt-0.5" />
                 <div>
                   <p className="text-sm font-medium text-stone-800 mb-1">Export Summary</p>
                   <p className="text-xs text-stone-600">

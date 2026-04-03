@@ -203,7 +203,7 @@ export default function UIKitDemo() {
                       id: 'progress',
                       title: 'In Progress',
                       count: 2,
-                      color: 'bg-blue-500',
+                      color: 'bg-stone-1000',
                       cards: [
                         {
                           id: '3',
@@ -219,7 +219,7 @@ export default function UIKitDemo() {
                       id: 'done',
                       title: 'Done',
                       count: 5,
-                      color: 'bg-green-500',
+                      color: 'bg-stone-1000',
                       cards: [
                         {
                           id: '4',

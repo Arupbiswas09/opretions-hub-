@@ -38,7 +38,7 @@ export function T02KanbanPage({ title, subtitle }: T02KanbanPageProps) {
       id: 'inprogress',
       title: 'In Progress',
       count: 8,
-      color: 'bg-blue-500',
+      color: 'bg-stone-1000',
       cards: [
         {
           id: '3',
@@ -61,7 +61,7 @@ export function T02KanbanPage({ title, subtitle }: T02KanbanPageProps) {
       id: 'review',
       title: 'Review',
       count: 3,
-      color: 'bg-amber-500',
+      color: 'bg-stone-1000',
       cards: [
         {
           id: '5',
@@ -77,7 +77,7 @@ export function T02KanbanPage({ title, subtitle }: T02KanbanPageProps) {
       id: 'done',
       title: 'Done',
       count: 12,
-      color: 'bg-green-500',
+      color: 'bg-stone-1000',
       cards: [
         {
           id: '6',

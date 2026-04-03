@@ -127,7 +127,7 @@ export function CL03ClientDetail({ client, onEdit, onInviteUser, onCreateRequest
                 status={getStatusColor(client.status)}
                 label={client.status}
               />
-              <span className="inline-flex px-3 py-1 text-xs rounded-full bg-blue-100 text-blue-700">
+              <span className="inline-flex px-3 py-1 text-xs rounded-full bg-stone-100 text-stone-600">
                 {client.industry}
               </span>
             </div>
@@ -203,11 +203,11 @@ export function CL03ClientDetail({ client, onEdit, onInviteUser, onCreateRequest
               </div>
               <div className="bg-white rounded-lg border border-stone-200 p-4">
                 <p className="text-xs text-stone-600 mb-1">Active Projects</p>
-                <p className="text-2xl font-semibold text-green-600">2</p>
+                <p className="text-2xl font-semibold text-stone-600">2</p>
               </div>
               <div className="bg-white rounded-lg border border-stone-200 p-4">
                 <p className="text-xs text-stone-600 mb-1">Open Requests</p>
-                <p className="text-2xl font-semibold text-amber-600">2</p>
+                <p className="text-2xl font-semibold text-stone-600">2</p>
               </div>
               <div className="bg-white rounded-lg border border-stone-200 p-4">
                 <p className="text-xs text-stone-600 mb-1">Portal Users</p>
@@ -438,7 +438,7 @@ export function CL03ClientDetail({ client, onEdit, onInviteUser, onCreateRequest
                       <div className="flex items-center gap-3">
                         <div className="text-right">
                           <div className="flex items-center gap-2">
-                            <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-700">
+                            <span className="px-2 py-1 text-xs rounded-full bg-stone-100 text-stone-600">
                               {user.role}
                             </span>
                             <BonsaiStatusPill

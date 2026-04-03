@@ -82,7 +82,7 @@ export default function LayoutTemplates() {
                     <DollarSign className="w-5 h-5 text-stone-700" />
                   </div>
                 </div>
-                <p className="text-xs text-green-600">+12% from last month</p>
+                <p className="text-xs text-stone-500">+12% from last month</p>
               </div>
 
               <div className="bg-white rounded-lg border border-stone-200 p-4">
@@ -91,8 +91,8 @@ export default function LayoutTemplates() {
                     <p className="text-sm text-stone-600">Active Projects</p>
                     <p className="text-2xl font-semibold text-stone-800 mt-1">8</p>
                   </div>
-                  <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                    <BarChart3 className="w-5 h-5 text-blue-600" />
+                  <div className="w-10 h-10 rounded-lg bg-stone-100 flex items-center justify-center">
+                    <BarChart3 className="w-5 h-5 text-stone-600" />
                   </div>
                 </div>
                 <p className="text-xs text-stone-500">2 due this week</p>
@@ -104,8 +104,8 @@ export default function LayoutTemplates() {
                     <p className="text-sm text-stone-600">Completed</p>
                     <p className="text-2xl font-semibold text-stone-800 mt-1">24</p>
                   </div>
-                  <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
-                    <CheckCircle className="w-5 h-5 text-green-600" />
+                  <div className="w-10 h-10 rounded-lg bg-stone-100 flex items-center justify-center">
+                    <CheckCircle className="w-5 h-5 text-stone-600" />
                   </div>
                 </div>
                 <p className="text-xs text-stone-500">This quarter</p>
@@ -117,8 +117,8 @@ export default function LayoutTemplates() {
                     <p className="text-sm text-stone-600">Team Members</p>
                     <p className="text-2xl font-semibold text-stone-800 mt-1">12</p>
                   </div>
-                  <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
-                    <Users className="w-5 h-5 text-purple-600" />
+                  <div className="w-10 h-10 rounded-lg bg-stone-100 flex items-center justify-center">
+                    <Users className="w-5 h-5 text-stone-600" />
                   </div>
                 </div>
                 <p className="text-xs text-stone-500">Across 8 projects</p>

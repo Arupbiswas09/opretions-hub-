@@ -94,15 +94,15 @@ export function FI02InvoicesList({ onInvoiceClick, onCreate, onGenerateFromTimes
         </div>
         <div className="bg-white rounded-lg border border-stone-200 p-4">
           <p className="text-sm text-stone-600">Sent</p>
-          <p className="text-2xl font-semibold text-amber-600 mt-1">1</p>
+          <p className="text-2xl font-semibold text-stone-600 mt-1">1</p>
         </div>
         <div className="bg-white rounded-lg border border-stone-200 p-4">
           <p className="text-sm text-stone-600">Paid</p>
-          <p className="text-2xl font-semibold text-green-600 mt-1">1</p>
+          <p className="text-2xl font-semibold text-stone-600 mt-1">1</p>
         </div>
         <div className="bg-white rounded-lg border border-stone-200 p-4">
           <p className="text-sm text-stone-600">Overdue</p>
-          <p className="text-2xl font-semibold text-red-600 mt-1">1</p>
+          <p className="text-2xl font-semibold text-stone-700 mt-1">1</p>
         </div>
       </div>
 

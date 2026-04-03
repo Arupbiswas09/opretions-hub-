@@ -100,9 +100,9 @@ export function CL05RequestDetail({ request, onBack }: CL05RequestDetailProps) {
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'Urgent': return 'bg-red-100 text-red-700';
-      case 'High': return 'bg-orange-100 text-orange-700';
-      case 'Medium': return 'bg-blue-100 text-blue-700';
+      case 'Urgent': return 'bg-stone-100 text-stone-700';
+      case 'High': return 'bg-stone-100 text-stone-700';
+      case 'Medium': return 'bg-stone-100 text-stone-600';
       case 'Low': return 'bg-stone-100 text-stone-700';
       default: return 'bg-stone-100 text-stone-700';
     }
@@ -152,19 +152,19 @@ export function CL05RequestDetail({ request, onBack }: CL05RequestDetailProps) {
             <p className="text-xs font-medium">New</p>
           </div>
           <div className="w-8 h-0.5 bg-stone-300"></div>
-          <div className={`flex-1 text-center p-3 rounded-lg ${request.status === 'In Review' ? 'bg-primary text-white' : request.status !== 'New' ? 'bg-green-100 text-green-700' : 'bg-stone-100 text-stone-600'}`}>
+          <div className={`flex-1 text-center p-3 rounded-lg ${request.status === 'In Review' ? 'bg-primary text-white' : request.status !== 'New' ? 'bg-stone-100 text-stone-700' : 'bg-stone-100 text-stone-600'}`}>
             <p className="text-xs font-medium">In Review</p>
           </div>
           <div className="w-8 h-0.5 bg-stone-300"></div>
-          <div className={`flex-1 text-center p-3 rounded-lg ${request.status === 'Approved' ? 'bg-primary text-white' : ['In Progress', 'Completed'].includes(request.status) ? 'bg-green-100 text-green-700' : 'bg-stone-100 text-stone-600'}`}>
+          <div className={`flex-1 text-center p-3 rounded-lg ${request.status === 'Approved' ? 'bg-primary text-white' : ['In Progress', 'Completed'].includes(request.status) ? 'bg-stone-100 text-stone-700' : 'bg-stone-100 text-stone-600'}`}>
             <p className="text-xs font-medium">Approved</p>
           </div>
           <div className="w-8 h-0.5 bg-stone-300"></div>
-          <div className={`flex-1 text-center p-3 rounded-lg ${request.status === 'In Progress' ? 'bg-primary text-white' : request.status === 'Completed' ? 'bg-green-100 text-green-700' : 'bg-stone-100 text-stone-600'}`}>
+          <div className={`flex-1 text-center p-3 rounded-lg ${request.status === 'In Progress' ? 'bg-primary text-white' : request.status === 'Completed' ? 'bg-stone-100 text-stone-700' : 'bg-stone-100 text-stone-600'}`}>
             <p className="text-xs font-medium">In Progress</p>
           </div>
           <div className="w-8 h-0.5 bg-stone-300"></div>
-          <div className={`flex-1 text-center p-3 rounded-lg ${request.status === 'Completed' ? 'bg-green-600 text-white' : request.status === 'Rejected' ? 'bg-red-600 text-white' : 'bg-stone-100 text-stone-600'}`}>
+          <div className={`flex-1 text-center p-3 rounded-lg ${request.status === 'Completed' ? 'bg-stone-700 text-white' : request.status === 'Rejected' ? 'bg-stone-800 text-white' : 'bg-stone-100 text-stone-600'}`}>
             <p className="text-xs font-medium">{request.status === 'Rejected' ? 'Rejected' : 'Completed'}</p>
           </div>
         </div>
@@ -275,7 +275,7 @@ export function CL05RequestDetail({ request, onBack }: CL05RequestDetailProps) {
                   key={msg.id}
                   className={`p-4 rounded-lg ${
                     msg.isInternal
-                      ? 'bg-amber-50 border border-amber-200'
+                      ? 'bg-stone-100 border border-stone-200'
                       : 'bg-stone-50'
                   }`}
                 >
@@ -291,7 +291,7 @@ export function CL05RequestDetail({ request, onBack }: CL05RequestDetailProps) {
                         <p className="text-xs text-stone-500">{msg.role}</p>
                       </div>
                       {msg.isInternal && (
-                        <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-amber-200 text-amber-800 flex items-center gap-1">
+                        <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-stone-200 text-stone-700 flex items-center gap-1">
                           <Lock className="w-3 h-3" />
                           Internal
                         </span>

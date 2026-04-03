@@ -228,19 +228,19 @@ export function CO01ContactsList({ onContactClick, onCreateContact, onBulkAction
         </div>
         <div className="bg-white rounded-lg border border-stone-200 p-4">
           <p className="text-sm text-stone-600">Consent Given</p>
-          <p className="text-2xl font-semibold text-green-600 mt-1">3</p>
+          <p className="text-2xl font-semibold text-stone-600 mt-1">3</p>
         </div>
         <div className="bg-white rounded-lg border border-stone-200 p-4">
           <p className="text-sm text-stone-600">Pending Consent</p>
-          <p className="text-2xl font-semibold text-amber-600 mt-1">1</p>
+          <p className="text-2xl font-semibold text-stone-600 mt-1">1</p>
         </div>
         <div className="bg-white rounded-lg border border-stone-200 p-4">
           <p className="text-sm text-stone-600">Export Requests</p>
-          <p className="text-2xl font-semibold text-blue-600 mt-1">1</p>
+          <p className="text-2xl font-semibold text-stone-600 mt-1">1</p>
         </div>
         <div className="bg-white rounded-lg border border-stone-200 p-4">
           <p className="text-sm text-stone-600">Deletion Requests</p>
-          <p className="text-2xl font-semibold text-red-600 mt-1">1</p>
+          <p className="text-2xl font-semibold text-stone-700 mt-1">1</p>
         </div>
       </div>
 
@@ -355,7 +355,7 @@ export function CO01ContactsList({ onContactClick, onCreateContact, onBulkAction
             </BonsaiButton>
             <button
               onClick={() => handleBulkAction('show-toolbar')}
-              className="ml-2 px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200"
+              className="ml-2 px-3 py-1.5 text-xs font-medium rounded-lg bg-stone-100 text-stone-600 hover:bg-stone-200"
             >
               Show CO-06
             </button>
@@ -372,7 +372,7 @@ export function CO01ContactsList({ onContactClick, onCreateContact, onBulkAction
           data={contacts.map(contact => ({
             ...contact,
             type: (
-              <span className="inline-flex px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-700">
+              <span className="inline-flex px-2 py-1 text-xs rounded-full bg-stone-100 text-stone-600">
                 {contact.type}
               </span>
             ),

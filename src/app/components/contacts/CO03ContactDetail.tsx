@@ -135,7 +135,7 @@ export function CO03ContactDetail({ contact, onEdit, onLinkClient }: CO03Contact
                   label={contact.gdprStatus}
                 />
               )}
-              <span className="inline-flex px-3 py-1 text-xs rounded-full bg-blue-100 text-blue-700">
+              <span className="inline-flex px-3 py-1 text-xs rounded-full bg-stone-100 text-stone-600">
                 {contact.type}
               </span>
             </div>
@@ -385,7 +385,7 @@ export function CO03ContactDetail({ contact, onEdit, onLinkClient }: CO03Contact
                   actions: item.type !== 'system' ? (
                     <div className="flex items-center gap-2">
                       <button className="text-xs text-primary hover:underline">Edit</button>
-                      <button className="text-xs text-red-600 hover:underline">Delete</button>
+                      <button className="text-xs text-stone-700 hover:underline">Delete</button>
                     </div>
                   ) : undefined,
                 }))}

@@ -160,8 +160,8 @@ export function SA02DealsList({ onDealClick, onCreateDeal }: SA02DealsListProps)
             type: (
               <span className={`inline-flex px-2 py-1 text-xs rounded-full ${
                 deal.type === 'Project' 
-                  ? 'bg-blue-100 text-blue-700' 
-                  : 'bg-purple-100 text-purple-700'
+                  ? 'bg-stone-100 text-stone-600' 
+                  : 'bg-stone-100 text-stone-600'
               }`}>
                 {deal.type}
               </span>

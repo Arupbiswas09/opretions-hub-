@@ -47,11 +47,11 @@ export function PE07ApproveRejectModal({ isOpen, onClose, onApprove, onReject, r
           {/* Header */}
           <div className="px-6 py-4 border-b border-stone-200 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-lg ${isLeave ? 'bg-blue-100' : 'bg-green-100'} flex items-center justify-center`}>
+              <div className={`w-10 h-10 rounded-lg ${isLeave ? 'bg-stone-100' : 'bg-stone-100'} flex items-center justify-center`}>
                 {isLeave ? (
-                  <Calendar className="w-5 h-5 text-blue-600" />
+                  <Calendar className="w-5 h-5 text-stone-600" />
                 ) : (
-                  <DollarSign className="w-5 h-5 text-green-600" />
+                  <DollarSign className="w-5 h-5 text-stone-600" />
                 )}
               </div>
               <div>
@@ -162,15 +162,15 @@ export function PE07ApproveRejectModal({ isOpen, onClose, onApprove, onReject, r
             )}
 
             {action === 'approve' && (
-              <div className="bg-green-50 border-2 border-green-200 rounded-lg p-6">
+              <div className="bg-stone-100 border-2 border-stone-200 rounded-lg p-6">
                 <div className="flex items-start gap-3 mb-4">
-                  <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" />
+                  <CheckCircle className="w-6 h-6 text-stone-600 flex-shrink-0 mt-0.5" />
                   <div className="flex-1">
-                    <h3 className="font-semibold text-green-900 mb-2">Approve Request</h3>
+                    <h3 className="font-semibold text-stone-800 mb-2">Approve Request</h3>
                     <p className="text-sm text-green-800 mb-4">
                       This {isLeave ? 'leave request' : 'expense claim'} will be approved and the employee will be notified.
                     </p>
-                    <label className="block text-sm font-medium text-green-900 mb-2">
+                    <label className="block text-sm font-medium text-stone-800 mb-2">
                       Comment (optional)
                     </label>
                     <textarea
@@ -194,16 +194,16 @@ export function PE07ApproveRejectModal({ isOpen, onClose, onApprove, onReject, r
             )}
 
             {action === 'reject' && (
-              <div className="bg-red-50 border-2 border-red-200 rounded-lg p-6">
+              <div className="bg-stone-100 border-2 border-red-200 rounded-lg p-6">
                 <div className="flex items-start gap-3 mb-4">
-                  <XCircle className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" />
+                  <XCircle className="w-6 h-6 text-stone-700 flex-shrink-0 mt-0.5" />
                   <div className="flex-1">
                     <h3 className="font-semibold text-red-900 mb-2">Reject Request</h3>
                     <p className="text-sm text-red-800 mb-4">
                       The request will be rejected and returned to the employee with your feedback.
                     </p>
                     <label className="block text-sm font-medium text-red-900 mb-2">
-                      Rejection Reason * <span className="font-normal text-red-700">(Required)</span>
+                      Rejection Reason * <span className="font-normal text-stone-700">(Required)</span>
                     </label>
                     <textarea
                       value={reason}

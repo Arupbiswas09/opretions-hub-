@@ -208,11 +208,11 @@ export function CL01ClientsList({ onClientClick, onCreateClient, onBulkAction }:
         </div>
         <div className="bg-white rounded-lg border border-stone-200 p-4">
           <p className="text-sm text-stone-600">Active</p>
-          <p className="text-2xl font-semibold text-green-600 mt-1">3</p>
+          <p className="text-2xl font-semibold text-stone-600 mt-1">3</p>
         </div>
         <div className="bg-white rounded-lg border border-stone-200 p-4">
           <p className="text-sm text-stone-600">Onboarding</p>
-          <p className="text-2xl font-semibold text-blue-600 mt-1">1</p>
+          <p className="text-2xl font-semibold text-stone-600 mt-1">1</p>
         </div>
         <div className="bg-white rounded-lg border border-stone-200 p-4">
           <p className="text-sm text-stone-600">Total Revenue</p>

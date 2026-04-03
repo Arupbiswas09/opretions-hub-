@@ -31,22 +31,22 @@ export function FI01FinanceDashboard({ onNavigateToInvoices, onNavigateToExpense
             <DollarSign className="w-5 h-5 text-primary" />
           </div>
           <p className="text-3xl font-semibold text-stone-800">$145,280</p>
-          <p className="text-xs text-green-600 mt-1">+12.5% from last month</p>
+          <p className="text-xs text-stone-600 mt-1">+12.5% from last month</p>
         </div>
 
         <div className="bg-white rounded-lg border border-stone-200 p-6">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm text-stone-600">Outstanding</p>
-            <FileText className="w-5 h-5 text-amber-600" />
+            <FileText className="w-5 h-5 text-stone-600" />
           </div>
-          <p className="text-3xl font-semibold text-amber-600">$38,450</p>
+          <p className="text-3xl font-semibold text-stone-600">$38,450</p>
           <p className="text-xs text-stone-600 mt-1">5 invoices pending</p>
         </div>
 
         <div className="bg-white rounded-lg border border-stone-200 p-6">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm text-stone-600">Expenses (MTD)</p>
-            <TrendingUp className="w-5 h-5 text-red-600" />
+            <TrendingUp className="w-5 h-5 text-stone-700" />
           </div>
           <p className="text-3xl font-semibold text-stone-800">$24,120</p>
           <p className="text-xs text-stone-600 mt-1">18 pending claims</p>
@@ -55,9 +55,9 @@ export function FI01FinanceDashboard({ onNavigateToInvoices, onNavigateToExpense
         <div className="bg-white rounded-lg border border-stone-200 p-6">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm text-stone-600">Overdue</p>
-            <AlertCircle className="w-5 h-5 text-red-600" />
+            <AlertCircle className="w-5 h-5 text-stone-700" />
           </div>
-          <p className="text-3xl font-semibold text-red-600">$8,200</p>
+          <p className="text-3xl font-semibold text-stone-700">$8,200</p>
           <p className="text-xs text-stone-600 mt-1">2 invoices overdue</p>
         </div>
       </div>
@@ -102,8 +102,8 @@ export function FI01FinanceDashboard({ onNavigateToInvoices, onNavigateToExpense
           className="bg-white rounded-lg border border-stone-200 p-6 hover:shadow-md transition-shadow text-left"
         >
           <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center">
-              <DollarSign className="w-6 h-6 text-green-600" />
+            <div className="w-12 h-12 rounded-lg bg-stone-100 flex items-center justify-center">
+              <DollarSign className="w-6 h-6 text-stone-600" />
             </div>
             <BonsaiStatusPill status="pending" label="18 To Review" />
           </div>

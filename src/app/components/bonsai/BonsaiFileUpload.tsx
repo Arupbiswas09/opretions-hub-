@@ -109,8 +109,8 @@ interface BonsaiDocumentListProps {
 
 export function BonsaiDocumentList({ documents, onDownload, onDelete, className }: BonsaiDocumentListProps) {
   const getFileIcon = (type: string) => {
-    if (type.includes('image')) return <ImageIcon className="w-5 h-5 text-blue-500" />;
-    if (type.includes('pdf')) return <FileText className="w-5 h-5 text-red-500" />;
+    if (type.includes('image')) return <ImageIcon className="w-5 h-5 text-stone-600" />;
+    if (type.includes('pdf')) return <FileText className="w-5 h-5 text-stone-600" />;
     if (type.includes('sheet') || type.includes('excel')) return <FileSpreadsheet className="w-5 h-5 text-green-500" />;
     return <File className="w-5 h-5 text-stone-500" />;
   };

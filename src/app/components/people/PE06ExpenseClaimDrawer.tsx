@@ -62,8 +62,8 @@ export function PE06ExpenseClaimDrawer({ isOpen, onClose, onSubmit }: PE06Expens
       <div className="fixed right-0 top-0 bottom-0 w-full max-w-2xl bg-white shadow-2xl z-50 overflow-y-auto">
         <div className="sticky top-0 bg-white border-b border-stone-200 px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
-              <DollarSign className="w-5 h-5 text-green-600" />
+            <div className="w-10 h-10 rounded-lg bg-stone-100 flex items-center justify-center">
+              <DollarSign className="w-5 h-5 text-stone-600" />
             </div>
             <div>
               <h2 className="text-xl font-semibold text-stone-800">Submit Expense Claim</h2>
@@ -94,7 +94,7 @@ export function PE06ExpenseClaimDrawer({ isOpen, onClose, onSubmit }: PE06Expens
                       <button
                         type="button"
                         onClick={() => removeItem(item.id)}
-                        className="p-1 text-stone-400 hover:text-red-600 hover:bg-red-50 rounded"
+                        className="p-1 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>

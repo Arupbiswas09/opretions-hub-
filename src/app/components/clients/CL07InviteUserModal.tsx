@@ -175,7 +175,7 @@ export function CL07InviteUserModal({ isOpen, onClose, onInvite }: CL07InviteUse
             </div>
 
             {/* Info */}
-            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="p-4 bg-stone-100 border border-stone-200 rounded-lg">
               <p className="text-xs text-blue-800">
                 <strong>Email Invitation:</strong> An invitation email will be sent to the user with instructions 
                 to set up their password and access the client portal.

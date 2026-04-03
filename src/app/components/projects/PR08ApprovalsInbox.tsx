@@ -90,11 +90,11 @@ export function PR08ApprovalsInbox({ onApprovalClick }: PR08ApprovalsInboxProps)
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <div className="bg-white rounded-lg border border-stone-200 p-4">
           <p className="text-sm text-stone-600">Pending Review</p>
-          <p className="text-2xl font-semibold text-amber-600 mt-1">2</p>
+          <p className="text-2xl font-semibold text-stone-600 mt-1">2</p>
         </div>
         <div className="bg-white rounded-lg border border-stone-200 p-4">
           <p className="text-sm text-stone-600">Approved This Week</p>
-          <p className="text-2xl font-semibold text-green-600 mt-1">1</p>
+          <p className="text-2xl font-semibold text-stone-600 mt-1">1</p>
         </div>
         <div className="bg-white rounded-lg border border-stone-200 p-4">
           <p className="text-sm text-stone-600">Total Hours Pending</p>
@@ -185,7 +185,7 @@ export function PR08ApprovalsInbox({ onApprovalClick }: PR08ApprovalsInboxProps)
                         e.stopPropagation();
                         onApprovalClick(approval);
                       }}
-                      className="px-3 py-1.5 text-xs font-medium rounded-lg bg-green-100 text-green-700 hover:bg-green-200 flex items-center gap-1"
+                      className="px-3 py-1.5 text-xs font-medium rounded-lg bg-stone-100 text-stone-700 hover:bg-stone-200 flex items-center gap-1"
                     >
                       <CheckCircle className="w-3 h-3" />
                       Approve
@@ -195,7 +195,7 @@ export function PR08ApprovalsInbox({ onApprovalClick }: PR08ApprovalsInboxProps)
                         e.stopPropagation();
                         onApprovalClick(approval);
                       }}
-                      className="px-3 py-1.5 text-xs font-medium rounded-lg bg-red-100 text-red-700 hover:bg-red-200 flex items-center gap-1"
+                      className="px-3 py-1.5 text-xs font-medium rounded-lg bg-stone-100 text-stone-700 hover:bg-red-200 flex items-center gap-1"
                     >
                       <XCircle className="w-3 h-3" />
                       Reject

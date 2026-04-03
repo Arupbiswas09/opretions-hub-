@@ -158,7 +158,7 @@ export function CL06CreateRequestModal({ isOpen, onClose, onCreate }: CL06Create
             />
 
             {/* Info Box */}
-            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="p-4 bg-stone-100 border border-stone-200 rounded-lg">
               <p className="text-xs text-blue-800">
                 <strong>What happens next?</strong> Your request will be reviewed by our team. 
                 You'll receive an initial response within 1-2 business days. 

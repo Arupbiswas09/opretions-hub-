@@ -154,7 +154,7 @@ export function FI04InvoiceDrawer({ isOpen, onClose, onSave, initialInvoice }: F
                       <button
                         type="button"
                         onClick={() => removeLineItem(item.id)}
-                        className="p-1 text-stone-400 hover:text-red-600 hover:bg-red-50 rounded"
+                        className="p-1 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>

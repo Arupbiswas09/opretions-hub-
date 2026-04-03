@@ -116,10 +116,10 @@ export function SA01Dashboard({ onNavigateToDeals, onNavigateToPipeline, onCreat
             </p>
             <div className="flex items-center gap-2 mt-1.5">
               {s.up
-                ? <TrendingUp className="w-3 h-3 text-emerald-500 flex-shrink-0" />
-                : <TrendingDown className="w-3 h-3 text-red-400 flex-shrink-0" />
+                ? <TrendingUp className="w-3 h-3 text-stone-600 flex-shrink-0" />
+                : <TrendingDown className="w-3 h-3 text-stone-400 flex-shrink-0" />
               }
-              <span className={`text-[11px] font-medium ${s.up ? 'text-emerald-600' : 'text-red-500'}`}>{s.delta}</span>
+              <span className={`text-[11px] font-medium ${s.up ? 'text-stone-700' : 'text-stone-400'}`}>{s.delta}</span>
               <span className="text-[11px] text-stone-400">{s.sub}</span>
             </div>
           </motion.div>
@@ -226,7 +226,7 @@ export function SA01Dashboard({ onNavigateToDeals, onNavigateToPipeline, onCreat
               onClick={onNavigateToDeals}
             >
               {/* Urgency indicator */}
-              <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${deal.hot ? 'bg-amber-500' : 'bg-stone-200'}`} />
+              <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${deal.hot ? 'bg-stone-800' : 'bg-stone-200'}`} />
 
               <div className="flex-1 min-w-0">
                 <p className="text-[13px] font-medium text-stone-800 truncate">{deal.name}</p>

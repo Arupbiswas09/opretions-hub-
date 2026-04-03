@@ -106,8 +106,8 @@ export function PE01PeopleDirectory({ onPersonClick, onCreatePerson, onBulkActio
 
   const getAvailabilityColor = (availability: string) => {
     switch (availability) {
-      case 'Available': return 'bg-green-100 text-green-700';
-      case 'Busy': return 'bg-amber-100 text-amber-700';
+      case 'Available': return 'bg-stone-100 text-stone-700';
+      case 'Busy': return 'bg-stone-100 text-stone-600';
       case 'On Leave': return 'bg-stone-100 text-stone-700';
       default: return 'bg-stone-100 text-stone-700';
     }
@@ -189,15 +189,15 @@ export function PE01PeopleDirectory({ onPersonClick, onCreatePerson, onBulkActio
         </div>
         <div className="bg-white rounded-lg border border-stone-200 p-4">
           <p className="text-sm text-stone-600">Freelancers</p>
-          <p className="text-2xl font-semibold text-green-600 mt-1">2</p>
+          <p className="text-2xl font-semibold text-stone-600 mt-1">2</p>
         </div>
         <div className="bg-white rounded-lg border border-stone-200 p-4">
           <p className="text-sm text-stone-600">Available</p>
-          <p className="text-2xl font-semibold text-green-600 mt-1">2</p>
+          <p className="text-2xl font-semibold text-stone-600 mt-1">2</p>
         </div>
         <div className="bg-white rounded-lg border border-stone-200 p-4">
           <p className="text-sm text-stone-600">On Leave</p>
-          <p className="text-2xl font-semibold text-amber-600 mt-1">1</p>
+          <p className="text-2xl font-semibold text-stone-600 mt-1">1</p>
         </div>
       </div>
 
@@ -286,7 +286,7 @@ export function PE01PeopleDirectory({ onPersonClick, onCreatePerson, onBulkActio
             ...person,
             type: (
               <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                person.type === 'Employee' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'
+                person.type === 'Employee' ? 'bg-stone-100 text-stone-600' : 'bg-stone-100 text-stone-700'
               }`}>
                 {person.type}
               </span>

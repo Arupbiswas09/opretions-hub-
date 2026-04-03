@@ -1,5 +1,7 @@
 'use client';
 import React, { useState } from 'react';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
 import { Home, Briefcase, FileText, DollarSign, Calendar, Users, FolderOpen, MessageSquare, ClipboardList, CheckSquare, FileCheck, ThumbsUp, Video, X, Check, Download, MessageCircle, User, BookOpen, Award, TrendingUp, Clock, Receipt, Shield } from 'lucide-react';
 import { BonsaiTabs } from './bonsai/BonsaiTabs';
@@ -9,14 +11,27 @@ import { BonsaiTimeline } from './bonsai/BonsaiTimeline';
 import { BonsaiDocumentList } from './bonsai/BonsaiFileUpload';
 import { EnhancedTable } from './operations/EnhancedTable';
 
-type PortalType = 'client' | 'employee' | 'freelancer' | 'hris';
+export type PortalType = 'client' | 'employee' | 'freelancer' | 'hris';
 type ClientScreen = 'home' | 'projects' | 'requests' | 'documents' | 'invoices' | 'invoice-detail' | 'support' | 'ticket-detail' | 'talent' | 'proposals' | 'proposal-detail' | 'approvals' | 'approval-detail-request' | 'approval-detail-invoice' | 'approval-detail-timesheet' | 'meetings' | 'meeting-detail' | 'forms';
 type EmployeeScreen = 'home' | 'projects' | 'tasks' | 'timesheets' | 'expenses' | 'leave' | 'documents' | 'onboarding' | 'onboarding-task' | 'profile' | 'profile-change-request' | 'training' | 'training-detail' | 'performance-reviews' | 'performance-review-detail' | 'meetings' | 'meeting-detail';
 type FreelancerScreen = 'home' | 'assignments' | 'tasks' | 'timesheets' | 'expenses' | 'documents' | 'onboarding' | 'contract-docs' | 'profile' | 'profile-change-request' | 'self-bills' | 'self-bill-detail';
 type HRISScreen = 'profile-requests' | 'profile-request-detail' | 'document-requests';
 
-export default function Portals() {
-  const [portalType, setPortalType] = useState<PortalType>('employee');
+type PortalsProps = {
+  /** When set (e.g. from `/hub/portals/[portal]`), initial tab matches URL. */
+  initialPortal?: PortalType;
+  /** Use Next.js links for portal tabs so the URL stays in sync. */
+  urlSync?: boolean;
+};
+
+export default function Portals({ initialPortal = 'employee', urlSync = false }: PortalsProps) {
+  const params = useParams();
+  const portalFromUrl = params?.portal as PortalType | undefined;
+  const [portalType, setPortalType] = useState<PortalType>(initialPortal);
+  const activePortal: PortalType =
+    urlSync && portalFromUrl && (['client', 'employee', 'freelancer', 'hris'] as const).includes(portalFromUrl)
+      ? portalFromUrl
+      : portalType;
   const [clientScreen, setClientScreen] = useState<ClientScreen>('home');
   const [employeeScreen, setEmployeeScreen] = useState<EmployeeScreen>('home');
   const [freelancerScreen, setFreelancerScreen] = useState<FreelancerScreen>('home');
@@ -34,9 +49,9 @@ export default function Portals() {
     >{label}</button>
   );
 
-  const screenKey = portalType === 'client' ? clientScreen
-    : portalType === 'employee' ? employeeScreen
-    : portalType === 'freelancer' ? freelancerScreen
+  const screenKey = activePortal === 'client' ? clientScreen
+    : activePortal === 'employee' ? employeeScreen
+    : activePortal === 'freelancer' ? freelancerScreen
     : hrisScreen;
 
   return (
@@ -55,19 +70,38 @@ export default function Portals() {
           {(['client','employee','freelancer','hris'] as const).map((id) => {
             const label = id === 'hris' ? 'HRIS Admin' : id.charAt(0).toUpperCase() + id.slice(1);
             const dot: Record<string, string> = { client: '#6366F1', employee: '#059669', freelancer: '#D97706', hris: '#78716c' };
+            const href = `/hub/portals/${id}`;
+            const className =
+              'flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] text-[12px] font-medium transition-all duration-200';
+            const style = {
+              background: activePortal === id ? '#1c1917' : 'transparent',
+              color: activePortal === id ? '#ffffff' : '#78716c',
+            } as const;
+            if (urlSync) {
+              return (
+                <Link
+                  key={id}
+                  href={href}
+                  className={className}
+                  style={style}
+                  scroll={false}
+                >
+                  {activePortal === id && <div className="w-[5px] h-[5px] rounded-full" style={{ background: dot[id] }} />}
+                  {label}
+                </Link>
+              );
+            }
             return (
               <button
                 key={id}
+                type="button"
                 onClick={() => setPortalType(id)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] text-[12px] font-medium transition-all duration-200"
-                style={{
-                  background: portalType === id ? '#1c1917' : 'transparent',
-                  color: portalType === id ? '#ffffff' : '#78716c',
-                }}
-                onMouseEnter={(e) => { if (portalType !== id) e.currentTarget.style.background = 'rgba(28,25,23,0.06)'; }}
-                onMouseLeave={(e) => { if (portalType !== id) e.currentTarget.style.background = 'transparent'; }}
+                className={className}
+                style={style}
+                onMouseEnter={(e) => { if (activePortal !== id) e.currentTarget.style.background = 'rgba(28,25,23,0.06)'; }}
+                onMouseLeave={(e) => { if (activePortal !== id) e.currentTarget.style.background = 'transparent'; }}
               >
-                {portalType === id && <div className="w-[5px] h-[5px] rounded-full" style={{ background: dot[id] }} />}
+                {activePortal === id && <div className="w-[5px] h-[5px] rounded-full" style={{ background: dot[id] }} />}
                 {label}
               </button>
             );
@@ -76,17 +110,17 @@ export default function Portals() {
       </div>
 
       <AnimatePresence mode="wait">
-        <motion.div key={`${portalType}-${screenKey}`} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.25, ease: 'easeOut' }}>
-          {portalType === 'client' && (
+        <motion.div key={`${activePortal}-${screenKey}`} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.25, ease: 'easeOut' }}>
+          {activePortal === 'client' && (
             <ClientPortal currentScreen={clientScreen} onNavigate={setClientScreen} />
           )}
-          {portalType === 'employee' && (
+          {activePortal === 'employee' && (
             <EmployeePortal currentScreen={employeeScreen} onNavigate={setEmployeeScreen} />
           )}
-          {portalType === 'freelancer' && (
+          {activePortal === 'freelancer' && (
             <FreelancerPortal currentScreen={freelancerScreen} onNavigate={setFreelancerScreen} />
           )}
-          {portalType === 'hris' && (
+          {activePortal === 'hris' && (
             <HRISPortal currentScreen={hrisScreen} onNavigate={setHRISScreen} />
           )}
         </motion.div>
@@ -253,7 +287,7 @@ function ClientHome({ onNavigate }: { onNavigate: (screen: ClientScreen) => void
             variants={{ hidden: { opacity:0, y:12 }, show: { opacity:1, y:0, transition:{ type:'spring', stiffness:320, damping:28 } } }}
           >
             <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-[0.08em] mb-2">{kpi.label}</p>
-            <p className={`text-[32px] font-bold tracking-[-0.03em] leading-none shimmer-text ${kpi.urgent ? 'text-amber-600' : 'text-stone-800'}`}>{kpi.value}</p>
+            <p className={`text-[32px] font-bold tracking-[-0.03em] leading-none shimmer-text ${kpi.urgent ? 'text-stone-600' : 'text-stone-800'}`}>{kpi.value}</p>
             <p className="text-[11px] text-stone-400 mt-1.5">{kpi.sub}</p>
           </motion.div>
         ))}
@@ -295,9 +329,9 @@ function ClientHome({ onNavigate }: { onNavigate: (screen: ClientScreen) => void
             <span className="text-stone-300 group-hover:text-stone-500 transition-colors text-[14px]">→</span>
           </div>
           <div className="space-y-2">
-            <div className="p-3 bg-amber-50/60 rounded-lg border border-amber-200/50">
-              <p className="text-[12px] font-medium text-amber-800">Access issue with project files</p>
-              <p className="text-[11px] text-amber-600 mt-0.5">Open • 2 hours ago</p>
+            <div className="p-3 bg-stone-100/60 rounded-lg border border-stone-200/50">
+              <p className="text-[12px] font-medium text-stone-700">Access issue with project files</p>
+              <p className="text-[11px] text-stone-600 mt-0.5">Open • 2 hours ago</p>
             </div>
           </div>
         </button>
@@ -567,7 +601,7 @@ function ClientSupport({ onNavigate }: { onNavigate: (screen: ClientScreen) => v
               </div>
               <div className="flex items-center gap-3 text-sm text-stone-500">
                 <span className={`px-2 py-1 rounded-full text-xs ${
-                  ticket.priority === 'High' ? 'bg-red-100 text-red-700' : 'bg-stone-100 text-stone-500'
+                  ticket.priority === 'High' ? 'bg-stone-100 text-stone-700' : 'bg-stone-100 text-stone-500'
                 }`}>
                   {ticket.priority}
                 </span>
@@ -1311,7 +1345,7 @@ function EmployeeHome({ onNavigate }: { onNavigate: (screen: EmployeeScreen) => 
             variants={{ hidden: { opacity:0, y:12 }, show: { opacity:1, y:0, transition:{ type:'spring', stiffness:320, damping:28 } } }}
           >
             <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-[0.08em] mb-2">{kpi.label}</p>
-            <p className={`text-[32px] font-bold tracking-[-0.03em] leading-none shimmer-text ${kpi.urgent ? 'text-amber-600' : 'text-stone-800'}`}>{kpi.value}</p>
+            <p className={`text-[32px] font-bold tracking-[-0.03em] leading-none shimmer-text ${kpi.urgent ? 'text-stone-600' : 'text-stone-800'}`}>{kpi.value}</p>
             <p className="text-[11px] text-stone-400 mt-1.5">{kpi.sub}</p>
           </motion.div>
         ))}
@@ -1338,9 +1372,9 @@ function EmployeeHome({ onNavigate }: { onNavigate: (screen: EmployeeScreen) => 
 
         <div className="bg-white/60 backdrop-blur-sm rounded-xl border border-stone-200/40 p-5">
           <h3 className="text-[13px] font-semibold text-stone-700 mb-4">Timesheet Status</h3>
-          <div className="p-4 bg-amber-50/60 rounded-lg border border-amber-200/50">
-            <p className="text-[13px] font-medium text-amber-800">Week of Jan 13, 2026</p>
-            <p className="text-[12px] text-amber-600 mt-0.5">Not submitted · 42 hours logged</p>
+          <div className="p-4 bg-stone-100/60 rounded-lg border border-stone-200/50">
+            <p className="text-[13px] font-medium text-stone-700">Week of Jan 13, 2026</p>
+            <p className="text-[12px] text-stone-600 mt-0.5">Not submitted · 42 hours logged</p>
             <BonsaiButton size="sm" variant="primary" className="mt-3" onClick={() => onNavigate('timesheets')}>
               Submit Timesheet
             </BonsaiButton>
@@ -1436,7 +1470,7 @@ function EmployeeLeave() {
         </div>
         <div className="bg-white rounded-lg border border-stone-200/40 p-4">
           <p className="text-sm text-stone-500 mb-1">Pending Requests</p>
-          <p className="text-2xl font-semibold text-amber-600">1</p>
+          <p className="text-2xl font-semibold text-stone-600">1</p>
         </div>
       </div>
 
@@ -1631,9 +1665,9 @@ function FreelancerHome({ onNavigate }: { onNavigate: (screen: FreelancerScreen)
           className="glass-card p-5 text-left hover-lift"
         >
           <h3 className="text-[13px] font-semibold text-stone-700 mb-4">Timesheet Status</h3>
-          <div className="p-4 bg-amber-50/70 rounded-xl border border-amber-200/50">
-            <p className="text-[13px] font-semibold text-amber-800">Week of Jan 13, 2026</p>
-            <p className="text-[12px] text-amber-600 mt-0.5">Not submitted · 42 hours logged</p>
+          <div className="p-4 bg-stone-100/70 rounded-xl border border-stone-200/50">
+            <p className="text-[13px] font-semibold text-stone-700">Week of Jan 13, 2026</p>
+            <p className="text-[12px] text-stone-600 mt-0.5">Not submitted · 42 hours logged</p>
           </div>
         </button>
       </div>

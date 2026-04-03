@@ -11,7 +11,7 @@ const buttonVariants = cva(
         primary: "bg-stone-800 text-white hover:bg-stone-700 shadow-sm hover:shadow-md",
         secondary: "bg-stone-100 text-stone-700 hover:bg-stone-200/80",
         ghost: "text-stone-500 hover:text-stone-700 hover:bg-stone-100/60",
-        destructive: "bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700",
+        destructive: "bg-stone-100 text-stone-700 hover:bg-stone-100 hover:text-stone-700",
         outline: "border border-stone-200 bg-white/60 text-stone-700 hover:bg-stone-50 hover:border-stone-300",
       },
       size: {

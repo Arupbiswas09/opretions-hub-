@@ -79,7 +79,7 @@ function ClientPortalDemo() {
           <div className="rounded-xl border border-stone-200/60 bg-white/50 backdrop-blur-sm p-6">
             <div className="flex items-start justify-between mb-4">
               <div><h3 className="text-[15px] font-medium text-stone-800">Website Redesign</h3><p className="text-[12px] text-stone-400 mt-0.5">Started Jan 5, 2026</p></div>
-              <span className="px-2 py-0.5 text-[11px] font-medium rounded-full bg-emerald-50 text-emerald-700">In Progress</span>
+              <span className="px-2 py-0.5 text-[11px] font-medium rounded-full bg-stone-100 text-stone-700">In Progress</span>
             </div>
             <div className="mb-4">
               <div className="flex items-center justify-between text-[12px] mb-1.5"><span className="text-stone-400">Progress</span><span className="font-medium text-stone-700">65%</span></div>
@@ -98,7 +98,7 @@ function ClientPortalDemo() {
               <div key={i} className="rounded-xl border border-stone-200/60 bg-white/50 backdrop-blur-sm p-5 hover:bg-white/70 transition-colors cursor-pointer">
                 <div className="flex items-start justify-between">
                   <div><p className="text-[13px] font-medium text-stone-800">Week of Jan {13 + i * 7}, 2026</p><p className="text-[12px] text-stone-400 mt-0.5">{text}</p></div>
-                  <span className="px-2 py-0.5 text-[11px] font-medium rounded-full bg-amber-50 text-amber-700">Pending</span>
+                  <span className="px-2 py-0.5 text-[11px] font-medium rounded-full bg-stone-100 text-stone-600">Pending</span>
                 </div>
               </div>
             ))}
@@ -124,8 +124,8 @@ function FreelancerPortalDemo() {
           ))}
         </div>
         <div className="space-y-3">
-          {[{ title: 'Website Redesign', client: 'Acme Corporation · 65% complete', status: 'Active', color: 'bg-emerald-50 text-emerald-700' },
-            { title: 'Mobile App Development', client: 'Tech Startup Inc · 10% complete', status: 'Planning', color: 'bg-sky-50 text-sky-700' }].map((p) => (
+          {[{ title: 'Website Redesign', client: 'Acme Corporation · 65% complete', status: 'Active', color: 'bg-stone-100 text-stone-700' },
+            { title: 'Mobile App Development', client: 'Tech Startup Inc · 10% complete', status: 'Planning', color: 'bg-stone-100 text-stone-600' }].map((p) => (
             <div key={p.title} className="rounded-xl border border-stone-200/60 bg-white/50 backdrop-blur-sm p-5 flex items-center justify-between hover:bg-white/70 transition-colors cursor-pointer">
               <div><p className="text-[13px] font-medium text-stone-800">{p.title}</p><p className="text-[12px] text-stone-400 mt-0.5">{p.client}</p></div>
               <span className={`px-2 py-0.5 text-[11px] font-medium rounded-full ${p.color}`}>{p.status}</span>

@@ -26,8 +26,8 @@ export function CO04GDPRActions({ contact, onExportData, onRequestDeletion, onPe
         <h3 className="font-semibold text-stone-800 mb-4">GDPR Compliance Status</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="flex items-center gap-3 p-4 bg-stone-50 rounded-lg">
-            <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
-              <CheckCircle2 className="w-5 h-5 text-green-600" />
+            <div className="w-10 h-10 rounded-lg bg-stone-100 flex items-center justify-center">
+              <CheckCircle2 className="w-5 h-5 text-stone-600" />
             </div>
             <div>
               <p className="text-xs text-stone-600">Consent Status</p>
@@ -35,8 +35,8 @@ export function CO04GDPRActions({ contact, onExportData, onRequestDeletion, onPe
             </div>
           </div>
           <div className="flex items-center gap-3 p-4 bg-stone-50 rounded-lg">
-            <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-              <FileText className="w-5 h-5 text-blue-600" />
+            <div className="w-10 h-10 rounded-lg bg-stone-100 flex items-center justify-center">
+              <FileText className="w-5 h-5 text-stone-600" />
             </div>
             <div>
               <p className="text-xs text-stone-600">Data Processing</p>
@@ -44,8 +44,8 @@ export function CO04GDPRActions({ contact, onExportData, onRequestDeletion, onPe
             </div>
           </div>
           <div className="flex items-center gap-3 p-4 bg-stone-50 rounded-lg">
-            <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
-              <Clock className="w-5 h-5 text-purple-600" />
+            <div className="w-10 h-10 rounded-lg bg-stone-100 flex items-center justify-center">
+              <Clock className="w-5 h-5 text-stone-600" />
             </div>
             <div>
               <p className="text-xs text-stone-600">Data Retention</p>
@@ -66,8 +66,8 @@ export function CO04GDPRActions({ contact, onExportData, onRequestDeletion, onPe
         <div className="space-y-3">
           {/* Right to Access */}
           <div className="flex items-start gap-4 p-4 border border-stone-200 rounded-lg">
-            <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
-              <Download className="w-6 h-6 text-blue-600" />
+            <div className="w-12 h-12 rounded-lg bg-stone-100 flex items-center justify-center flex-shrink-0">
+              <Download className="w-6 h-6 text-stone-600" />
             </div>
             <div className="flex-1">
               <h4 className="font-medium text-stone-800 mb-1">Right to Access (Export Data)</h4>
@@ -83,8 +83,8 @@ export function CO04GDPRActions({ contact, onExportData, onRequestDeletion, onPe
 
           {/* Right to Erasure (Soft Delete) */}
           <div className="flex items-start gap-4 p-4 border border-stone-200 rounded-lg">
-            <div className="w-12 h-12 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
-              <AlertTriangle className="w-6 h-6 text-amber-600" />
+            <div className="w-12 h-12 rounded-lg bg-stone-100 flex items-center justify-center flex-shrink-0">
+              <AlertTriangle className="w-6 h-6 text-stone-600" />
             </div>
             <div className="flex-1">
               <h4 className="font-medium text-stone-800 mb-1">Right to Erasure (Request Deletion)</h4>
@@ -99,9 +99,9 @@ export function CO04GDPRActions({ contact, onExportData, onRequestDeletion, onPe
           </div>
 
           {/* Permanent Delete (Admin Only) */}
-          <div className="flex items-start gap-4 p-4 border-2 border-red-200 bg-red-50 rounded-lg">
-            <div className="w-12 h-12 rounded-lg bg-red-100 flex items-center justify-center flex-shrink-0">
-              <Shield className="w-6 h-6 text-red-600" />
+          <div className="flex items-start gap-4 p-4 border-2 border-red-200 bg-stone-100 rounded-lg">
+            <div className="w-12 h-12 rounded-lg bg-stone-100 flex items-center justify-center flex-shrink-0">
+              <Shield className="w-6 h-6 text-stone-700" />
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
@@ -211,23 +211,23 @@ export function CO04GDPRActions({ contact, onExportData, onRequestDeletion, onPe
         <h3 className="font-semibold text-stone-800 mb-4">GDPR Compliance Checklist</h3>
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-green-600" />
+            <CheckCircle2 className="w-4 h-4 text-stone-600" />
             <span className="text-sm text-stone-700">Valid consent obtained and documented</span>
           </div>
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-green-600" />
+            <CheckCircle2 className="w-4 h-4 text-stone-600" />
             <span className="text-sm text-stone-700">Legal basis for processing documented</span>
           </div>
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-green-600" />
+            <CheckCircle2 className="w-4 h-4 text-stone-600" />
             <span className="text-sm text-stone-700">Data processing activities logged</span>
           </div>
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-green-600" />
+            <CheckCircle2 className="w-4 h-4 text-stone-600" />
             <span className="text-sm text-stone-700">Retention policy applied</span>
           </div>
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-green-600" />
+            <CheckCircle2 className="w-4 h-4 text-stone-600" />
             <span className="text-sm text-stone-700">Subject rights mechanism in place</span>
           </div>
         </div>

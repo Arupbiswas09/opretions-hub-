@@ -13,18 +13,18 @@ function Toast({ id, type, message, onClose }: ToastProps) {
   const config = {
     success: {
       icon: <CheckCircle2 className="w-5 h-5" />,
-      className: 'bg-green-50 text-green-800 border-green-200',
+      className: 'bg-stone-100 text-green-800 border-stone-200',
       iconColor: 'text-green-500',
     },
     error: {
       icon: <AlertCircle className="w-5 h-5" />,
-      className: 'bg-red-50 text-red-800 border-red-200',
-      iconColor: 'text-red-500',
+      className: 'bg-stone-100 text-red-800 border-red-200',
+      iconColor: 'text-stone-600',
     },
     info: {
       icon: <Info className="w-5 h-5" />,
-      className: 'bg-blue-50 text-blue-800 border-blue-200',
-      iconColor: 'text-blue-500',
+      className: 'bg-stone-100 text-blue-800 border-stone-200',
+      iconColor: 'text-stone-600',
     },
   }[type];
 

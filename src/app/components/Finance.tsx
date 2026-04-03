@@ -95,7 +95,7 @@ function GenerateWizard({ onClose }: { onClose: () => void }) {
             <div className="space-y-4">
               <div><label className="block text-[13px] font-medium text-stone-600 mb-1.5">Invoice Number</label><input type="text" defaultValue="INV-2026-003" className="w-full px-3.5 py-2.5 bg-white/60 border border-stone-200/60 rounded-xl text-[13px]" /></div>
               <div><label className="block text-[13px] font-medium text-stone-600 mb-1.5">Due Date</label><input type="date" className="w-full px-3.5 py-2.5 bg-white/60 border border-stone-200/60 rounded-xl text-[13px]" /></div>
-              <div className="p-4 rounded-xl bg-emerald-50/60 border border-emerald-200/40"><p className="text-[13px] text-emerald-700"><strong>Ready to generate.</strong> Invoice will be marked as Draft.</p></div>
+              <div className="p-4 rounded-xl bg-stone-100/60 border border-emerald-200/40"><p className="text-[13px] text-stone-700"><strong>Ready to generate.</strong> Invoice will be marked as Draft.</p></div>
             </div>
           )}
         </div>

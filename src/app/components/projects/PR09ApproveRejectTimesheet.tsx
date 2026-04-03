@@ -108,15 +108,15 @@ export function PR09ApproveRejectTimesheet({ timesheet, onBack, onApprove, onRej
 
       {/* Approve Confirmation */}
       {showApproveConfirm && (
-        <div className="bg-green-50 border-2 border-green-200 rounded-lg p-6 mb-6">
+        <div className="bg-stone-100 border-2 border-stone-200 rounded-lg p-6 mb-6">
           <div className="flex items-start gap-3 mb-4">
-            <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" />
+            <CheckCircle className="w-6 h-6 text-stone-600 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
-              <h3 className="font-semibold text-green-900 mb-2">Approve Timesheet</h3>
+              <h3 className="font-semibold text-stone-800 mb-2">Approve Timesheet</h3>
               <p className="text-sm text-green-800 mb-4">
                 This timesheet will be marked as approved and {timesheet.requiresClientApproval ? 'sent to the client for final approval' : 'moved to billing'}.
               </p>
-              <label className="block text-sm font-medium text-green-900 mb-2">
+              <label className="block text-sm font-medium text-stone-800 mb-2">
                 Comment (optional)
               </label>
               <textarea
@@ -141,16 +141,16 @@ export function PR09ApproveRejectTimesheet({ timesheet, onBack, onApprove, onRej
 
       {/* Reject Confirmation */}
       {showRejectConfirm && (
-        <div className="bg-red-50 border-2 border-red-200 rounded-lg p-6 mb-6">
+        <div className="bg-stone-100 border-2 border-red-200 rounded-lg p-6 mb-6">
           <div className="flex items-start gap-3 mb-4">
-            <XCircle className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" />
+            <XCircle className="w-6 h-6 text-stone-700 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
               <h3 className="font-semibold text-red-900 mb-2">Reject Timesheet</h3>
               <p className="text-sm text-red-800 mb-4">
                 The timesheet will be returned to {timesheet.employee} with your feedback for corrections.
               </p>
               <label className="block text-sm font-medium text-red-900 mb-2">
-                Rejection Reason * <span className="font-normal text-red-700">(Required)</span>
+                Rejection Reason * <span className="font-normal text-stone-700">(Required)</span>
               </label>
               <textarea
                 value={rejectReason}

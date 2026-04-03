@@ -38,46 +38,46 @@ function FreelancerOnboardingHome({ onNavigate }) {
 
   return (
     <div className="p-8">
-      <h1 className="text-2xl font-semibold text-green-900 mb-2">Onboarding Checklist</h1>
-      <p className="text-sm text-green-700 mb-6">Complete these tasks to start working</p>
+      <h1 className="text-2xl font-semibold text-stone-800 mb-2">Onboarding Checklist</h1>
+      <p className="text-sm text-stone-700 mb-6">Complete these tasks to start working</p>
 
-      <div className="bg-white rounded-lg border border-green-200 p-6 mb-6">
+      <div className="bg-white rounded-lg border border-stone-200 p-6 mb-6">
         <div className="flex items-center justify-between mb-2">
-          <p className="text-sm font-medium text-green-900">Progress</p>
-          <p className="text-sm font-semibold text-green-900">{completed} of {tasks.length} completed</p>
+          <p className="text-sm font-medium text-stone-800">Progress</p>
+          <p className="text-sm font-semibold text-stone-800">{completed} of {tasks.length} completed</p>
         </div>
-        <div className="w-full bg-green-100 rounded-full h-3">
+        <div className="w-full bg-stone-100 rounded-full h-3">
           <div
-            className="bg-green-600 h-3 rounded-full transition-all"
+            className="bg-stone-700 h-3 rounded-full transition-all"
             style={{ width: `${progress}%` }}
           />
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-green-200">
+      <div className="bg-white rounded-lg border border-stone-200">
         <div className="divide-y divide-green-100">
           {tasks.map((task) => (
             <button
               key={task.id}
               onClick={() => onNavigate('contract-docs')}
-              className="w-full p-6 hover:bg-green-50 transition-colors text-left flex items-center justify-between"
+              className="w-full p-6 hover:bg-stone-100 transition-colors text-left flex items-center justify-between"
             >
               <div className="flex items-center gap-4">
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                  task.status === 'completed' ? 'bg-green-100' : task.status === 'pending' ? 'bg-amber-100' : 'bg-stone-100'
+                  task.status === 'completed' ? 'bg-stone-100' : task.status === 'pending' ? 'bg-stone-100' : 'bg-stone-100'
                 }`}>
                   {task.status === 'completed' ? (
-                    <Check className="w-5 h-5 text-green-600" />
+                    <Check className="w-5 h-5 text-stone-600" />
                   ) : (
                     <ClipboardList className="w-5 h-5 text-stone-600" />
                   )}
                 </div>
                 <div>
-                  <p className="font-medium text-green-900">{task.title}</p>
-                  <p className="text-sm text-green-700 capitalize">{task.type} • {task.status.replace('-', ' ')}</p>
+                  <p className="font-medium text-stone-800">{task.title}</p>
+                  <p className="text-sm text-stone-700 capitalize">{task.type} • {task.status.replace('-', ' ')}</p>
                 </div>
               </div>
-              <span className="text-green-600">→</span>
+              <span className="text-stone-600">→</span>
             </button>
           ))}
         </div>
@@ -92,31 +92,31 @@ function FreelancerContractDocs({ onNavigate }) {
     <div className="p-8 max-w-3xl mx-auto">
       <button
         onClick={() => onNavigate('onboarding')}
-        className="flex items-center gap-2 text-sm text-green-700 hover:text-green-900 mb-6"
+        className="flex items-center gap-2 text-sm text-stone-700 hover:text-stone-800 mb-6"
       >
         ← Back to Onboarding
       </button>
 
-      <div className="bg-white rounded-lg border border-green-200 p-8">
-        <h1 className="text-2xl font-semibold text-green-900 mb-2">Sign Contract</h1>
-        <p className="text-sm text-green-700 mb-6">Please review and sign your freelance contract</p>
+      <div className="bg-white rounded-lg border border-stone-200 p-8">
+        <h1 className="text-2xl font-semibold text-stone-800 mb-2">Sign Contract</h1>
+        <p className="text-sm text-stone-700 mb-6">Please review and sign your freelance contract</p>
 
         <div className="space-y-6">
-          <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+          <div className="p-4 bg-stone-100 border border-stone-200 rounded-lg">
             <p className="text-sm text-green-800">
               <strong>Document:</strong> Freelance_Contract_2026.pdf
             </p>
-            <button className="mt-2 text-sm text-green-600 hover:underline">Download & Review</button>
+            <button className="mt-2 text-sm text-stone-600 hover:underline">Download & Review</button>
           </div>
 
           <div>
             <label className="flex items-center gap-3">
-              <input type="checkbox" className="w-5 h-5 rounded border-green-300 text-green-600" />
-              <span className="text-sm text-green-900">I have read and agree to the terms of the freelance contract</span>
+              <input type="checkbox" className="w-5 h-5 rounded border-green-300 text-stone-600" />
+              <span className="text-sm text-stone-800">I have read and agree to the terms of the freelance contract</span>
             </label>
           </div>
 
-          <div className="flex gap-3 pt-4 border-t border-green-200">
+          <div className="flex gap-3 pt-4 border-t border-stone-200">
             <BonsaiButton variant="ghost" onClick={() => onNavigate('onboarding')}>Cancel</BonsaiButton>
             <BonsaiButton variant="primary" onClick={() => { alert('Contract signed!\n\nTask marked as complete.'); onNavigate('onboarding'); }}>
               Sign & Submit
@@ -135,7 +135,7 @@ function FreelancerProfile({ onNavigate }) {
   return (
     <div className="p-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold text-green-900">My Profile</h1>
+        <h1 className="text-2xl font-semibold text-stone-800">My Profile</h1>
         <BonsaiButton 
           variant={isEditing ? "primary" : "ghost"} 
           onClick={() => {
@@ -151,114 +151,114 @@ function FreelancerProfile({ onNavigate }) {
       </div>
 
       {!isEditing && (
-        <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-          <p className="text-sm text-amber-800">
+        <div className="mb-4 p-4 bg-stone-100 border border-stone-200 rounded-lg">
+          <p className="text-sm text-stone-700">
             <strong>Note:</strong> Profile changes require admin approval (GDPR compliance)
           </p>
         </div>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-lg border border-green-200 p-6">
-          <h3 className="font-semibold text-green-900 mb-4">Personal Information</h3>
+        <div className="bg-white rounded-lg border border-stone-200 p-6">
+          <h3 className="font-semibold text-stone-800 mb-4">Personal Information</h3>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-green-700 mb-1">Full Name</label>
+              <label className="block text-sm font-medium text-stone-700 mb-1">Full Name</label>
               <input
                 type="text"
                 defaultValue="Sarah Johnson"
                 disabled={!isEditing}
-                className="w-full px-3 py-2 bg-white border border-green-200 rounded-lg text-sm disabled:bg-green-50 disabled:text-green-900"
+                className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm disabled:bg-stone-100 disabled:text-stone-800"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-green-700 mb-1">Email</label>
+              <label className="block text-sm font-medium text-stone-700 mb-1">Email</label>
               <input
                 type="email"
                 defaultValue="sarah.j@freelance.com"
                 disabled={!isEditing}
-                className="w-full px-3 py-2 bg-white border border-green-200 rounded-lg text-sm disabled:bg-green-50 disabled:text-green-900"
+                className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm disabled:bg-stone-100 disabled:text-stone-800"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-green-700 mb-1">Phone</label>
+              <label className="block text-sm font-medium text-stone-700 mb-1">Phone</label>
               <input
                 type="tel"
                 defaultValue="+1 555-0789"
                 disabled={!isEditing}
-                className="w-full px-3 py-2 bg-white border border-green-200 rounded-lg text-sm disabled:bg-green-50 disabled:text-green-900"
+                className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm disabled:bg-stone-100 disabled:text-stone-800"
               />
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-green-200 p-6">
-          <h3 className="font-semibold text-green-900 mb-4">Business Information</h3>
+        <div className="bg-white rounded-lg border border-stone-200 p-6">
+          <h3 className="font-semibold text-stone-800 mb-4">Business Information</h3>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-green-700 mb-1">Business Name</label>
+              <label className="block text-sm font-medium text-stone-700 mb-1">Business Name</label>
               <input
                 type="text"
                 defaultValue="SJ Design Studio"
                 disabled={!isEditing}
-                className="w-full px-3 py-2 bg-white border border-green-200 rounded-lg text-sm disabled:bg-green-50 disabled:text-green-900"
+                className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm disabled:bg-stone-100 disabled:text-stone-800"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-green-700 mb-1">Tax ID / EIN</label>
+              <label className="block text-sm font-medium text-stone-700 mb-1">Tax ID / EIN</label>
               <input
                 type="text"
                 defaultValue="****5678"
                 disabled={!isEditing}
-                className="w-full px-3 py-2 bg-white border border-green-200 rounded-lg text-sm disabled:bg-green-50 disabled:text-green-900"
+                className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm disabled:bg-stone-100 disabled:text-stone-800"
               />
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-green-200 p-6">
-          <h3 className="font-semibold text-green-900 mb-4">Bank Details</h3>
+        <div className="bg-white rounded-lg border border-stone-200 p-6">
+          <h3 className="font-semibold text-stone-800 mb-4">Bank Details</h3>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-green-700 mb-1">Bank Name</label>
+              <label className="block text-sm font-medium text-stone-700 mb-1">Bank Name</label>
               <input
                 type="text"
                 defaultValue="First National Bank"
                 disabled={!isEditing}
-                className="w-full px-3 py-2 bg-white border border-green-200 rounded-lg text-sm disabled:bg-green-50 disabled:text-green-900"
+                className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm disabled:bg-stone-100 disabled:text-stone-800"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-green-700 mb-1">Account Number</label>
+              <label className="block text-sm font-medium text-stone-700 mb-1">Account Number</label>
               <input
                 type="text"
                 defaultValue="****9012"
                 disabled={!isEditing}
-                className="w-full px-3 py-2 bg-white border border-green-200 rounded-lg text-sm disabled:bg-green-50 disabled:text-green-900"
+                className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm disabled:bg-stone-100 disabled:text-stone-800"
               />
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-green-200 p-6">
-          <h3 className="font-semibold text-green-900 mb-4">Address</h3>
+        <div className="bg-white rounded-lg border border-stone-200 p-6">
+          <h3 className="font-semibold text-stone-800 mb-4">Address</h3>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-green-700 mb-1">Street Address</label>
+              <label className="block text-sm font-medium text-stone-700 mb-1">Street Address</label>
               <input
                 type="text"
                 defaultValue="456 Oak St"
                 disabled={!isEditing}
-                className="w-full px-3 py-2 bg-white border border-green-200 rounded-lg text-sm disabled:bg-green-50 disabled:text-green-900"
+                className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm disabled:bg-stone-100 disabled:text-stone-800"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-green-700 mb-1">City</label>
+              <label className="block text-sm font-medium text-stone-700 mb-1">City</label>
               <input
                 type="text"
                 defaultValue="Los Angeles"
                 disabled={!isEditing}
-                className="w-full px-3 py-2 bg-white border border-green-200 rounded-lg text-sm disabled:bg-green-50 disabled:text-green-900"
+                className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm disabled:bg-stone-100 disabled:text-stone-800"
               />
             </div>
           </div>
@@ -274,36 +274,36 @@ function FreelancerProfileChangeRequest({ onNavigate }) {
     <div className="p-8">
       <button
         onClick={() => onNavigate('profile')}
-        className="flex items-center gap-2 text-sm text-green-700 hover:text-green-900 mb-6"
+        className="flex items-center gap-2 text-sm text-stone-700 hover:text-stone-800 mb-6"
       >
         ← Back to Profile
       </button>
 
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-green-900">Profile Change Request</h1>
-          <p className="text-sm text-green-700">Request #PCR-5678 • Submitted 1 hour ago</p>
+          <h1 className="text-2xl font-semibold text-stone-800">Profile Change Request</h1>
+          <p className="text-sm text-stone-700">Request #PCR-5678 • Submitted 1 hour ago</p>
         </div>
         <BonsaiStatusPill status="pending" label="Pending Approval" />
       </div>
 
-      <div className="bg-white rounded-lg border border-green-200 p-6 mb-6">
-        <h3 className="font-semibold text-green-900 mb-4">Requested Changes</h3>
+      <div className="bg-white rounded-lg border border-stone-200 p-6 mb-6">
+        <h3 className="font-semibold text-stone-800 mb-4">Requested Changes</h3>
         <div className="space-y-4">
           {[
             { field: 'Bank Account', oldValue: '****9012', newValue: '****3456' },
             { field: 'Business Address', oldValue: '456 Oak St', newValue: '789 Pine Ave' },
           ].map((change, i) => (
-            <div key={i} className="p-4 bg-green-50 rounded-lg">
-              <p className="text-sm font-medium text-green-900 mb-2">{change.field}</p>
+            <div key={i} className="p-4 bg-stone-100 rounded-lg">
+              <p className="text-sm font-medium text-stone-800 mb-2">{change.field}</p>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-xs text-green-700 mb-1">Current Value</p>
-                  <p className="text-sm text-green-900 line-through">{change.oldValue}</p>
+                  <p className="text-xs text-stone-700 mb-1">Current Value</p>
+                  <p className="text-sm text-stone-800 line-through">{change.oldValue}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-green-700 mb-1">New Value</p>
-                  <p className="text-sm font-medium text-green-700">{change.newValue}</p>
+                  <p className="text-xs text-stone-700 mb-1">New Value</p>
+                  <p className="text-sm font-medium text-stone-700">{change.newValue}</p>
                 </div>
               </div>
             </div>
@@ -311,8 +311,8 @@ function FreelancerProfileChangeRequest({ onNavigate }) {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-green-200 p-6">
-        <h3 className="font-semibold text-green-900 mb-4">Activity</h3>
+      <div className="bg-white rounded-lg border border-stone-200 p-6">
+        <h3 className="font-semibold text-stone-800 mb-4">Activity</h3>
         <BonsaiTimeline
           items={[
             { id: '1', title: 'Request submitted', description: 'Profile change request created', timestamp: '1 hour ago', user: { name: 'Sarah Johnson' } },
@@ -332,16 +332,16 @@ function FreelancerSelfBills({ onNavigate }) {
 
   return (
     <div className="p-8">
-      <h1 className="text-2xl font-semibold text-green-900 mb-2">Self-Bills</h1>
-      <p className="text-sm text-green-700 mb-6">Automatically generated from approved timesheets</p>
+      <h1 className="text-2xl font-semibold text-stone-800 mb-2">Self-Bills</h1>
+      <p className="text-sm text-stone-700 mb-6">Automatically generated from approved timesheets</p>
 
-      <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+      <div className="mb-6 p-4 bg-stone-100 border border-stone-200 rounded-lg">
         <p className="text-sm text-green-800">
           <strong>How it works:</strong> When your timesheet is approved, a self-bill is automatically created for you to download and submit.
         </p>
       </div>
 
-      <div className="bg-white rounded-lg border border-green-200">
+      <div className="bg-white rounded-lg border border-stone-200">
         <EnhancedTable
           columns={[
             { key: 'number', label: 'Self-Bill #', sortable: true },
@@ -351,7 +351,7 @@ function FreelancerSelfBills({ onNavigate }) {
           ]}
           data={selfBills.map(bill => ({
             ...bill,
-            amount: <span className="font-semibold text-green-900">${bill.amount.toLocaleString()}</span>,
+            amount: <span className="font-semibold text-stone-800">${bill.amount.toLocaleString()}</span>,
             status: (
               <BonsaiStatusPill
                 status={bill.status === 'Paid' ? 'active' : 'pending'}
@@ -376,15 +376,15 @@ function FreelancerSelfBillDetail({ onNavigate }) {
     <div className="p-8">
       <button
         onClick={() => onNavigate('self-bills')}
-        className="flex items-center gap-2 text-sm text-green-700 hover:text-green-900 mb-6"
+        className="flex items-center gap-2 text-sm text-stone-700 hover:text-stone-800 mb-6"
       >
         ← Back to Self-Bills
       </button>
 
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-green-900">SB-2026-001</h1>
-          <p className="text-sm text-green-700">Period: Jan 1-15, 2026</p>
+          <h1 className="text-2xl font-semibold text-stone-800">SB-2026-001</h1>
+          <p className="text-sm text-stone-700">Period: Jan 1-15, 2026</p>
         </div>
         <div className="flex items-center gap-3">
           <BonsaiStatusPill status="pending" label="Generated" />
@@ -406,50 +406,50 @@ function FreelancerSelfBillDetail({ onNavigate }) {
 
       <div className="mt-6">
         {activeTab === 'overview' && (
-          <div className="bg-white rounded-lg border border-green-200 p-6">
+          <div className="bg-white rounded-lg border border-stone-200 p-6">
             <div className="grid grid-cols-2 gap-6 mb-6">
               <div>
-                <p className="text-xs text-green-700 mb-1">Generated Date</p>
-                <p className="text-sm font-medium text-green-900">Jan 16, 2026</p>
+                <p className="text-xs text-stone-700 mb-1">Generated Date</p>
+                <p className="text-sm font-medium text-stone-800">Jan 16, 2026</p>
               </div>
               <div>
-                <p className="text-xs text-green-700 mb-1">Period</p>
-                <p className="text-sm font-medium text-green-900">Jan 1-15, 2026</p>
+                <p className="text-xs text-stone-700 mb-1">Period</p>
+                <p className="text-sm font-medium text-stone-800">Jan 1-15, 2026</p>
               </div>
               <div>
-                <p className="text-xs text-green-700 mb-1">Amount</p>
-                <p className="text-2xl font-semibold text-green-900">$4,200.00</p>
+                <p className="text-xs text-stone-700 mb-1">Amount</p>
+                <p className="text-2xl font-semibold text-stone-800">$4,200.00</p>
               </div>
               <div>
-                <p className="text-xs text-green-700 mb-1">Timesheet Status</p>
+                <p className="text-xs text-stone-700 mb-1">Timesheet Status</p>
                 <BonsaiStatusPill status="active" label="Approved" />
               </div>
             </div>
-            <div className="pt-4 border-t border-green-200">
-              <p className="text-sm text-green-700 mb-2">This self-bill was automatically generated from your approved timesheet.</p>
+            <div className="pt-4 border-t border-stone-200">
+              <p className="text-sm text-stone-700 mb-2">This self-bill was automatically generated from your approved timesheet.</p>
               <p className="text-sm text-green-800">Download the PDF to submit to your client or accounting system.</p>
             </div>
           </div>
         )}
         {activeTab === 'items' && (
-          <div className="bg-white rounded-lg border border-green-200 p-6">
+          <div className="bg-white rounded-lg border border-stone-200 p-6">
             <div className="space-y-3">
               {[
                 { desc: 'UI Design - Week 1-2', hours: 42, rate: 100 },
               ].map((item, i) => (
-                <div key={i} className="p-4 bg-green-50 rounded-lg flex justify-between">
+                <div key={i} className="p-4 bg-stone-100 rounded-lg flex justify-between">
                   <div>
-                    <p className="font-medium text-green-900">{item.desc}</p>
-                    <p className="text-sm text-green-700">{item.hours} hours × ${item.rate}/hr</p>
+                    <p className="font-medium text-stone-800">{item.desc}</p>
+                    <p className="text-sm text-stone-700">{item.hours} hours × ${item.rate}/hr</p>
                   </div>
-                  <p className="font-semibold text-green-900">${(item.hours * item.rate).toLocaleString()}</p>
+                  <p className="font-semibold text-stone-800">${(item.hours * item.rate).toLocaleString()}</p>
                 </div>
               ))}
             </div>
           </div>
         )}
         {activeTab === 'activity' && (
-          <div className="bg-white rounded-lg border border-green-200 p-6">
+          <div className="bg-white rounded-lg border border-stone-200 p-6">
             <BonsaiTimeline
               items={[
                 { id: '1', title: 'Self-bill generated', description: 'Generated from approved timesheet', timestamp: 'Jan 16, 2026', user: { name: 'System' } },
@@ -474,17 +474,17 @@ function FreelancerDocumentsEnhanced() {
   return (
     <div className="p-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold text-green-900">My Documents</h1>
+        <h1 className="text-2xl font-semibold text-stone-800">My Documents</h1>
         <BonsaiButton variant="primary">Upload Document</BonsaiButton>
       </div>
 
-      <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-        <p className="text-sm text-amber-800">
+      <div className="mb-6 p-4 bg-stone-100 border border-stone-200 rounded-lg">
+        <p className="text-sm text-stone-700">
           <strong>Required Documents:</strong> Please ensure you have uploaded all required documents (Contract, Tax Form, NDA).
         </p>
       </div>
 
-      <div className="bg-white rounded-lg border border-green-200 p-6">
+      <div className="bg-white rounded-lg border border-stone-200 p-6">
         <BonsaiDocumentList
           documents={documents}
           onDownload={(doc) => alert(`Downloading ${doc.name}`)}

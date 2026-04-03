@@ -50,8 +50,8 @@ export function SA04DealDetail({
             <BonsaiStatusPill status="pending" label={deal.stage} />
             <span className={`inline-flex px-3 py-1 text-xs rounded-full ${
               deal.type === 'Project' 
-                ? 'bg-blue-100 text-blue-700' 
-                : 'bg-purple-100 text-purple-700'
+                ? 'bg-stone-100 text-stone-600' 
+                : 'bg-stone-100 text-stone-600'
             }`}>
               {deal.type} Deal
             </span>
@@ -85,8 +85,8 @@ export function SA04DealDetail({
         </button>
 
         <button className="flex items-center gap-3 p-4 bg-white rounded-lg border border-stone-200 hover:border-primary hover:shadow-sm transition-all">
-          <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-            <Activity className="w-5 h-5 text-blue-600" />
+          <div className="w-10 h-10 rounded-lg bg-stone-100 flex items-center justify-center">
+            <Activity className="w-5 h-5 text-stone-600" />
           </div>
           <div className="text-left">
             <p className="font-medium text-stone-800">Log Activity</p>
@@ -98,8 +98,8 @@ export function SA04DealDetail({
           onClick={onMarkWonLost}
           className="flex items-center gap-3 p-4 bg-white rounded-lg border border-stone-200 hover:border-primary hover:shadow-sm transition-all"
         >
-          <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
-            <CheckCircle2 className="w-5 h-5 text-green-600" />
+          <div className="w-10 h-10 rounded-lg bg-stone-100 flex items-center justify-center">
+            <CheckCircle2 className="w-5 h-5 text-stone-600" />
           </div>
           <div className="text-left">
             <p className="font-medium text-stone-800">Mark Won/Lost</p>

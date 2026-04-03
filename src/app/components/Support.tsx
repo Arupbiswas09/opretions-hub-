@@ -89,9 +89,9 @@ function TicketsList({ viewMode, onViewModeChange, onTicketClick, onNewTicket }:
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'High': return 'bg-red-100 text-red-700';
-      case 'Medium': return 'bg-amber-100 text-amber-700';
-      case 'Low': return 'bg-blue-100 text-blue-700';
+      case 'High': return 'bg-stone-100 text-stone-700';
+      case 'Medium': return 'bg-stone-100 text-stone-600';
+      case 'Low': return 'bg-stone-100 text-stone-600';
       default: return 'bg-stone-100 text-stone-700';
     }
   };
@@ -129,23 +129,23 @@ function TicketsList({ viewMode, onViewModeChange, onTicketClick, onNewTicket }:
         <div className="bg-white rounded-lg border border-stone-200 p-4">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm text-stone-600">Open</p>
-            <AlertCircle className="w-5 h-5 text-amber-600" />
+            <AlertCircle className="w-5 h-5 text-stone-600" />
           </div>
-          <p className="text-2xl font-semibold text-amber-600">1</p>
+          <p className="text-2xl font-semibold text-stone-600">1</p>
         </div>
         <div className="bg-white rounded-lg border border-stone-200 p-4">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm text-stone-600">In Progress</p>
-            <Clock className="w-5 h-5 text-blue-600" />
+            <Clock className="w-5 h-5 text-stone-600" />
           </div>
-          <p className="text-2xl font-semibold text-blue-600">1</p>
+          <p className="text-2xl font-semibold text-stone-600">1</p>
         </div>
         <div className="bg-white rounded-lg border border-stone-200 p-4">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm text-stone-600">Resolved</p>
-            <CheckCircle className="w-5 h-5 text-green-600" />
+            <CheckCircle className="w-5 h-5 text-stone-600" />
           </div>
-          <p className="text-2xl font-semibold text-green-600">1</p>
+          <p className="text-2xl font-semibold text-stone-600">1</p>
         </div>
         <div className="bg-white rounded-lg border border-stone-200 p-4">
           <div className="flex items-center justify-between mb-2">
@@ -168,8 +168,8 @@ function TicketsList({ viewMode, onViewModeChange, onTicketClick, onNewTicket }:
               >
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-4 flex-1">
-                    <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
-                      <MessageSquare className="w-6 h-6 text-blue-600" />
+                    <div className="w-12 h-12 rounded-lg bg-stone-100 flex items-center justify-center">
+                      <MessageSquare className="w-6 h-6 text-stone-600" />
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
@@ -235,7 +235,7 @@ function TicketDetail({ ticket, onBack }: any) {
           <div className="flex items-center gap-3 mb-2">
             <h1 className="text-2xl font-semibold text-stone-800">{ticket.number}</h1>
             <BonsaiStatusPill status="pending" label={ticket.status} />
-            <span className="inline-flex px-3 py-1 text-xs font-medium rounded-full bg-red-100 text-red-700">
+            <span className="inline-flex px-3 py-1 text-xs font-medium rounded-full bg-stone-100 text-stone-700">
               {ticket.priority} Priority
             </span>
           </div>

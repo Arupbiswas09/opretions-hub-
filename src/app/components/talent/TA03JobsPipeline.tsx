@@ -54,7 +54,7 @@ export function TA03JobsPipeline() {
         ))}
       </div>
 
-      <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+      <div className="mt-4 p-4 bg-stone-100 border border-stone-200 rounded-lg">
         <p className="text-sm text-blue-800">
           <strong>Drag & Drop:</strong> Drag jobs between stages to update pipeline. Changes create activity entries.
         </p>

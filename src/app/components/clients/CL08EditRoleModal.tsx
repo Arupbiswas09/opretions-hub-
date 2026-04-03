@@ -159,8 +159,8 @@ export function CL08EditRoleModal({ isOpen, onClose, onSave, user }: CL08EditRol
 
             {/* Warning */}
             {role !== user.role && (
-              <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                <p className="text-xs text-amber-800">
+              <div className="p-4 bg-stone-100 border border-stone-200 rounded-lg">
+                <p className="text-xs text-stone-700">
                   <strong>Role Change:</strong> Changing this user's role will immediately update their 
                   portal access and available features.
                 </p>

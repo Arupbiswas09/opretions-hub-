@@ -91,9 +91,9 @@ export function CL04RequestsList({ onRequestClick, onCreateRequest }: CL04Reques
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'Urgent': return 'bg-red-100 text-red-700';
-      case 'High': return 'bg-orange-100 text-orange-700';
-      case 'Medium': return 'bg-blue-100 text-blue-700';
+      case 'Urgent': return 'bg-stone-100 text-stone-700';
+      case 'High': return 'bg-stone-100 text-stone-700';
+      case 'Medium': return 'bg-stone-100 text-stone-600';
       case 'Low': return 'bg-stone-100 text-stone-700';
       default: return 'bg-stone-100 text-stone-700';
     }
@@ -158,15 +158,15 @@ export function CL04RequestsList({ onRequestClick, onCreateRequest }: CL04Reques
         </div>
         <div className="bg-white rounded-lg border border-stone-200 p-3">
           <p className="text-xs text-stone-600">New</p>
-          <p className="text-xl font-semibold text-blue-600">0</p>
+          <p className="text-xl font-semibold text-stone-600">0</p>
         </div>
         <div className="bg-white rounded-lg border border-stone-200 p-3">
           <p className="text-xs text-stone-600">In Review</p>
-          <p className="text-xl font-semibold text-amber-600">1</p>
+          <p className="text-xl font-semibold text-stone-600">1</p>
         </div>
         <div className="bg-white rounded-lg border border-stone-200 p-3">
           <p className="text-xs text-stone-600">Approved</p>
-          <p className="text-xl font-semibold text-green-600">1</p>
+          <p className="text-xl font-semibold text-stone-600">1</p>
         </div>
         <div className="bg-white rounded-lg border border-stone-200 p-3">
           <p className="text-xs text-stone-600">In Progress</p>
@@ -197,7 +197,7 @@ export function CL04RequestsList({ onRequestClick, onCreateRequest }: CL04Reques
                       <div className="flex items-center gap-2 mb-1">
                         <h4 className="font-medium text-stone-800">{request.title}</h4>
                         {request.unreadMessages > 0 && (
-                          <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-500 text-white text-xs font-semibold">
+                          <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-stone-1000 text-white text-xs font-semibold">
                             {request.unreadMessages}
                           </span>
                         )}

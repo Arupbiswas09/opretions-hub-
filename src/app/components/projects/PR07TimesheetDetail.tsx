@@ -195,7 +195,7 @@ export function PR07TimesheetDetail({ timesheet, onBack, onSubmit }: PR07Timeshe
                     {timesheet.status === 'Draft' && (
                       <button
                         onClick={() => removeEntry(entry.id)}
-                        className="p-1 text-stone-400 hover:text-red-600 hover:bg-red-50 rounded"
+                        className="p-1 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -251,7 +251,7 @@ export function PR07TimesheetDetail({ timesheet, onBack, onSubmit }: PR07Timeshe
       <div className="flex items-center justify-between">
         <div>
           {timesheet.status === 'Rejected' && (
-            <div className="text-sm text-red-600">
+            <div className="text-sm text-stone-700">
               <strong>Rejection Reason:</strong> Please add more detail to task descriptions.
             </div>
           )}

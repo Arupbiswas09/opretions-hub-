@@ -72,17 +72,17 @@ export function SA09WonLostModal({ isOpen, onClose, onSave, dealName }: SA09WonL
                   onClick={() => setOutcome('won')}
                   className={`p-4 rounded-lg border-2 transition-all ${
                     outcome === 'won'
-                      ? 'border-green-500 bg-green-50'
+                      ? 'border-green-500 bg-stone-100'
                       : 'border-stone-200 hover:border-green-300'
                   }`}
                 >
                   <div className="flex flex-col items-center gap-2">
                     <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                      outcome === 'won' ? 'bg-green-500' : 'bg-stone-100'
+                      outcome === 'won' ? 'bg-stone-1000' : 'bg-stone-100'
                     }`}>
                       <ThumbsUp className={`w-6 h-6 ${outcome === 'won' ? 'text-white' : 'text-stone-400'}`} />
                     </div>
-                    <span className={`font-medium ${outcome === 'won' ? 'text-green-700' : 'text-stone-600'}`}>
+                    <span className={`font-medium ${outcome === 'won' ? 'text-stone-700' : 'text-stone-600'}`}>
                       Won
                     </span>
                   </div>
@@ -93,17 +93,17 @@ export function SA09WonLostModal({ isOpen, onClose, onSave, dealName }: SA09WonL
                   onClick={() => setOutcome('lost')}
                   className={`p-4 rounded-lg border-2 transition-all ${
                     outcome === 'lost'
-                      ? 'border-red-500 bg-red-50'
+                      ? 'border-red-500 bg-stone-100'
                       : 'border-stone-200 hover:border-red-300'
                   }`}
                 >
                   <div className="flex flex-col items-center gap-2">
                     <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                      outcome === 'lost' ? 'bg-red-500' : 'bg-stone-100'
+                      outcome === 'lost' ? 'bg-stone-1000' : 'bg-stone-100'
                     }`}>
                       <ThumbsDown className={`w-6 h-6 ${outcome === 'lost' ? 'text-white' : 'text-stone-400'}`} />
                     </div>
-                    <span className={`font-medium ${outcome === 'lost' ? 'text-red-700' : 'text-stone-600'}`}>
+                    <span className={`font-medium ${outcome === 'lost' ? 'text-stone-700' : 'text-stone-600'}`}>
                       Lost
                     </span>
                   </div>

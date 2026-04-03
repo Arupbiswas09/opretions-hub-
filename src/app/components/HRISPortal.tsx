@@ -84,20 +84,20 @@ function ProfileChangeRequestsInbox({ onNavigate }: { onNavigate: (screen: HRISS
   return (
     <div className="p-8">
       <h1 className="text-2xl font-semibold text-purple-900 mb-2">Profile Change Requests</h1>
-      <p className="text-sm text-purple-700 mb-6">Review and approve profile changes (GDPR compliance)</p>
+      <p className="text-sm text-stone-600 mb-6">Review and approve profile changes (GDPR compliance)</p>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div className="bg-white rounded-lg border border-purple-200 p-6">
-          <p className="text-sm text-purple-700 mb-1">Pending Requests</p>
-          <p className="text-3xl font-semibold text-amber-600">2</p>
+          <p className="text-sm text-stone-600 mb-1">Pending Requests</p>
+          <p className="text-3xl font-semibold text-stone-600">2</p>
         </div>
         <div className="bg-white rounded-lg border border-purple-200 p-6">
-          <p className="text-sm text-purple-700 mb-1">Approved This Month</p>
-          <p className="text-3xl font-semibold text-green-600">12</p>
+          <p className="text-sm text-stone-600 mb-1">Approved This Month</p>
+          <p className="text-3xl font-semibold text-stone-600">12</p>
         </div>
         <div className="bg-white rounded-lg border border-purple-200 p-6">
-          <p className="text-sm text-purple-700 mb-1">Rejected This Month</p>
-          <p className="text-3xl font-semibold text-red-600">1</p>
+          <p className="text-sm text-stone-600 mb-1">Rejected This Month</p>
+          <p className="text-3xl font-semibold text-stone-700">1</p>
         </div>
       </div>
 
@@ -137,7 +137,7 @@ function ProfileChangeRequestReview({ onNavigate }: { onNavigate: (screen: HRISS
     <div className="p-8">
       <button
         onClick={() => onNavigate('profile-requests')}
-        className="flex items-center gap-2 text-sm text-purple-700 hover:text-purple-900 mb-6"
+        className="flex items-center gap-2 text-sm text-stone-600 hover:text-purple-900 mb-6"
       >
         ← Back to Profile Requests
       </button>
@@ -145,7 +145,7 @@ function ProfileChangeRequestReview({ onNavigate }: { onNavigate: (screen: HRISS
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-semibold text-purple-900">Profile Change Request</h1>
-          <p className="text-sm text-purple-700">John Doe (Employee) • Request #PCR-1234 • Submitted 2 hours ago</p>
+          <p className="text-sm text-stone-600">John Doe (Employee) • Request #PCR-1234 • Submitted 2 hours ago</p>
         </div>
         <div className="flex items-center gap-3">
           <BonsaiStatusPill status="pending" label="Pending Review" />
@@ -193,30 +193,30 @@ function ProfileChangeRequestReview({ onNavigate }: { onNavigate: (screen: HRISS
                 { field: 'Phone', oldValue: '+1 555-0123', newValue: '+1 555-9999', sensitive: false },
                 { field: 'Street Address', oldValue: '123 Main St', newValue: '456 Oak Ave', sensitive: false },
               ].map((change, i) => (
-                <div key={i} className="p-4 bg-purple-50 rounded-lg border border-purple-200">
+                <div key={i} className="p-4 bg-stone-100 rounded-lg border border-purple-200">
                   <div className="flex items-center justify-between mb-3">
                     <p className="text-sm font-semibold text-purple-900">{change.field}</p>
                     {change.sensitive && (
-                      <span className="px-2 py-1 bg-amber-100 text-amber-700 text-xs rounded-full">
+                      <span className="px-2 py-1 bg-stone-100 text-stone-600 text-xs rounded-full">
                         Sensitive Field
                       </span>
                     )}
                   </div>
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                      <p className="text-xs text-red-700 font-medium mb-1">Current Value</p>
+                    <div className="p-3 bg-stone-100 border border-red-200 rounded-lg">
+                      <p className="text-xs text-stone-700 font-medium mb-1">Current Value</p>
                       <p className="text-sm text-red-900 line-through">{change.oldValue}</p>
                     </div>
-                    <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                      <p className="text-xs text-green-700 font-medium mb-1">New Value</p>
-                      <p className="text-sm font-medium text-green-900">{change.newValue}</p>
+                    <div className="p-3 bg-stone-100 border border-stone-200 rounded-lg">
+                      <p className="text-xs text-stone-700 font-medium mb-1">New Value</p>
+                      <p className="text-sm font-medium text-stone-800">{change.newValue}</p>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
 
-            <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="mt-6 p-4 bg-stone-100 border border-stone-200 rounded-lg">
               <p className="text-sm text-blue-800">
                 <strong>GDPR Compliance:</strong> Review changes carefully. Sensitive fields require additional verification.
               </p>
@@ -228,19 +228,19 @@ function ProfileChangeRequestReview({ onNavigate }: { onNavigate: (screen: HRISS
             <h3 className="font-semibold text-purple-900 mb-4">Current Profile Data</h3>
             <div className="grid grid-cols-2 gap-6">
               <div>
-                <p className="text-xs text-purple-700 mb-1">Full Name</p>
+                <p className="text-xs text-stone-600 mb-1">Full Name</p>
                 <p className="text-sm font-medium text-purple-900">John Doe</p>
               </div>
               <div>
-                <p className="text-xs text-purple-700 mb-1">Email</p>
+                <p className="text-xs text-stone-600 mb-1">Email</p>
                 <p className="text-sm font-medium text-purple-900">john.doe@company.com</p>
               </div>
               <div>
-                <p className="text-xs text-purple-700 mb-1">Phone</p>
+                <p className="text-xs text-stone-600 mb-1">Phone</p>
                 <p className="text-sm font-medium text-purple-900">+1 555-0123</p>
               </div>
               <div>
-                <p className="text-xs text-purple-700 mb-1">Address</p>
+                <p className="text-xs text-stone-600 mb-1">Address</p>
                 <p className="text-sm font-medium text-purple-900">123 Main St, San Francisco, CA 94105</p>
               </div>
             </div>
@@ -270,16 +270,16 @@ function DocumentRequestsInbox({ onNavigate }: { onNavigate: (screen: HRISScreen
   return (
     <div className="p-8">
       <h1 className="text-2xl font-semibold text-purple-900 mb-2">Document Requests</h1>
-      <p className="text-sm text-purple-700 mb-6">Review and process employee document requests</p>
+      <p className="text-sm text-stone-600 mb-6">Review and process employee document requests</p>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <div className="bg-white rounded-lg border border-purple-200 p-6">
-          <p className="text-sm text-purple-700 mb-1">Pending Requests</p>
-          <p className="text-3xl font-semibold text-amber-600">1</p>
+          <p className="text-sm text-stone-600 mb-1">Pending Requests</p>
+          <p className="text-3xl font-semibold text-stone-600">1</p>
         </div>
         <div className="bg-white rounded-lg border border-purple-200 p-6">
-          <p className="text-sm text-purple-700 mb-1">Completed This Month</p>
-          <p className="text-3xl font-semibold text-green-600">8</p>
+          <p className="text-sm text-stone-600 mb-1">Completed This Month</p>
+          <p className="text-3xl font-semibold text-stone-600">8</p>
         </div>
       </div>
 
