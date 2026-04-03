@@ -9,6 +9,7 @@ import { BonsaiTimeline } from './bonsai/BonsaiTimeline';
 import { EnhancedTable } from './operations/EnhancedTable';
 
 // HRIS Portal Shell
+export type HRISScreen = any;
 function HRISPortal({ currentScreen, onNavigate }: { currentScreen: HRISScreen; onNavigate: (screen: HRISScreen) => void }) {
   const menuItems = [
     { id: 'profile-requests', label: 'Profile Change Requests', icon: User },
@@ -161,7 +162,7 @@ function ProfileChangeRequestReview({ onNavigate }: { onNavigate: (screen: HRISS
           </BonsaiButton>
           <BonsaiButton 
             size="sm" 
-            variant="danger" 
+            variant="destructive" 
             icon={<XCircle />}
             onClick={() => {
               alert('Profile change request rejected!\n\nEmployee notified.');

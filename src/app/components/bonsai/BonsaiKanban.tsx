@@ -10,6 +10,7 @@ interface KanbanCard {
   tags?: string[];
   assignee?: { name: string; avatar: string };
   dueDate?: string;
+  metadata?: any;
 }
 
 interface KanbanColumn {

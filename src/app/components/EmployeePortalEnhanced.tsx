@@ -1,5 +1,14 @@
 // EMPLOYEE PORTAL ENHANCED SCREENS - APPEND TO PORTALS.TSX
+import React, { useState } from 'react';
+import { Home, ClipboardList, User, Briefcase, CheckSquare, Clock, DollarSign, Calendar, BookOpen, TrendingUp, Video, FolderOpen, Check } from 'lucide-react';
+import { BonsaiButton } from './bonsai/BonsaiButton';
+import { BonsaiStatusPill } from './bonsai/BonsaiStatusPill';
+import { BonsaiTimeline } from './bonsai/BonsaiTimeline';
+import { BonsaiTabs } from './bonsai/BonsaiTabs';
+import { EnhancedTable } from './operations/EnhancedTable';
+import { BonsaiDocumentList } from './bonsai/BonsaiFileUpload';
 
+export type EmployeeScreen = any;
 // Employee Portal Menu Update (replace existing menuItems in EmployeePortal function)
 const employeeMenuItems = [
   { id: 'home', label: 'Home', icon: Home },

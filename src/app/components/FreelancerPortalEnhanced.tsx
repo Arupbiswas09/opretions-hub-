@@ -1,12 +1,15 @@
 // FREELANCER PORTAL ENHANCED SCREENS - TO BE INTEGRATED
 
 import React, { useState } from 'react';
-import { Check, ClipboardList, User, Receipt, FileText, Shield } from 'lucide-react';
+import { Home, Briefcase, CheckSquare, Clock, DollarSign, FolderOpen, Download, Check, ClipboardList, User, Receipt, FileText, Shield } from 'lucide-react';
 import { BonsaiButton } from './bonsai/BonsaiButton';
 import { BonsaiStatusPill } from './bonsai/BonsaiStatusPill';
 import { BonsaiTimeline } from './bonsai/BonsaiTimeline';
 import { BonsaiDocumentList } from './bonsai/BonsaiFileUpload';
 import { EnhancedTable } from './operations/EnhancedTable';
+import { BonsaiTabs } from './bonsai/BonsaiTabs';
+
+export type FreelancerScreen = any;
 
 // Freelancer Portal Menu Update
 const freelancerMenuItems = [

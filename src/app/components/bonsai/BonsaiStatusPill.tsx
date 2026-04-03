@@ -14,6 +14,8 @@ const statusPillVariants = cva(
         cancelled: "bg-stone-100 text-stone-400 line-through",
         overdue: "bg-red-50 text-red-600",
         inProgress: "bg-sky-50 text-sky-700",
+        archived: "bg-stone-100 text-stone-400",
+        inactive: "bg-stone-100 text-stone-500",
       },
     },
     defaultVariants: {
