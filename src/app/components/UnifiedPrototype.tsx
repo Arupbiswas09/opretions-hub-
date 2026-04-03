@@ -1,13 +1,13 @@
 'use client';
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, MotionConfig } from 'motion/react';
 import {
   Home, Briefcase, Users, Building2, FolderKanban, UserPlus,
   DollarSign, Headphones, Settings, Search, Bell, Plus,
   ChevronRight, ClipboardList, PanelLeftClose, PanelLeft,
   Command, ArrowUpRight
 } from 'lucide-react';
-import { pageTransition } from '../lib/motion';
+import { pageTransition, springSnap } from '../lib/motion';
 
 import Dashboard from './Dashboard';
 import Sales from './Sales';
@@ -66,6 +66,7 @@ export default function UnifiedPrototype() {
   };
 
   return (
+    <MotionConfig reducedMotion="user" transition={{ type: 'spring', stiffness: 400, damping: 30 }}>
     <div className="min-h-screen flex">
 
       {/* ═══════════════════════════════════════
@@ -176,20 +177,21 @@ export default function UnifiedPrototype() {
                 Portals
               </p>
               {PORTALS.map((p) => (
-                <button
+                <motion.button
                   key={p.id}
                   onClick={() => setView(p.id)}
                   className="w-full flex items-center justify-between px-[10px] py-[7px] rounded-[10px] group transition-all"
                   style={{ color: '#78716c' }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(28,25,23,0.05)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                  whileHover={{ backgroundColor: 'rgba(28,25,23,0.05)', x: 1 }}
+                  whileTap={{ scale: 0.97 }}
+                  transition={springSnap}
                 >
                   <div className="flex items-center gap-2">
                     <div className="w-[6px] h-[6px] rounded-full flex-shrink-0" style={{ background: p.color }} />
                     <span className="text-[12px] text-stone-600 group-hover:text-stone-800 transition-colors">{p.label}</span>
                   </div>
                   <ArrowUpRight className="w-3 h-3 text-stone-300 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </button>
+                </motion.button>
               ))}
             </motion.div>
           )}
@@ -224,11 +226,11 @@ export default function UnifiedPrototype() {
           transition={{ delay: 0.1, duration: 0.3 }}
           className="sticky top-0 z-20 h-[56px] flex items-center justify-between px-6"
           style={{
-            background: 'rgba(245,245,243,0.85)',
+            background: 'rgba(238,237,233,0.88)',
             backdropFilter: 'blur(44px) saturate(180%)',
             WebkitBackdropFilter: 'blur(44px) saturate(180%)',
             borderBottom: '1px solid rgba(0,0,0,0.06)',
-            boxShadow: '0 1px 0 rgba(255,255,255,0.7)',
+            boxShadow: '0 1px 0 rgba(255,255,255,0.6)',
           }}
         >
           {/* Breadcrumb / title */}
@@ -329,5 +331,6 @@ export default function UnifiedPrototype() {
         </main>
       </div>
     </div>
+    </MotionConfig>
   );
 }
