@@ -25,8 +25,8 @@ const SCREENS: { id: Screen; label: string }[] = [
   { id: 'proposal-detail', label: 'Proposal' },
 ];
 
-export default function Sales() {
-  const [currentScreen, setCurrentScreen] = useState<Screen>('dashboard');
+export default function Sales({ initialScreen = 'dashboard', hideNav = false }: { initialScreen?: Screen; hideNav?: boolean }) {
+  const [currentScreen, setCurrentScreen] = useState<Screen>(initialScreen);
   const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
   const [showDealDrawer, setShowDealDrawer] = useState(false);
   const [showProposalDrawer, setShowProposalDrawer] = useState(false);
@@ -56,7 +56,7 @@ export default function Sales() {
   return (
     <div className="min-h-full">
       {/* Screen nav — minimal pill bar */}
-      <div className="px-8 py-3 border-b border-stone-100/60">
+      {!hideNav && <div className="px-8 py-3 border-b border-stone-100/60">
         <div className="flex items-center gap-1">
           {SCREENS.map((s) => (
             <button
@@ -99,7 +99,7 @@ export default function Sales() {
             Won/Lost
           </button>
         </div>
-      </div>
+      </div>}
 
       {/* Content with page transitions */}
       <AnimatePresence mode="wait">

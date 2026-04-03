@@ -11,8 +11,8 @@ import { PE07ApproveRejectModal } from './people/PE07ApproveRejectModal';
 
 type Screen = 'directory' | 'detail' | 'approvals';
 
-export default function People() {
-  const [currentScreen, setCurrentScreen] = useState<Screen>('directory');
+export default function People({ initialScreen = 'directory', hideNav = false }: { initialScreen?: Screen; hideNav?: boolean }) {
+  const [currentScreen, setCurrentScreen] = useState<Screen>(initialScreen);
   const [selectedPerson, setSelectedPerson] = useState<any>(null);
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
   const [showPersonDrawer, setShowPersonDrawer] = useState(false);
@@ -25,7 +25,7 @@ export default function People() {
 
   return (
     <div className="min-h-full">
-      <div className="px-8 py-3 border-b border-stone-100/60">
+      {!hideNav && <div className="px-8 py-3 border-b border-stone-100/60">
         <div className="flex items-center gap-1">
           {([{ id: 'directory', label: 'Directory' }, { id: 'detail', label: 'Detail' }, { id: 'approvals', label: 'Approvals' }] as const).map((s) => (
             <button key={s.id} onClick={() => {
@@ -39,7 +39,7 @@ export default function People() {
           <button onClick={() => setShowExpenseDrawer(true)} className="px-3 py-1.5 text-[12px] text-stone-400 hover:text-stone-600 hover:bg-stone-50 rounded-md transition-colors">Expense</button>
           <button onClick={() => { setSelectedRequest({ id: '1', type: 'leave', employee: 'Sarah Johnson', submittedDate: 'Jan 15, 2026', status: 'Submitted', leaveType: 'Vacation', startDate: 'Feb 10, 2026', endDate: 'Feb 14, 2026', days: 5 }); setShowApprovalModal(true); }} className="px-3 py-1.5 text-[12px] text-stone-400 hover:text-stone-600 hover:bg-stone-50 rounded-md transition-colors">Review</button>
         </div>
-      </div>
+      </div>}
 
       <AnimatePresence mode="wait">
         <motion.div key={currentScreen} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}>

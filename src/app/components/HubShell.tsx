@@ -29,6 +29,37 @@ import { HUB_MODULES, type HubModule } from '../lib/hub-modules';
 
 export { HUB_MODULES, type HubModule };
 
+/** Default landing URL per module — deep-links straight to the primary sub-view. */
+const MODULE_DEFAULT_HREF: Record<HubModule, string> = {
+  dashboard: '/hub/dashboard',
+  sales: '/hub/sales/overview',
+  contacts: '/hub/contacts',
+  clients: '/hub/clients',
+  projects: '/hub/projects/list',
+  talent: '/hub/talent/overview',
+  people: '/hub/people/directory',
+  finance: '/hub/finance/overview',
+  support: '/hub/support',
+  forms: '/hub/forms',
+  admin: '/hub/admin',
+};
+
+/** Human-readable label for the 3rd URL segment (sub-route). */
+const SUB_ROUTE_LABEL: Record<string, string> = {
+  overview: 'Overview',
+  deals: 'Deals',
+  pipeline: 'Pipeline',
+  list: 'Projects',
+  timesheets: 'Timesheets',
+  approvals: 'Approvals',
+  directory: 'Directory',
+  invoices: 'Invoices',
+  expenses: 'Expenses',
+  jobs: 'Jobs',
+  candidates: 'Candidates',
+  referrals: 'Referrals',
+};
+
 const NAV: { id: HubModule; label: string; icon: React.ElementType; badge?: number }[] = [
   { id: 'dashboard', label: 'Dashboard', icon: Home },
   { id: 'sales', label: 'Sales', icon: Briefcase, badge: 5 },
@@ -133,8 +164,10 @@ export default function HubShell({ children }: { children: React.ReactNode }) {
             <nav className="flex-1 px-2 py-3 space-y-[2px] overflow-y-auto">
               {NAV.map((item, i) => {
                 const Icon = item.icon;
-                const active = mod === item.id;
-                const href = `/hub/${item.id}`;
+                const href = MODULE_DEFAULT_HREF[item.id];
+                const active =
+                  pathname === `/hub/${item.id}` ||
+                  pathname.startsWith(`/hub/${item.id}/`);
                 return (
                   <motion.div
                     key={item.id}
@@ -263,26 +296,54 @@ export default function HubShell({ children }: { children: React.ReactNode }) {
               boxShadow: '0 1px 0 rgba(255,255,255,0.6)',
             }}
           >
-            <div className="flex items-center gap-2 text-[13px]">
-              <Link href={homeHref} className="text-stone-400 hover:text-stone-700 transition-colors font-medium">
-                {isPortalView ? portalLabelFromPath(pathname) ?? 'Portal' : 'Hub'}
-              </Link>
-              {!isPortalView && mod && mod !== 'dashboard' && (
-                <AnimatePresence mode="wait">
-                  <motion.span
-                    key={mod}
-                    initial={{ opacity: 0, x: -6 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 6 }}
-                    transition={{ duration: 0.15 }}
-                    className="flex items-center gap-2"
-                  >
-                    <ChevronRight className="w-3.5 h-3.5 text-stone-300" />
-                    <span className="text-stone-800 font-semibold capitalize tracking-[-0.01em]">{mod}</span>
-                  </motion.span>
-                </AnimatePresence>
-              )}
-            </div>
+            {(() => {
+              const segments = pathname.split('/').filter(Boolean); // ['hub', module?, subRoute?]
+              const subSeg = segments[2]; // e.g. 'overview', 'deals', 'pipeline'
+              const subLabel = subSeg ? SUB_ROUTE_LABEL[subSeg] : null;
+              const modLabel = mod ? (mod.charAt(0).toUpperCase() + mod.slice(1)) : null;
+              return (
+                <div className="flex items-center gap-2 text-[13px]">
+                  <Link href={homeHref} className="text-stone-400 hover:text-stone-700 transition-colors font-medium">
+                    {isPortalView ? (portalLabelFromPath(pathname) ?? 'Portal') : 'Hub'}
+                  </Link>
+                  {!isPortalView && modLabel && mod !== 'dashboard' && (
+                    <AnimatePresence mode="wait">
+                      <motion.span
+                        key={mod}
+                        initial={{ opacity: 0, x: -6 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 6 }}
+                        transition={{ duration: 0.15 }}
+                        className="flex items-center gap-2"
+                      >
+                        <ChevronRight className="w-3.5 h-3.5 text-stone-300" />
+                        <Link
+                          href={MODULE_DEFAULT_HREF[mod]}
+                          className={`tracking-[-0.01em] transition-colors ${subLabel ? 'text-stone-400 hover:text-stone-700 font-medium' : 'text-stone-800 font-semibold'}`}
+                        >
+                          {modLabel}
+                        </Link>
+                      </motion.span>
+                    </AnimatePresence>
+                  )}
+                  {!isPortalView && subLabel && (
+                    <AnimatePresence mode="wait">
+                      <motion.span
+                        key={subSeg}
+                        initial={{ opacity: 0, x: -6 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 6 }}
+                        transition={{ duration: 0.15 }}
+                        className="flex items-center gap-2"
+                      >
+                        <ChevronRight className="w-3.5 h-3.5 text-stone-300" />
+                        <span className="text-stone-800 font-semibold tracking-[-0.01em]">{subLabel}</span>
+                      </motion.span>
+                    </AnimatePresence>
+                  )}
+                </div>
+              );
+            })()}
 
             <div className="flex items-center gap-2">
               <div className="relative hidden md:flex items-center">

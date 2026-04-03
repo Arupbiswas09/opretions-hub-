@@ -13,8 +13,8 @@ import { BonsaiInput } from './bonsai/BonsaiFormFields';
 
 type Screen = 'dashboard' | 'jobs' | 'pipeline' | 'job-detail' | 'candidates' | 'candidate-detail' | 'referrals' | 'client-portal' | 'client-job' | 'client-shortlist';
 
-export default function Talent() {
-  const [currentScreen, setCurrentScreen] = useState<Screen>('dashboard');
+export default function Talent({ initialScreen = 'dashboard', hideNav = false }: { initialScreen?: Screen; hideNav?: boolean }) {
+  const [currentScreen, setCurrentScreen] = useState<Screen>(initialScreen);
   const [selectedJob, setSelectedJob] = useState<any>(null);
   const [selectedCandidate, setSelectedCandidate] = useState<any>(null);
   const [showJobDrawer, setShowJobDrawer] = useState(false);
@@ -35,7 +35,7 @@ export default function Talent() {
 
   return (
     <div className="min-h-full">
-      <div className="px-8 py-3 border-b border-stone-100/60">
+      {!hideNav && <div className="px-8 py-3 border-b border-stone-100/60">
         <div className="flex items-center gap-1 flex-wrap">
           {navBtn('dashboard', 'Overview')}
           {navBtn('jobs', 'Jobs')}
@@ -52,7 +52,7 @@ export default function Talent() {
           {navBtn('client-job', 'Client Detail')}
           {navBtn('client-shortlist', 'Shortlist')}
         </div>
-      </div>
+      </div>}
 
       <AnimatePresence mode="wait">
         <motion.div key={currentScreen} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.25, ease: 'easeOut' }}>
