@@ -21,10 +21,10 @@ const REVENUE_DATA = [
 ];
 
 const EXPENSE_CATEGORIES = [
-  { name: 'Salaries',    value: 61500, pct: 62, color: 'rgba(251,191,36,0.85)' },
-  { name: 'Software',    value: 11900, pct: 12, color: 'rgba(139,92,246,0.70)' },
-  { name: 'Marketing',   value: 14850, pct: 15, color: 'rgba(20,184,166,0.70)'  },
-  { name: 'Operations',  value: 10890, pct: 11, color: 'rgba(244,114,182,0.60)'  },
+  { name: 'Salaries',    value: 61500, pct: 62, color: isDarkFn => isDarkFn ? 'rgba(251,191,36,0.85)' : '#D97706' },
+  { name: 'Software',    value: 11900, pct: 12, color: isDarkFn => isDarkFn ? 'rgba(139,92,246,0.70)' : '#7C3AED' },
+  { name: 'Marketing',   value: 14850, pct: 15, color: isDarkFn => isDarkFn ? 'rgba(20,184,166,0.70)' : '#0D9488' },
+  { name: 'Operations',  value: 10890, pct: 11, color: isDarkFn => isDarkFn ? 'rgba(244,114,182,0.60)' : '#EC4899' },
 ];
 
 const MONTHLY_INVOICES = [
@@ -34,6 +34,13 @@ const MONTHLY_INVOICES = [
   { month: 'Nov', paid: 21, pending: 1 },
   { month: 'Dec', paid: 16, pending: 4 },
   { month: 'Jan', paid: 19, pending: 5 },
+];
+
+/* Profitability per client */
+const CLIENT_PROFITABILITY = [
+  { client: 'Acme Corp',        revenue: 45000, cost: 28500, margin: 36.7 },
+  { client: 'Tech Startup Inc', revenue: 85000, cost: 52000, margin: 38.8 },
+  { client: 'Local Retail Co',  revenue: 15000, cost: 14800, margin: 1.3  },
 ];
 
 const fmt = (val: number) => `$${(val / 1000).toFixed(0)}K`;
@@ -73,7 +80,7 @@ function RevenueTooltip({ active, payload, label }: any) {
       {payload.map((p: any) => (
         <div key={p.name} className="flex items-center gap-2 mb-0.5">
           <div className="w-2 h-2 rounded-full" style={{ background: p.color }} />
-          <span style={{ color: 'var(--muted-foreground)' }} className="capitalize">{p.name}:</span>
+          <span style={{ color: 'var(--foreground-muted)' }} className="capitalize">{p.name}:</span>
           <span className="font-semibold" style={{ color: 'var(--foreground)' }}>{fmt(p.value)}</span>
         </div>
       ))}
@@ -95,7 +102,7 @@ function InvoiceTooltip({ active, payload, label }: any) {
       {payload.map((p: any) => (
         <div key={p.name} className="flex items-center gap-1.5">
           <div className="w-1.5 h-1.5 rounded-full" style={{ background: p.fill }} />
-          <span style={{ color: 'var(--muted-foreground)' }} className="capitalize">{p.name}:</span>
+          <span style={{ color: 'var(--foreground-muted)' }} className="capitalize">{p.name}:</span>
           <span className="font-medium" style={{ color: 'var(--foreground)' }}>{p.value}</span>
         </div>
       ))}
@@ -111,37 +118,41 @@ interface FI01FinanceDashboardProps {
 export function FI01FinanceDashboard({ onNavigateToInvoices, onNavigateToExpenses }: FI01FinanceDashboardProps) {
   const { isDark } = useTheme();
 
-  const revColor    = isDark ? 'rgba(251,191,36,0.90)' : '#1c1917';
-  const expColor    = isDark ? 'rgba(255,255,255,0.35)' : '#a8a29e';
-  const profitColor = isDark ? 'rgba(52,211,153,0.80)' : '#059669';
+  const revColor    = isDark ? '#2563EB' : '#1E3A8A';
+  const expColor    = isDark ? 'rgba(255,255,255,0.35)' : '#94A3B8';
+  const profitColor = isDark ? '#34D399' : '#059669';
   const gridColor   = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)';
-  const tickColor   = isDark ? '#57534e' : '#a8a29e';
+  const tickColor   = isDark ? 'rgba(255,255,255,0.35)' : '#94A3B8';
 
   const revGrad  = isDark ? 'revGradDark'  : 'revGradLight';
   const profGrad = isDark ? 'profGradDark' : 'profGradLight';
 
-  const invoicePaidColor    = isDark ? 'rgba(251,191,36,0.80)' : '#292524';
-  const invoicePendingColor = isDark ? 'rgba(255,255,255,0.20)' : '#d6d3d1';
+  const invoicePaidColor    = isDark ? '#2563EB' : '#1E3A8A';
+  const invoicePendingColor = isDark ? 'rgba(255,255,255,0.15)' : '#CBD5E1';
 
   const KPI_CARDS = [
     {
       label: 'Total Revenue', val: '$145,280', icon: DollarSign,
-      delta: '+12.5% from last month', deltaColor: 'text-emerald-500 dark:text-emerald-400',
+      delta: '+12.5% from last month',
+      deltaStyle: { color: isDark ? '#34D399' : '#059669' },
       onClick: onNavigateToInvoices,
     },
     {
       label: 'Outstanding', val: '$38,450', icon: FileText,
-      delta: '5 invoices pending', deltaColor: 'text-amber-500 dark:text-amber-400',
+      delta: '5 invoices pending',
+      deltaStyle: { color: isDark ? '#FBBF24' : '#D97706' },
       onClick: onNavigateToInvoices,
     },
     {
       label: 'Expenses (MTD)', val: '$24,120', icon: TrendingUp,
-      delta: '18 pending claims', deltaColor: 'text-stone-500 dark:text-stone-400',
+      delta: '18 pending claims',
+      deltaStyle: { color: 'var(--foreground-muted)' },
       onClick: onNavigateToExpenses,
     },
     {
       label: 'Overdue', val: '$8,200', icon: AlertCircle,
-      delta: '2 invoices overdue', deltaColor: 'text-red-500 dark:text-red-400',
+      delta: '2 invoices overdue',
+      deltaStyle: { color: isDark ? '#F87171' : '#DC2626' },
       urgent: true,
       onClick: onNavigateToInvoices,
     },
@@ -158,10 +169,9 @@ export function FI01FinanceDashboard({ onNavigateToInvoices, onNavigateToExpense
         transition={{ duration: 0.3, ease: EASE_OUT_EXPO }}
       >
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.1em] mb-1
-                        text-stone-400 dark:text-stone-500">Finance</p>
-          <h1 className="text-[28px] font-semibold tracking-[-0.025em]
-                         text-stone-900 dark:text-stone-50">Overview</h1>
+          <p className="eyebrow-label mb-1">Finance</p>
+          <h1 className="text-[28px] font-semibold tracking-[-0.025em]"
+            style={{ color: 'var(--foreground)' }}>Overview</h1>
         </div>
         <BonsaiButton variant="ghost" size="sm" icon={<Download className="w-4 h-4" />}>
           Export Report
@@ -181,34 +191,27 @@ export function FI01FinanceDashboard({ onNavigateToInvoices, onNavigateToExpense
               whileHover={{ y: -2 }}
               whileTap={{ scale: 0.98 }}
               onClick={card.onClick}
-              className="rounded-2xl p-5 text-left group transition-all"
-              style={{
-                background: card.urgent
-                  ? isDark ? 'rgba(239,68,68,0.08)' : 'rgba(254,242,242,0.65)'
-                  : 'var(--glass-bg)',
-                backdropFilter: 'blur(20px) saturate(180%)',
-                WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-                border: card.urgent
-                  ? isDark ? '1px solid rgba(239,68,68,0.20)' : '1px solid rgba(254,202,202,0.60)'
-                  : '1px solid var(--border)',
-              }}
+              className="rounded-2xl p-5 text-left group transition-all glass-stat"
+              style={card.urgent ? {
+                background: isDark ? 'rgba(248,113,113,0.08)' : 'rgba(254,242,242,0.65)',
+                border: isDark ? '1px solid rgba(248,113,113,0.20)' : '1px solid rgba(254,202,202,0.60)',
+              } : {}}
             >
               <div className="flex items-center justify-between mb-3">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.08em]
-                              text-stone-400 dark:text-stone-500">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.08em]"
+                  style={{ color: 'var(--foreground-muted)' }}>
                   {card.label}
                 </p>
-                <div className="w-7 h-7 rounded-lg flex items-center justify-center
-                                bg-stone-100/60 dark:bg-white/[0.06]">
-                  <Icon className="w-3.5 h-3.5 text-stone-500 dark:text-stone-400" />
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center"
+                  style={{ background: 'var(--glass-bg)' }}>
+                  <Icon className="w-3.5 h-3.5" style={{ color: 'var(--foreground-secondary)' }} />
                 </div>
               </div>
-              <p className={`text-[26px] font-bold tracking-[-0.02em] leading-none ${
-                card.urgent ? 'text-red-600 dark:text-red-400' : 'text-stone-800 dark:text-stone-50'
-              }`}>
+              <p className={`text-[26px] font-bold tracking-[-0.02em] leading-none`}
+                style={{ color: card.urgent ? (isDark ? '#F87171' : '#DC2626') : 'var(--foreground)' }}>
                 {card.val}
               </p>
-              <p className={`text-[11px] font-medium mt-2 ${card.deltaColor}`}>{card.delta}</p>
+              <p className="text-[11px] font-medium mt-2" style={card.deltaStyle}>{card.delta}</p>
             </motion.button>
           );
         })}
@@ -221,10 +224,11 @@ export function FI01FinanceDashboard({ onNavigateToInvoices, onNavigateToExpense
         <GlassPanel delay={0.22}>
           <div className="px-6 pt-5 pb-2 flex items-center justify-between">
             <div>
-              <h3 className="text-[14px] font-semibold tracking-[-0.01em] text-stone-800 dark:text-stone-100">
+              <h3 className="text-[14px] font-semibold tracking-[-0.01em]"
+                style={{ color: 'var(--foreground)' }}>
                 Revenue Trend
               </h3>
-              <p className="text-[11px] mt-0.5 text-stone-400 dark:text-stone-500">Last 6 months</p>
+              <p className="text-[11px] mt-0.5" style={{ color: 'var(--foreground-muted)' }}>Last 6 months</p>
             </div>
             <div className="flex items-center gap-4">
               {[
@@ -234,7 +238,7 @@ export function FI01FinanceDashboard({ onNavigateToInvoices, onNavigateToExpense
               ].map(l => (
                 <div key={l.label} className="flex items-center gap-1.5">
                   <div className="w-2 h-2 rounded-full" style={{ background: l.color }} />
-                  <span className="text-[10px] text-stone-400 dark:text-stone-500">{l.label}</span>
+                  <span className="text-[10px]" style={{ color: 'var(--foreground-muted)' }}>{l.label}</span>
                 </div>
               ))}
             </div>
@@ -244,20 +248,20 @@ export function FI01FinanceDashboard({ onNavigateToInvoices, onNavigateToExpense
               <AreaChart data={REVENUE_DATA} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
                 <defs>
                   <linearGradient id="revGradLight" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#1c1917" stopOpacity={0.12} />
-                    <stop offset="100%" stopColor="#1c1917" stopOpacity={0.01} />
+                    <stop offset="0%" stopColor="#1E3A8A" stopOpacity={0.12} />
+                    <stop offset="100%" stopColor="#1E3A8A" stopOpacity={0.01} />
                   </linearGradient>
                   <linearGradient id="revGradDark" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="rgba(251,191,36,1)" stopOpacity={0.22} />
-                    <stop offset="100%" stopColor="rgba(251,191,36,1)" stopOpacity={0.01} />
+                    <stop offset="0%" stopColor="#2563EB" stopOpacity={0.22} />
+                    <stop offset="100%" stopColor="#2563EB" stopOpacity={0.01} />
                   </linearGradient>
                   <linearGradient id="profGradLight" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="#059669" stopOpacity={0.14} />
                     <stop offset="100%" stopColor="#059669" stopOpacity={0.01} />
                   </linearGradient>
                   <linearGradient id="profGradDark" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="rgba(52,211,153,1)" stopOpacity={0.20} />
-                    <stop offset="100%" stopColor="rgba(52,211,153,1)" stopOpacity={0.01} />
+                    <stop offset="0%" stopColor="#34D399" stopOpacity={0.20} />
+                    <stop offset="100%" stopColor="#34D399" stopOpacity={0.01} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
@@ -275,19 +279,19 @@ export function FI01FinanceDashboard({ onNavigateToInvoices, onNavigateToExpense
                   type="monotone" dataKey="revenue" name="revenue"
                   stroke={revColor} strokeWidth={2}
                   fill={`url(#${revGrad})`}
-                  dot={false} activeDot={{ r: 4, fill: revColor, stroke: isDark ? '#0C0A09' : '#fff', strokeWidth: 2 }}
+                  dot={false} activeDot={{ r: 4, fill: revColor, stroke: isDark ? '#0B0D12' : '#fff', strokeWidth: 2 }}
                 />
                 <Area
                   type="monotone" dataKey="expenses" name="expenses"
                   stroke={expColor} strokeWidth={1.5} strokeDasharray="4 4"
                   fill="none"
-                  dot={false} activeDot={{ r: 3, fill: expColor, stroke: isDark ? '#0C0A09' : '#fff', strokeWidth: 2 }}
+                  dot={false} activeDot={{ r: 3, fill: expColor, stroke: isDark ? '#0B0D12' : '#fff', strokeWidth: 2 }}
                 />
                 <Area
                   type="monotone" dataKey="profit" name="profit"
                   stroke={profitColor} strokeWidth={1.5}
                   fill={`url(#${profGrad})`}
-                  dot={false} activeDot={{ r: 3, fill: profitColor, stroke: isDark ? '#0C0A09' : '#fff', strokeWidth: 2 }}
+                  dot={false} activeDot={{ r: 3, fill: profitColor, stroke: isDark ? '#0B0D12' : '#fff', strokeWidth: 2 }}
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -296,11 +300,12 @@ export function FI01FinanceDashboard({ onNavigateToInvoices, onNavigateToExpense
 
         {/* Expense breakdown */}
         <GlassPanel delay={0.26} className="flex flex-col">
-          <div className="px-5 pt-5 pb-3 border-b" style={{ borderColor: 'var(--border)' }}>
-            <h3 className="text-[14px] font-semibold tracking-[-0.01em] text-stone-800 dark:text-stone-100">
+          <div className="px-5 pt-5 pb-3" style={{ borderBottom: '1px solid var(--border)' }}>
+            <h3 className="text-[14px] font-semibold tracking-[-0.01em]"
+              style={{ color: 'var(--foreground)' }}>
               Expense Breakdown
             </h3>
-            <p className="text-[11px] mt-0.5 text-stone-400 dark:text-stone-500">January 2026</p>
+            <p className="text-[11px] mt-0.5" style={{ color: 'var(--foreground-muted)' }}>January 2026</p>
           </div>
 
           {/* Donut + categories */}
@@ -317,7 +322,7 @@ export function FI01FinanceDashboard({ onNavigateToInvoices, onNavigateToExpense
                   strokeWidth={0}
                 >
                   {EXPENSE_CATEGORIES.map((e, i) => (
-                    <Cell key={i} fill={e.color} />
+                    <Cell key={i} fill={e.color(isDark)} />
                   ))}
                 </Pie>
               </PieChart>
@@ -329,20 +334,20 @@ export function FI01FinanceDashboard({ onNavigateToInvoices, onNavigateToExpense
                 <div key={cat.name}>
                   <div className="flex items-center justify-between mb-1">
                     <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: cat.color }} />
-                      <span className="text-[12px] font-medium text-stone-700 dark:text-stone-200">{cat.name}</span>
+                      <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: cat.color(isDark) }} />
+                      <span className="text-[12px] font-medium" style={{ color: 'var(--foreground)' }}>{cat.name}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] text-stone-400 dark:text-stone-500">{cat.pct}%</span>
-                      <span className="text-[11px] font-semibold tabular-nums text-stone-700 dark:text-stone-200">
+                      <span className="text-[10px]" style={{ color: 'var(--foreground-muted)' }}>{cat.pct}%</span>
+                      <span className="text-[11px] font-semibold tabular-nums" style={{ color: 'var(--foreground)' }}>
                         ${(cat.value / 1000).toFixed(1)}K
                       </span>
                     </div>
                   </div>
-                  <div className="h-[3px] rounded-full overflow-hidden" style={{ background: 'var(--border)' }}>
+                  <div className="h-[3px] rounded-full overflow-hidden" style={{ background: 'var(--stat-bar-track)' }}>
                     <motion.div
                       className="h-full rounded-full"
-                      style={{ background: cat.color }}
+                      style={{ background: cat.color(isDark) }}
                       initial={{ width: 0 }}
                       animate={{ width: `${cat.pct}%` }}
                       transition={{ delay: 0.4, duration: 0.8, ease: EASE_OUT_EXPO }}
@@ -353,10 +358,10 @@ export function FI01FinanceDashboard({ onNavigateToInvoices, onNavigateToExpense
             </div>
 
             {/* Total */}
-            <div className="mt-4 pt-3 border-t flex items-center justify-between"
-              style={{ borderColor: 'var(--border)' }}>
-              <span className="text-[11px] font-medium text-stone-500 dark:text-stone-400">Total MTD</span>
-              <span className="text-[15px] font-bold tracking-[-0.02em] text-stone-800 dark:text-stone-100">
+            <div className="mt-4 pt-3 flex items-center justify-between"
+              style={{ borderTop: '1px solid var(--border)' }}>
+              <span className="text-[11px] font-medium" style={{ color: 'var(--foreground-muted)' }}>Total MTD</span>
+              <span className="text-[15px] font-bold tracking-[-0.02em]" style={{ color: 'var(--foreground)' }}>
                 $99,140
               </span>
             </div>
@@ -364,23 +369,24 @@ export function FI01FinanceDashboard({ onNavigateToInvoices, onNavigateToExpense
         </GlassPanel>
       </div>
 
-      {/* ── Invoice volume + Quick actions ── */}
-      <div className="grid grid-cols-[1fr_auto] gap-5">
+      {/* ── Invoice volume + Profitability Table ── */}
+      <div className="grid grid-cols-[1fr_1fr] gap-5 mb-6">
 
         {/* Monthly invoice volume chart */}
         <GlassPanel delay={0.30}>
           <div className="px-5 pt-4 pb-1 flex items-center justify-between">
-            <h3 className="text-[13px] font-semibold tracking-[-0.01em] text-stone-800 dark:text-stone-100">
+            <h3 className="text-[13px] font-semibold tracking-[-0.01em]"
+              style={{ color: 'var(--foreground)' }}>
               Invoice Volume
             </h3>
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-1.5">
                 <div className="w-2 h-2 rounded-full" style={{ background: invoicePaidColor }} />
-                <span className="text-[10px] text-stone-400 dark:text-stone-500">Paid</span>
+                <span className="text-[10px]" style={{ color: 'var(--foreground-muted)' }}>Paid</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <div className="w-2 h-2 rounded-full" style={{ background: invoicePendingColor }} />
-                <span className="text-[10px] text-stone-400 dark:text-stone-500">Pending</span>
+                <span className="text-[10px]" style={{ color: 'var(--foreground-muted)' }}>Pending</span>
               </div>
             </div>
           </div>
@@ -397,52 +403,97 @@ export function FI01FinanceDashboard({ onNavigateToInvoices, onNavigateToExpense
           </ResponsiveContainer>
         </GlassPanel>
 
-        {/* Quick navigation cards */}
-        <div className="flex flex-col gap-3 w-[200px]">
-          {[
-            {
-              icon: FileText, label: 'Invoices', sub: '5 Pending',
-              onClick: onNavigateToInvoices,
-              pill: <BonsaiStatusPill status="pending" label="5 Pending" />,
-            },
-            {
-              icon: DollarSign, label: 'Expenses', sub: '18 To Review',
-              onClick: onNavigateToExpenses,
-              pill: <BonsaiStatusPill status="pending" label="18 To Review" />,
-            },
-          ].map((item) => {
-            const Icon = item.icon;
-            return (
-              <motion.button
-                key={item.label}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.32, ease: EASE_OUT_EXPO }}
-                whileHover={{ y: -2 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={item.onClick}
-                className="flex-1 rounded-2xl p-4 text-left group transition-all"
-                style={{
-                  background: 'var(--glass-bg)',
-                  backdropFilter: 'blur(20px) saturate(180%)',
-                  border: '1px solid var(--border)',
-                }}
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-stone-100 dark:bg-white/[0.08]">
-                    <Icon className="w-4 h-4 text-stone-500 dark:text-stone-300" />
-                  </div>
-                  <ArrowUpRight className="w-3.5 h-3.5 text-stone-300 dark:text-stone-600
-                                          group-hover:text-stone-600 dark:group-hover:text-stone-300 transition-colors" />
+        {/* Client Profitability Table */}
+        <GlassPanel delay={0.34}>
+          <div className="px-5 pt-4 pb-3" style={{ borderBottom: '1px solid var(--border)' }}>
+            <h3 className="text-[13px] font-semibold tracking-[-0.01em]"
+              style={{ color: 'var(--foreground)' }}>
+              Client Profitability
+            </h3>
+            <p className="text-[10px] mt-0.5" style={{ color: 'var(--foreground-muted)' }}>Revenue vs cost per client</p>
+          </div>
+          <div className="px-5 py-3">
+            <table className="w-full text-[11px]">
+              <thead>
+                <tr>
+                  <th className="text-left font-medium py-1.5 pr-2"
+                    style={{ color: 'var(--foreground-muted)' }}>Client</th>
+                  <th className="text-right font-medium py-1.5 px-2"
+                    style={{ color: 'var(--foreground-muted)' }}>Revenue</th>
+                  <th className="text-right font-medium py-1.5 px-2"
+                    style={{ color: 'var(--foreground-muted)' }}>Cost</th>
+                  <th className="text-right font-medium py-1.5 pl-2"
+                    style={{ color: 'var(--foreground-muted)' }}>Margin</th>
+                </tr>
+              </thead>
+              <tbody>
+                {CLIENT_PROFITABILITY.map((row) => (
+                  <tr key={row.client}>
+                    <td className="py-2 pr-2 font-medium" style={{ color: 'var(--foreground)' }}>{row.client}</td>
+                    <td className="py-2 px-2 text-right tabular-nums" style={{ color: 'var(--foreground-secondary)' }}>
+                      ${(row.revenue / 1000).toFixed(0)}K
+                    </td>
+                    <td className="py-2 px-2 text-right tabular-nums" style={{ color: 'var(--foreground-secondary)' }}>
+                      ${(row.cost / 1000).toFixed(1)}K
+                    </td>
+                    <td className="py-2 pl-2 text-right tabular-nums font-semibold"
+                      style={{ color: row.margin > 20 ? 'var(--success)' : row.margin > 5 ? 'var(--warning)' : 'var(--destructive)' }}>
+                      {row.margin}%
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </GlassPanel>
+      </div>
+
+      {/* ── Quick navigation cards ── */}
+      <div className="flex gap-3">
+        {[
+          {
+            icon: FileText, label: 'Invoices', sub: '5 Pending',
+            onClick: onNavigateToInvoices,
+            pill: <BonsaiStatusPill status="pending" label="5 Pending" />,
+          },
+          {
+            icon: DollarSign, label: 'Expenses', sub: '18 To Review',
+            onClick: onNavigateToExpenses,
+            pill: <BonsaiStatusPill status="pending" label="18 To Review" />,
+          },
+        ].map((item) => {
+          const Icon = item.icon;
+          return (
+            <motion.button
+              key={item.label}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.32, ease: EASE_OUT_EXPO }}
+              whileHover={{ y: -2 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={item.onClick}
+              className="flex-1 rounded-2xl p-4 text-left group transition-all"
+              style={{
+                background: 'var(--glass-bg)',
+                backdropFilter: 'blur(20px) saturate(180%)',
+                border: '1px solid var(--border)',
+              }}
+            >
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-8 h-8 rounded-xl flex items-center justify-center"
+                  style={{ background: 'var(--glass-bg)' }}>
+                  <Icon className="w-4 h-4" style={{ color: 'var(--foreground-secondary)' }} />
                 </div>
-                <h3 className="text-[13px] font-semibold mb-1 text-stone-800 dark:text-stone-100">
-                  {item.label}
-                </h3>
-                <div>{item.pill}</div>
-              </motion.button>
-            );
-          })}
-        </div>
+                <ArrowUpRight className="w-3.5 h-3.5 opacity-30 group-hover:opacity-100 transition-opacity"
+                  style={{ color: 'var(--foreground-muted)' }} />
+              </div>
+              <h3 className="text-[13px] font-semibold mb-1" style={{ color: 'var(--foreground)' }}>
+                {item.label}
+              </h3>
+              <div>{item.pill}</div>
+            </motion.button>
+          );
+        })}
       </div>
     </div>
   );

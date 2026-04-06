@@ -8,6 +8,7 @@ import { CL06CreateRequestModal } from './clients/CL06CreateRequestModal';
 import { CL07InviteUserModal } from './clients/CL07InviteUserModal';
 import { CL08EditRoleModal } from './clients/CL08EditRoleModal';
 import { CL09DeactivateUserDialog } from './clients/CL09DeactivateUserDialog';
+import { ModuleSubNav, moduleSubNavButtonClass, ModuleSubNavDivider } from './ui/ModuleSubNav';
 
 type Screen = 'list' | 'detail';
 
@@ -48,23 +49,34 @@ export default function Clients() {
 
   return (
     <div className="min-h-full">
-      <div className="px-8 py-3 border-b border-stone-100/60">
-        <div className="flex items-center gap-1">
-          {([{ id: 'list', label: 'All Clients' }, { id: 'detail', label: 'Detail' }] as const).map((s) => (
-            <button key={s.id} onClick={() => {
+      <ModuleSubNav>
+        {([{ id: 'list', label: 'All Clients' }, { id: 'detail', label: 'Detail' }] as const).map((s) => (
+          <button
+            key={s.id}
+            type="button"
+            onClick={() => {
               if (s.id === 'detail' && !selectedClient) {
                 setSelectedClient({ id: '1', name: 'Acme Corporation', industry: 'Technology', status: 'Active', owner: 'John Doe', contacts: 5, projects: 3, revenue: '$125,000', lastActivity: 'Today', tags: ['Enterprise', 'VIP'], website: 'https://acmecorp.com', phone: '(555) 123-4567', email: 'contact@acmecorp.com', address: 'San Francisco, CA' });
               }
               setCurrentScreen(s.id);
-            }} className={`px-3 py-1.5 text-[12px] rounded-md transition-all duration-200 ${currentScreen === s.id ? 'bg-stone-800 text-white font-medium shadow-sm' : 'text-stone-400 hover:text-stone-600 hover:bg-stone-50'}`}>{s.label}</button>
-          ))}
-          <div className="w-px h-3.5 bg-stone-200/60 mx-1.5" />
-          <button onClick={() => setShowClientDrawer(true)} className="px-3 py-1.5 text-[12px] text-stone-400 hover:text-stone-600 hover:bg-stone-50 rounded-md transition-colors">+ Client</button>
-          <button onClick={() => setShowRequestModal(true)} className="px-3 py-1.5 text-[12px] text-stone-400 hover:text-stone-600 hover:bg-stone-50 rounded-md transition-colors">Request</button>
-          <button onClick={() => setShowInviteUserModal(true)} className="px-3 py-1.5 text-[12px] text-stone-400 hover:text-stone-600 hover:bg-stone-50 rounded-md transition-colors">Invite</button>
-          <button onClick={() => { setSelectedPortalUser({ id: '1', name: 'Jennifer Davis', email: 'jennifer@acmecorp.com', role: 'Admin' }); setShowEditRoleModal(true); }} className="px-3 py-1.5 text-[12px] text-stone-400 hover:text-stone-600 hover:bg-stone-50 rounded-md transition-colors">Roles</button>
-        </div>
-      </div>
+            }}
+            className={moduleSubNavButtonClass(currentScreen === s.id)}
+          >
+            {s.label}
+          </button>
+        ))}
+        <ModuleSubNavDivider />
+        <button type="button" onClick={() => setShowClientDrawer(true)} className={moduleSubNavButtonClass(false)}>+ Client</button>
+        <button type="button" onClick={() => setShowRequestModal(true)} className={moduleSubNavButtonClass(false)}>Request</button>
+        <button type="button" onClick={() => setShowInviteUserModal(true)} className={moduleSubNavButtonClass(false)}>Invite</button>
+        <button
+          type="button"
+          onClick={() => { setSelectedPortalUser({ id: '1', name: 'Jennifer Davis', email: 'jennifer@acmecorp.com', role: 'Admin' }); setShowEditRoleModal(true); }}
+          className={moduleSubNavButtonClass(false)}
+        >
+          Roles
+        </button>
+      </ModuleSubNav>
 
       <AnimatePresence mode="wait">
         <motion.div key={currentScreen} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}>

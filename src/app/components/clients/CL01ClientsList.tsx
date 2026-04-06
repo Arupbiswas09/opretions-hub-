@@ -1,388 +1,321 @@
+'use client';
 import React, { useState } from 'react';
-import { Plus, List, LayoutGrid, Columns3, Settings, Filter, Archive, Trash2, UserPlus, Tag } from 'lucide-react';
-import { BonsaiButton } from '../bonsai/BonsaiButton';
-import { BonsaiStatusPill } from '../bonsai/BonsaiStatusPill';
-import { EnhancedTable } from '../operations/EnhancedTable';
-import { BonsaiGridCards } from '../bonsai/BonsaiGridCards';
+import { Search, Filter, SlidersHorizontal, MoreHorizontal, CheckCircle2, Plus } from 'lucide-react';
+import { motion } from 'motion/react';
 
 interface Client {
   id: string;
   name: string;
-  industry: string;
+  initials: string;
+  contactName: string;
+  contactEmail: string;
+  emailVerified?: boolean;
+  tags: string[];
   status: 'Active' | 'Onboarding' | 'Inactive' | 'Archived';
+  industry: string;
   owner: string;
-  contacts: number;
   projects: number;
   revenue: string;
   lastActivity: string;
-  tags: string[];
 }
 
 interface CL01ClientsListProps {
-  onClientClick: (client: Client) => void;
+  onClientClick: (client: any) => void;
   onCreateClient: () => void;
-  onBulkAction: (action: string, selected: string[]) => void;
+  onBulkAction?: (action: string, selected: string[]) => void;
 }
 
-export function CL01ClientsList({ onClientClick, onCreateClient, onBulkAction }: CL01ClientsListProps) {
-  const [viewMode, setViewMode] = useState<'list' | 'grid' | 'kanban'>('list');
-  const [selectedClients, setSelectedClients] = useState<string[]>([]);
-  const [showFilters, setShowFilters] = useState(false);
-  const [showColumnChooser, setShowColumnChooser] = useState(false);
-  const [filters, setFilters] = useState({
-    status: 'all',
-    industry: 'all',
-    owner: 'all',
-    tags: 'all',
-    lastActivity: 'all',
-  });
+/* ─── Avatar chip ─── */
+function AvatarChip({ name, initials }: { name: string; initials: string }) {
+  const colors = ['#2563EB', '#059669', '#D97706', '#7C3AED', '#0D9488', '#DC2626'];
+  const color = colors[name.charCodeAt(0) % colors.length];
+  return (
+    <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0"
+      style={{ background: color }}>
+      {initials}
+    </div>
+  );
+}
 
-  const clients: Client[] = [
-    {
-      id: '1',
-      name: 'Acme Corporation',
-      industry: 'Technology',
-      status: 'Active',
-      owner: 'John Doe',
-      contacts: 5,
-      projects: 3,
-      revenue: '$125,000',
-      lastActivity: 'Today',
-      tags: ['Enterprise', 'VIP'],
-    },
-    {
-      id: '2',
-      name: 'Tech Startup Inc',
-      industry: 'Software',
-      status: 'Active',
-      owner: 'Jane Smith',
-      contacts: 3,
-      projects: 2,
-      revenue: '$45,000',
-      lastActivity: '2 days ago',
-      tags: ['Startup', 'High Growth'],
-    },
-    {
-      id: '3',
-      name: 'Local Retail Co',
-      industry: 'Retail',
-      status: 'Onboarding',
-      owner: 'John Doe',
-      contacts: 2,
-      projects: 1,
-      revenue: '$15,000',
-      lastActivity: '1 week ago',
-      tags: ['SMB'],
-    },
-    {
-      id: '4',
-      name: 'FinTech Solutions',
-      industry: 'Finance',
-      status: 'Active',
-      owner: 'Sarah Wilson',
-      contacts: 4,
-      projects: 2,
-      revenue: '$85,000',
-      lastActivity: '3 days ago',
-      tags: ['Enterprise', 'Strategic'],
-    },
-    {
-      id: '5',
-      name: 'Marketing Agency Pro',
-      industry: 'Marketing',
-      status: 'Inactive',
-      owner: 'Mike Chen',
-      contacts: 8,
-      projects: 0,
-      revenue: '$0',
-      lastActivity: '3 months ago',
-      tags: ['Partner'],
-    },
-  ];
+/* ─── Tag pill ─── */
+function Tag({ label }: { label: string }) {
+  return (
+    <span className="text-[10px] px-2 py-0.5 rounded-full font-medium"
+      style={{
+        background: 'var(--glass-bg)',
+        border: '1px solid var(--border)',
+        color: 'var(--muted-foreground)',
+      }}>
+      {label}
+    </span>
+  );
+}
 
-  const availableColumns = [
-    { key: 'name', label: 'Client Name', visible: true },
-    { key: 'industry', label: 'Industry', visible: true },
-    { key: 'status', label: 'Status', visible: true },
-    { key: 'owner', label: 'Account Owner', visible: true },
-    { key: 'contacts', label: 'Contacts', visible: true },
-    { key: 'projects', label: 'Projects', visible: true },
-    { key: 'revenue', label: 'Revenue', visible: true },
-    { key: 'lastActivity', label: 'Last Activity', visible: true },
-    { key: 'tags', label: 'Tags', visible: false },
-  ];
+/* ─── Sort badge ─── */
+function SortBadge({ count, onClick }: { count: number; onClick: () => void }) {
+  if (count === 0) {
+    return (
+      <button onClick={onClick}
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium"
+        style={{
+          background: 'var(--glass-bg)',
+          border: '1px solid var(--border)',
+          color: 'var(--foreground)',
+        }}>
+        <SlidersHorizontal className="w-3.5 h-3.5" style={{ color: 'var(--muted-foreground)' }} />
+        Sort
+      </button>
+    );
+  }
+  return (
+    <button onClick={onClick}
+      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium"
+      style={{
+        background: 'rgba(37,99,235,0.10)',
+        border: '1px solid rgba(37,99,235,0.25)',
+        color: 'var(--primary)',
+      }}>
+      <SlidersHorizontal className="w-3.5 h-3.5" />
+      Sort {count}
+    </button>
+  );
+}
 
-  const [visibleColumns, setVisibleColumns] = useState(availableColumns);
+const CLIENTS: Client[] = [
+  {
+    id: '1', name: 'Acme Corporation', initials: 'AC',
+    contactName: 'Sample Client', contactEmail: 'contact@acmecorp.com',
+    emailVerified: true, tags: ['Enterprise', 'VIP'],
+    status: 'Active', industry: 'Technology', owner: 'John Doe',
+    projects: 3, revenue: '$125,000', lastActivity: 'Today',
+  },
+  {
+    id: '2', name: 'Tech Startup Inc', initials: 'TS',
+    contactName: 'Jane Smith', contactEmail: 'jane@techstartup.com',
+    emailVerified: false, tags: ['Startup', 'High Growth'],
+    status: 'Active', industry: 'Software', owner: 'Jane Smith',
+    projects: 2, revenue: '$45,000', lastActivity: '2 days ago',
+  },
+  {
+    id: '3', name: 'Local Retail Co', initials: 'LR',
+    contactName: 'Mike Johnson', contactEmail: 'mike@localretail.com',
+    emailVerified: true, tags: ['SMB'],
+    status: 'Onboarding', industry: 'Retail', owner: 'John Doe',
+    projects: 1, revenue: '$15,000', lastActivity: '1 week ago',
+  },
+  {
+    id: '4', name: 'FinTech Solutions', initials: 'FS',
+    contactName: 'Sarah Wilson', contactEmail: 'sarah@fintech.com',
+    emailVerified: true, tags: ['Enterprise', 'Strategic'],
+    status: 'Active', industry: 'Finance', owner: 'Sarah Wilson',
+    projects: 2, revenue: '$85,000', lastActivity: '3 days ago',
+  },
+  {
+    id: '5', name: 'Marketing Agency Pro', initials: 'MA',
+    contactName: 'Mike Chen', contactEmail: 'mike@mapro.com',
+    emailVerified: false, tags: ['Partner'],
+    status: 'Inactive', industry: 'Marketing', owner: 'Mike Chen',
+    projects: 0, revenue: '$0', lastActivity: '3 months ago',
+  },
+];
+
+const TH_STYLE: React.CSSProperties = {
+  padding: '10px 16px',
+  textAlign: 'left',
+  fontSize: 11,
+  fontWeight: 600,
+  letterSpacing: '0.04em',
+  textTransform: 'uppercase',
+  color: 'var(--muted-foreground)',
+  borderBottom: '1px solid var(--border)',
+  whiteSpace: 'nowrap',
+};
+
+export function CL01ClientsList({ onClientClick, onCreateClient }: CL01ClientsListProps) {
+  const [search, setSearch] = useState('');
+  const [sortCount, setSortCount] = useState(0);
+  const [selected, setSelected] = useState<string[]>([]);
+
+  const filtered = CLIENTS.filter(c =>
+    c.name.toLowerCase().includes(search.toLowerCase()) ||
+    c.contactName.toLowerCase().includes(search.toLowerCase()) ||
+    c.contactEmail.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const allSelected = filtered.length > 0 && selected.length === filtered.length;
+  const toggleAll = () => setSelected(allSelected ? [] : filtered.map(c => c.id));
+  const toggleOne = (id: string) => setSelected(prev =>
+    prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+  );
 
   return (
-    <div className="p-8">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-semibold text-stone-800">Clients</h1>
-          <p className="text-sm text-stone-500">Manage client organizations and relationships</p>
+    <div>
+      {/* ── Toolbar — Bonsai exact: Search · Filter · Sort · ··· · New Client ── */}
+      <div className="px-6 py-3 flex items-center gap-2" style={{ borderBottom: '1px solid var(--border)' }}>
+        {/* Search */}
+        <div className="relative flex items-center flex-1 max-w-xs">
+          <Search className="absolute left-2.5 w-3.5 h-3.5 pointer-events-none" style={{ color: 'var(--muted-foreground)' }} />
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search…"
+            className="w-full pl-8 pr-3 py-[6px] text-[12px] rounded-lg focus:outline-none"
+            style={{
+              background: 'var(--search-bg)',
+              border: '1px solid var(--search-border)',
+              color: 'var(--foreground)',
+            }}
+          />
         </div>
-        <div className="flex items-center gap-3">
-          {/* View Switcher */}
-          <div className="flex items-center gap-1 bg-white border border-stone-200 rounded-lg p-1">
-            <button
-              onClick={() => setViewMode('list')}
-              className={`p-2 rounded ${viewMode === 'list' ? 'bg-primary/10 text-primary' : 'text-stone-600 hover:bg-stone-100'}`}
-              title="List View"
-            >
-              <List className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => setViewMode('kanban')}
-              className={`p-2 rounded ${viewMode === 'kanban' ? 'bg-primary/10 text-primary' : 'text-stone-600 hover:bg-stone-100'}`}
-              title="Kanban View"
-            >
-              <Columns3 className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => setViewMode('grid')}
-              className={`p-2 rounded ${viewMode === 'grid' ? 'bg-primary/10 text-primary' : 'text-stone-600 hover:bg-stone-100'}`}
-              title="Grid View"
-            >
-              <LayoutGrid className="w-4 h-4" />
-            </button>
-          </div>
 
-          {/* Column Chooser */}
-          <div className="relative">
-            <BonsaiButton
-              variant="ghost"
-              size="sm"
-              icon={<Settings />}
-              onClick={() => setShowColumnChooser(!showColumnChooser)}
-            >
-              Columns
-            </BonsaiButton>
-            {showColumnChooser && (
-              <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-lg shadow-xl border border-stone-200 p-4 z-10">
-                <h3 className="font-medium text-stone-800 mb-3">Show Columns</h3>
-                <div className="space-y-2 max-h-64 overflow-y-auto">
-                  {visibleColumns.map((col) => (
-                    <label key={col.key} className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={col.visible}
-                        onChange={(e) => {
-                          setVisibleColumns(
-                            visibleColumns.map((c) =>
-                              c.key === col.key ? { ...c, visible: e.target.checked } : c
-                            )
-                          );
-                        }}
-                        className="w-4 h-4 rounded border-stone-300 text-primary focus:ring-2 focus:ring-primary/20"
-                      />
-                      <span className="text-sm text-stone-700">{col.label}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
+        {/* Filter */}
+        <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium"
+          style={{
+            background: 'var(--glass-bg)',
+            border: '1px solid var(--border)',
+            color: 'var(--foreground)',
+          }}>
+          <Filter className="w-3.5 h-3.5" style={{ color: 'var(--muted-foreground)' }} />
+          Filter
+        </button>
+
+        {/* Sort — shows "Sort 1" badge when active */}
+        <SortBadge count={sortCount} onClick={() => setSortCount(sortCount === 0 ? 1 : 0)} />
+
+        {/* More */}
+        <button className="p-1.5 rounded-lg" style={{ color: 'var(--muted-foreground)' }}>
+          <MoreHorizontal className="w-4 h-4" />
+        </button>
+
+        <div className="ml-auto">
+          <button
+            onClick={onCreateClient}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-medium"
+            style={{ background: 'var(--primary)', color: '#FFFFFF' }}>
+            <Plus className="w-3.5 h-3.5" />
+            New Client
+          </button>
+        </div>
+      </div>
+
+      {/* ── Table — Bonsai exact columns: Client · Contact Name · Contact Email · Tags · ··· ── */}
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead>
+            <tr style={{ background: 'var(--glass-bg)' }}>
+              <th style={{ ...TH_STYLE, width: 36, padding: '10px 12px' }}>
+                <input type="checkbox" checked={allSelected} onChange={toggleAll}
+                  className="w-3.5 h-3.5 rounded border accent-[color:var(--primary)]"
+                  style={{ borderColor: 'var(--border-strong)' }} />
+              </th>
+              {/* Sortable client column */}
+              <th style={TH_STYLE}>
+                <button className="flex items-center gap-1" onClick={() => setSortCount(s => s === 0 ? 1 : 0)}>
+                  Client
+                  {sortCount > 0 && (
+                    <span className="text-[9px] font-bold px-1 py-0.5 rounded"
+                      style={{ background: 'rgba(37,99,235,0.12)', color: 'var(--primary)' }}>
+                      {sortCount}
+                    </span>
+                  )}
+                </button>
+              </th>
+              <th style={TH_STYLE}>Contact Name</th>
+              <th style={TH_STYLE}>Contact Email</th>
+              <th style={TH_STYLE}>Tags</th>
+              <th style={{ ...TH_STYLE, width: 40 }}></th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map((client, i) => {
+              const isSelected = selected.includes(client.id);
+              return (
+                <motion.tr
+                  key={client.id}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: i * 0.04 }}
+                  onClick={() => onClientClick({
+                    id: client.id, name: client.name, industry: client.industry,
+                    status: client.status, owner: client.owner, contacts: 1,
+                    projects: client.projects, revenue: client.revenue,
+                    lastActivity: client.lastActivity, tags: client.tags,
+                    email: client.contactEmail,
+                  })}
+                  className="cursor-pointer transition-colors group"
+                  style={{
+                    background: isSelected ? 'rgba(37,99,235,0.05)' : 'transparent',
+                    borderBottom: '1px solid var(--border)',
+                  }}>
+                  {/* Checkbox */}
+                  <td className="px-3 py-3" onClick={e => { e.stopPropagation(); toggleOne(client.id); }}>
+                    <input type="checkbox" checked={isSelected} onChange={() => toggleOne(client.id)}
+                      className="w-3.5 h-3.5 rounded accent-[color:var(--primary)]"
+                      style={{ borderColor: 'var(--border-strong)' }} />
+                  </td>
+
+                  {/* Client — avatar chip + name */}
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <AvatarChip name={client.name} initials={client.initials} />
+                      <span className="text-[13px] font-medium group-hover:underline"
+                        style={{ color: 'var(--foreground)' }}>
+                        {client.name}
+                      </span>
+                    </div>
+                  </td>
+
+                  {/* Contact Name */}
+                  <td className="px-4 py-3">
+                    <span className="text-[13px]" style={{ color: 'var(--foreground)' }}>
+                      {client.contactName}
+                    </span>
+                  </td>
+
+                  {/* Contact Email — with verified badge */}
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[12px]" style={{ color: 'var(--foreground)' }}>
+                        {client.contactEmail}
+                      </span>
+                      {client.emailVerified && (
+                        <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#059669' }} />
+                      )}
+                    </div>
+                  </td>
+
+                  {/* Tags */}
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-1 flex-wrap">
+                      {client.tags.length > 0
+                        ? client.tags.map(tag => <Tag key={tag} label={tag} />)
+                        : <span className="text-[11px]" style={{ color: 'var(--muted-foreground)' }}>No tags</span>
+                      }
+                    </div>
+                  </td>
+
+                  {/* More */}
+                  <td className="px-3 py-3" onClick={e => e.stopPropagation()}>
+                    <button className="opacity-0 group-hover:opacity-100 p-1 rounded-md transition-opacity"
+                      style={{ color: 'var(--muted-foreground)' }}>
+                      <MoreHorizontal className="w-4 h-4" />
+                    </button>
+                  </td>
+                </motion.tr>
+              );
+            })}
+
+            {filtered.length === 0 && (
+              <tr>
+                <td colSpan={6} className="py-12 text-center text-[13px]"
+                  style={{ color: 'var(--muted-foreground)' }}>
+                  No clients found.
+                </td>
+              </tr>
             )}
-          </div>
-
-          {/* Filters */}
-          <BonsaiButton
-            variant="ghost"
-            size="sm"
-            icon={<Filter />}
-            onClick={() => setShowFilters(!showFilters)}
-          >
-            Filters
-          </BonsaiButton>
-
-          <BonsaiButton variant="primary" icon={<Plus />} onClick={onCreateClient}>
-            Add Client
-          </BonsaiButton>
-        </div>
+          </tbody>
+        </table>
       </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
-        <div className="bg-white rounded-lg border border-stone-200 p-4">
-          <p className="text-sm text-stone-600">Total Clients</p>
-          <p className="text-2xl font-semibold text-stone-800 mt-1">{clients.length}</p>
-        </div>
-        <div className="bg-white rounded-lg border border-stone-200 p-4">
-          <p className="text-sm text-stone-600">Active</p>
-          <p className="text-2xl font-semibold text-stone-600 mt-1">3</p>
-        </div>
-        <div className="bg-white rounded-lg border border-stone-200 p-4">
-          <p className="text-sm text-stone-600">Onboarding</p>
-          <p className="text-2xl font-semibold text-stone-600 mt-1">1</p>
-        </div>
-        <div className="bg-white rounded-lg border border-stone-200 p-4">
-          <p className="text-sm text-stone-600">Total Revenue</p>
-          <p className="text-2xl font-semibold text-primary mt-1">$270K</p>
-        </div>
-        <div className="bg-white rounded-lg border border-stone-200 p-4">
-          <p className="text-sm text-stone-600">Avg Project Value</p>
-          <p className="text-2xl font-semibold text-stone-800 mt-1">$33.8K</p>
-        </div>
-      </div>
-
-      {/* Filters Panel */}
-      {showFilters && (
-        <div className="bg-white rounded-lg border border-stone-200 p-4 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            <div>
-              <label className="block text-xs font-medium text-stone-600 mb-1">Status</label>
-              <select
-                value={filters.status}
-                onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-                className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm"
-              >
-                <option value="all">All Statuses</option>
-                <option value="active">Active</option>
-                <option value="onboarding">Onboarding</option>
-                <option value="inactive">Inactive</option>
-                <option value="archived">Archived</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-stone-600 mb-1">Industry</label>
-              <select
-                value={filters.industry}
-                onChange={(e) => setFilters({ ...filters, industry: e.target.value })}
-                className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm"
-              >
-                <option value="all">All Industries</option>
-                <option value="technology">Technology</option>
-                <option value="finance">Finance</option>
-                <option value="retail">Retail</option>
-                <option value="marketing">Marketing</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-stone-600 mb-1">Owner</label>
-              <select
-                value={filters.owner}
-                onChange={(e) => setFilters({ ...filters, owner: e.target.value })}
-                className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm"
-              >
-                <option value="all">All Owners</option>
-                <option value="john">John Doe</option>
-                <option value="jane">Jane Smith</option>
-                <option value="sarah">Sarah Wilson</option>
-                <option value="mike">Mike Chen</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-stone-600 mb-1">Tags</label>
-              <select
-                value={filters.tags}
-                onChange={(e) => setFilters({ ...filters, tags: e.target.value })}
-                className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm"
-              >
-                <option value="all">All Tags</option>
-                <option value="enterprise">Enterprise</option>
-                <option value="vip">VIP</option>
-                <option value="startup">Startup</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-stone-600 mb-1">Last Activity</label>
-              <select
-                value={filters.lastActivity}
-                onChange={(e) => setFilters({ ...filters, lastActivity: e.target.value })}
-                className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm"
-              >
-                <option value="all">All Time</option>
-                <option value="today">Today</option>
-                <option value="week">This Week</option>
-                <option value="month">This Month</option>
-                <option value="quarter">This Quarter</option>
-              </select>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Bulk Actions Bar */}
-      {selectedClients.length > 0 && (
-        <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 mb-6 flex items-center justify-between">
-          <p className="text-sm font-medium text-primary">
-            {selectedClients.length} client{selectedClients.length > 1 ? 's' : ''} selected
-          </p>
-          <div className="flex items-center gap-2">
-            <BonsaiButton size="sm" variant="ghost" icon={<Archive />} onClick={() => onBulkAction('archive', selectedClients)}>
-              Archive
-            </BonsaiButton>
-            <BonsaiButton size="sm" variant="ghost" icon={<UserPlus />} onClick={() => onBulkAction('assign', selectedClients)}>
-              Assign Owner
-            </BonsaiButton>
-            <BonsaiButton size="sm" variant="ghost" icon={<Tag />} onClick={() => onBulkAction('tag', selectedClients)}>
-              Add Tag
-            </BonsaiButton>
-            <BonsaiButton size="sm" variant="destructive" icon={<Trash2 />} onClick={() => onBulkAction('delete', selectedClients)}>
-              Delete (Admin)
-            </BonsaiButton>
-          </div>
-        </div>
-      )}
-
-      {/* Content based on view mode */}
-      {viewMode === 'list' && (
-        <EnhancedTable
-          columns={visibleColumns
-            .filter(col => col.visible)
-            .map(col => ({ key: col.key, label: col.label, sortable: true }))}
-          data={clients.map(client => ({
-            ...client,
-            status: (
-              <BonsaiStatusPill
-                status={
-                  client.status === 'Active' ? 'active' :
-                  client.status === 'Onboarding' ? 'pending' :
-                  client.status === 'Inactive' ? 'inactive' : 'archived'
-                }
-                label={client.status}
-              />
-            ),
-            tags: (
-              <div className="flex gap-1 flex-wrap">
-                {client.tags.map((tag, idx) => (
-                  <span key={idx} className="inline-flex px-2 py-0.5 text-xs rounded-full bg-stone-100 text-stone-700">
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            ),
-          }))}
-          onRowClick={(row) => onClientClick(row as Client)}
-          searchable
-          filterable
-          selectable
-          onSelectionChange={setSelectedClients}
-        />
-      )}
-
-      {viewMode === 'grid' && (
-        <BonsaiGridCards
-          columns={3}
-          cards={clients.map(client => ({
-            id: client.id,
-            title: client.name,
-            subtitle: client.industry,
-            status: client.status,
-            meta: [client.owner, `${client.projects} projects`, client.revenue],
-          }))}
-          onCardClick={(card) => {
-            const client = clients.find(c => c.id === card.id);
-            if (client) onClientClick(client);
-          }}
-        />
-      )}
-
-      {viewMode === 'kanban' && (
-        <div className="text-center py-12 bg-white rounded-lg border border-stone-200">
-          <p className="text-stone-600 mb-2">Kanban view groups clients by status</p>
-          <p className="text-sm text-stone-500">(Active / Onboarding / Inactive / Archived columns)</p>
-        </div>
-      )}
     </div>
   );
 }

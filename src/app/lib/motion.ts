@@ -86,7 +86,7 @@ export const fadeInUp = {
 
 export const fadeIn = {
   hidden:  { opacity: 0 },
-  visible: { opacity: 1, transition: { duration: 0.3, ease: 'easeOut' } },
+  visible: { opacity: 1, transition: { duration: 0.3, ease: EASE_OUT_EXPO } },
 };
 
 export const scaleIn = {

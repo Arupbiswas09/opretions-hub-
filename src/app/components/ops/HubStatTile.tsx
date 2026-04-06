@@ -30,14 +30,16 @@ export function HubStatTile({ label, value, sub, delay = 0, className, ...props 
       }}
       {...props}
     >
-      <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-stone-400 dark:text-stone-500">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.1em]"
+        style={{ color: 'var(--foreground-muted)' }}>
         {label}
       </p>
-      <p className="text-[24px] font-bold tracking-[-0.02em] mt-1 text-stone-800 dark:text-stone-50">
+      <p className="text-[24px] font-bold tracking-[-0.02em] mt-1"
+        style={{ color: 'var(--foreground)' }}>
         {value}
       </p>
       {sub != null && sub !== '' && (
-        <p className="text-[10px] mt-0.5 text-stone-400 dark:text-stone-500">{sub}</p>
+        <p className="text-[10px] mt-0.5" style={{ color: 'var(--foreground-muted)' }}>{sub}</p>
       )}
     </motion.div>
   );

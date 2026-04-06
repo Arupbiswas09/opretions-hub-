@@ -1,5 +1,8 @@
+'use client';
+
 import React, { useState } from 'react';
 import { Edit, Trash2, Mail, Phone, Building, Briefcase, Calendar, Tag as TagIcon, Filter } from 'lucide-react';
+import { OpsAvatar } from '../ops';
 import { BonsaiButton } from '../bonsai/BonsaiButton';
 import { BonsaiTabs } from '../bonsai/BonsaiTabs';
 import { BonsaiStatusPill } from '../bonsai/BonsaiStatusPill';
@@ -117,14 +120,10 @@ export function CO03ContactDetail({ contact, onEdit, onLinkClient }: CO03Contact
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div className="flex items-start gap-4">
-          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-green-600 flex items-center justify-center">
-            <span className="text-2xl font-semibold text-white">
-              {contact.name.split(' ').map(n => n[0]).join('')}
-            </span>
-          </div>
+          <OpsAvatar name={contact.name} size="lg" className="!w-16 !h-16 !text-[22px]" />
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-2xl font-semibold text-stone-800">{contact.name}</h1>
+              <h1 className="text-2xl font-semibold text-stone-900 dark:text-stone-50">{contact.name}</h1>
               <BonsaiStatusPill
                 status={contact.consent === 'Given' ? 'active' : contact.consent === 'Pending' ? 'pending' : 'draft'}
                 label={`Consent: ${contact.consent}`}
@@ -139,7 +138,7 @@ export function CO03ContactDetail({ contact, onEdit, onLinkClient }: CO03Contact
                 {contact.type}
               </span>
             </div>
-            <div className="flex items-center gap-4 text-sm text-stone-600">
+            <div className="flex items-center gap-4 text-sm text-stone-600 dark:text-stone-400">
               <div className="flex items-center gap-2">
                 <Mail className="w-4 h-4" />
                 <span>{contact.email}</span>
@@ -202,84 +201,103 @@ export function CO03ContactDetail({ contact, onEdit, onLinkClient }: CO03Contact
           <div className="space-y-6">
             {/* Key Info Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="bg-white rounded-lg border border-stone-200 p-4">
-                <p className="text-xs text-stone-600 mb-1">Source</p>
-                <p className="text-lg font-semibold text-stone-800">{contact.source}</p>
+              <div
+                className="rounded-xl p-4 border"
+                style={{ background: 'var(--glass-bg)', borderColor: 'var(--border)' }}
+              >
+                <p className="text-xs mb-1" style={{ color: 'var(--muted-foreground)' }}>Source</p>
+                <p className="text-lg font-semibold" style={{ color: 'var(--foreground)' }}>{contact.source}</p>
               </div>
-              <div className="bg-white rounded-lg border border-stone-200 p-4">
-                <p className="text-xs text-stone-600 mb-1">Linked Client</p>
-                <p className="text-lg font-semibold text-stone-800">{contact.linkedClient || '-'}</p>
+              <div
+                className="rounded-xl p-4 border"
+                style={{ background: 'var(--glass-bg)', borderColor: 'var(--border)' }}
+              >
+                <p className="text-xs mb-1" style={{ color: 'var(--muted-foreground)' }}>Linked Client</p>
+                <p className="text-lg font-semibold" style={{ color: 'var(--foreground)' }}>{contact.linkedClient || '-'}</p>
                 {!contact.linkedClient && (
                   <button
                     onClick={onLinkClient}
-                    className="text-xs text-primary hover:underline mt-1"
+                    className="text-xs mt-1 hover:underline"
+                    style={{ color: 'var(--accent-foreground)' }}
                   >
                     Link to Client
                   </button>
                 )}
               </div>
-              <div className="bg-white rounded-lg border border-stone-200 p-4">
-                <p className="text-xs text-stone-600 mb-1">Added</p>
-                <p className="text-lg font-semibold text-stone-800">Jan 1, 2026</p>
+              <div
+                className="rounded-xl p-4 border"
+                style={{ background: 'var(--glass-bg)', borderColor: 'var(--border)' }}
+              >
+                <p className="text-xs mb-1" style={{ color: 'var(--muted-foreground)' }}>Added</p>
+                <p className="text-lg font-semibold" style={{ color: 'var(--foreground)' }}>Jan 1, 2026</p>
               </div>
-              <div className="bg-white rounded-lg border border-stone-200 p-4">
-                <p className="text-xs text-stone-600 mb-1">Last Contact</p>
-                <p className="text-lg font-semibold text-stone-800">Jan 10, 2026</p>
+              <div
+                className="rounded-xl p-4 border"
+                style={{ background: 'var(--glass-bg)', borderColor: 'var(--border)' }}
+              >
+                <p className="text-xs mb-1" style={{ color: 'var(--muted-foreground)' }}>Last Contact</p>
+                <p className="text-lg font-semibold" style={{ color: 'var(--foreground)' }}>Jan 10, 2026</p>
               </div>
             </div>
 
             {/* Contact Details */}
-            <div className="bg-white rounded-lg border border-stone-200 p-6">
-              <h3 className="font-semibold text-stone-800 mb-4">Contact Information</h3>
+            <div
+              className="rounded-xl border p-6"
+              style={{ background: 'var(--glass-bg)', borderColor: 'var(--border)' }}
+            >
+              <h3 className="font-semibold mb-4" style={{ color: 'var(--foreground)' }}>Contact Information</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <p className="text-xs text-stone-600 mb-1">Email</p>
-                  <p className="text-sm text-stone-800">{contact.email}</p>
+                  <p className="text-xs mb-1" style={{ color: 'var(--muted-foreground)' }}>Email</p>
+                  <p className="text-sm" style={{ color: 'var(--foreground)' }}>{contact.email}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-stone-600 mb-1">Phone</p>
-                  <p className="text-sm text-stone-800">{contact.phone}</p>
+                  <p className="text-xs mb-1" style={{ color: 'var(--muted-foreground)' }}>Phone</p>
+                  <p className="text-sm" style={{ color: 'var(--foreground)' }}>{contact.phone}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-stone-600 mb-1">Company</p>
-                  <p className="text-sm text-stone-800">{contact.company || '-'}</p>
+                  <p className="text-xs mb-1" style={{ color: 'var(--muted-foreground)' }}>Company</p>
+                  <p className="text-sm" style={{ color: 'var(--foreground)' }}>{contact.company || '-'}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-stone-600 mb-1">Job Title</p>
-                  <p className="text-sm text-stone-800">{contact.jobTitle || '-'}</p>
+                  <p className="text-xs mb-1" style={{ color: 'var(--muted-foreground)' }}>Job Title</p>
+                  <p className="text-sm" style={{ color: 'var(--foreground)' }}>{contact.jobTitle || '-'}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-stone-600 mb-1">Type</p>
-                  <p className="text-sm text-stone-800">{contact.type}</p>
+                  <p className="text-xs mb-1" style={{ color: 'var(--muted-foreground)' }}>Type</p>
+                  <p className="text-sm" style={{ color: 'var(--foreground)' }}>{contact.type}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-stone-600 mb-1">Source</p>
-                  <p className="text-sm text-stone-800">{contact.source}</p>
+                  <p className="text-xs mb-1" style={{ color: 'var(--muted-foreground)' }}>Source</p>
+                  <p className="text-sm" style={{ color: 'var(--foreground)' }}>{contact.source}</p>
                 </div>
               </div>
             </div>
 
             {/* GDPR Summary */}
-            <div className="bg-white rounded-lg border border-stone-200 p-6">
-              <h3 className="font-semibold text-stone-800 mb-4">Data Privacy Summary</h3>
+            <div
+              className="rounded-xl border p-6"
+              style={{ background: 'var(--glass-bg)', borderColor: 'var(--border)' }}
+            >
+              <h3 className="font-semibold mb-4" style={{ color: 'var(--foreground)' }}>Data Privacy Summary</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <p className="text-xs text-stone-600 mb-1">Consent Status</p>
+                  <p className="text-xs mb-1" style={{ color: 'var(--muted-foreground)' }}>Consent Status</p>
                   <BonsaiStatusPill
                     status={contact.consent === 'Given' ? 'active' : contact.consent === 'Pending' ? 'pending' : 'draft'}
                     label={contact.consent}
                   />
                 </div>
                 <div>
-                  <p className="text-xs text-stone-600 mb-1">Consent Date</p>
-                  <p className="text-sm text-stone-800">Jan 1, 2026</p>
+                  <p className="text-xs mb-1" style={{ color: 'var(--muted-foreground)' }}>Consent Date</p>
+                  <p className="text-sm" style={{ color: 'var(--foreground)' }}>Jan 1, 2026</p>
                 </div>
                 <div>
-                  <p className="text-xs text-stone-600 mb-1">Processing Basis</p>
-                  <p className="text-sm text-stone-800">Consent</p>
+                  <p className="text-xs mb-1" style={{ color: 'var(--muted-foreground)' }}>Processing Basis</p>
+                  <p className="text-sm" style={{ color: 'var(--foreground)' }}>Consent</p>
                 </div>
               </div>
-              <div className="mt-4 pt-4 border-t border-stone-200">
+              <div className="mt-4 pt-4" style={{ borderTop: '1px solid var(--border-subtle)' }}>
                 <button
                   onClick={() => setActiveTab('gdpr')}
                   className="text-sm text-primary hover:underline"

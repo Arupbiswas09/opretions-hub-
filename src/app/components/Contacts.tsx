@@ -1,12 +1,14 @@
 'use client';
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useToast } from './bonsai/ToastSystem';
 import { CO01ContactsList } from './contacts/CO01ContactsList';
 import { CO02ContactDrawer } from './contacts/CO02ContactDrawer';
 import { CO03ContactDetail } from './contacts/CO03ContactDetail';
 import { CO05LinkClientModal } from './contacts/CO05LinkClientModal';
 import { CO06BulkToolbar } from './contacts/CO06BulkToolbar';
 import { CO07ExportModal } from './contacts/CO07ExportModal';
+import { ModuleSubNav, moduleSubNavButtonClass, ModuleSubNavDivider } from './ui/ModuleSubNav';
 
 type Screen = 'list' | 'detail';
 
@@ -25,6 +27,7 @@ const SCREENS: { id: Screen; label: string }[] = [
 ];
 
 export default function Contacts() {
+  const { addToast } = useToast();
   const [currentScreen, setCurrentScreen] = useState<Screen>('list');
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [showContactDrawer, setShowContactDrawer] = useState(false);
@@ -46,48 +49,48 @@ export default function Contacts() {
       tags: contact.tags.split(',').map((t: string) => t.trim()).filter(Boolean),
     });
     setCurrentScreen('detail');
+    addToast(contactToEdit ? 'Contact updated' : 'Contact saved', 'success');
   };
 
   const handleBulkAction = (action: string, selected: string[]) => {
+    const n = selected.length;
     if (action === 'show-toolbar') setShowBulkToolbar(true);
     else if (action === 'export') setShowExportModal(true);
+    else if (action === 'email') addToast(`Email queued for ${n} contact${n === 1 ? '' : 's'}`, 'info');
+    else if (action === 'tag') addToast(`Tags will be applied to ${n} record${n === 1 ? '' : 's'}`, 'info');
+    else if (action === 'consent') addToast(`Consent update scheduled for ${n} contact${n === 1 ? '' : 's'}`, 'warning');
+    else if (action === 'delete') addToast(`Delete request recorded (${n}) — confirm in audit log`, 'warning');
   };
 
   return (
     <div className="min-h-full">
-      {/* Screen nav */}
-      <div className="px-8 py-3 border-b border-stone-100/60">
-        <div className="flex items-center gap-1">
-          {SCREENS.map((s) => (
-            <button
-              key={s.id}
-              onClick={() => {
-                if (s.id === 'detail' && !selectedContact) {
-                  setSelectedContact({
-                    id: '1', name: 'Jennifer Davis', email: 'jennifer@acmecorp.com',
-                    phone: '(555) 123-4567', company: 'Acme Corp', jobTitle: 'Marketing Director',
-                    type: 'Client', linkedClient: 'Acme Corp', consent: 'Given',
-                    gdprStatus: 'Active', source: 'Website', tags: ['VIP', 'Decision Maker'],
-                  });
-                }
-                setCurrentScreen(s.id);
-              }}
-              className={`px-3 py-1.5 text-[12px] rounded-md transition-all duration-200 ${
-                currentScreen === s.id
-                  ? 'bg-stone-800 text-white font-medium shadow-sm'
-                  : 'text-stone-400 hover:text-stone-600 hover:bg-stone-50'
-              }`}
-            >
-              {s.label}
-            </button>
-          ))}
-          <div className="w-px h-3.5 bg-stone-200/60 mx-1.5" />
-          <button onClick={() => setShowContactDrawer(true)} className="px-3 py-1.5 text-[12px] text-stone-400 hover:text-stone-600 hover:bg-stone-50 rounded-md transition-colors">+ Contact</button>
-          <button onClick={() => setShowLinkClientModal(true)} className="px-3 py-1.5 text-[12px] text-stone-400 hover:text-stone-600 hover:bg-stone-50 rounded-md transition-colors">Link Client</button>
-          <button onClick={() => setShowBulkToolbar(!showBulkToolbar)} className="px-3 py-1.5 text-[12px] text-stone-400 hover:text-stone-600 hover:bg-stone-50 rounded-md transition-colors">Bulk</button>
-          <button onClick={() => setShowExportModal(true)} className="px-3 py-1.5 text-[12px] text-stone-400 hover:text-stone-600 hover:bg-stone-50 rounded-md transition-colors">Export</button>
-        </div>
-      </div>
+      <ModuleSubNav>
+        {SCREENS.map((s) => (
+          <button
+            key={s.id}
+            type="button"
+            onClick={() => {
+              if (s.id === 'detail' && !selectedContact) {
+                setSelectedContact({
+                  id: '1', name: 'Jennifer Davis', email: 'jennifer@acmecorp.com',
+                  phone: '(555) 123-4567', company: 'Acme Corp', jobTitle: 'Marketing Director',
+                  type: 'Client', linkedClient: 'Acme Corp', consent: 'Given',
+                  gdprStatus: 'Active', source: 'Website', tags: ['VIP', 'Decision Maker'],
+                });
+              }
+              setCurrentScreen(s.id);
+            }}
+            className={moduleSubNavButtonClass(currentScreen === s.id)}
+          >
+            {s.label}
+          </button>
+        ))}
+        <ModuleSubNavDivider />
+        <button type="button" onClick={() => setShowContactDrawer(true)} className={moduleSubNavButtonClass(false)}>+ Contact</button>
+        <button type="button" onClick={() => setShowLinkClientModal(true)} className={moduleSubNavButtonClass(false)}>Link Client</button>
+        <button type="button" onClick={() => setShowBulkToolbar(!showBulkToolbar)} className={moduleSubNavButtonClass(false)}>Bulk</button>
+        <button type="button" onClick={() => setShowExportModal(true)} className={moduleSubNavButtonClass(false)}>Export</button>
+      </ModuleSubNav>
 
       <AnimatePresence mode="wait">
         <motion.div key={currentScreen} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}>

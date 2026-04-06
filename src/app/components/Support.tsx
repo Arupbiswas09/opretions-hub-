@@ -6,6 +6,7 @@ import { BonsaiButton } from './bonsai/BonsaiButton';
 import { BonsaiStatusPill } from './bonsai/BonsaiStatusPill';
 import { BonsaiTabs } from './bonsai/BonsaiTabs';
 import { BonsaiTimeline } from './bonsai/BonsaiTimeline';
+import { ModuleSubNav, moduleSubNavButtonClass, ModuleSubNavDivider } from './ui/ModuleSubNav';
 
 type Screen = 'list' | 'detail';
 
@@ -17,18 +18,23 @@ export default function Support() {
 
   return (
     <div className="min-h-full">
-      <div className="px-8 py-3 border-b border-stone-100/60">
-        <div className="flex items-center gap-1">
-          {([{ id: 'list', label: 'All Tickets' }, { id: 'detail', label: 'Detail' }] as const).map((s) => (
-            <button key={s.id} onClick={() => {
+      <ModuleSubNav>
+        {([{ id: 'list', label: 'All Tickets' }, { id: 'detail', label: 'Detail' }] as const).map((s) => (
+          <button
+            key={s.id}
+            type="button"
+            onClick={() => {
               if (s.id === 'detail' && !selectedTicket) setSelectedTicket({ id: '1', number: 'TKT-1234', subject: 'Cannot access project files', status: 'Open', priority: 'High', submitter: 'Sarah Johnson', assignee: 'Support Team', created: '2 hours ago' });
               setCurrentScreen(s.id);
-            }} className={`px-3 py-1.5 text-[12px] rounded-md transition-all duration-200 ${currentScreen === s.id ? 'bg-stone-800 text-white font-medium shadow-sm' : 'text-stone-400 hover:text-stone-600 hover:bg-stone-50'}`}>{s.label}</button>
-          ))}
-          <div className="w-px h-3.5 bg-stone-200/60 mx-1.5" />
-          <button onClick={() => setShowNewTicket(true)} className="px-3 py-1.5 text-[12px] text-stone-400 hover:text-stone-600 hover:bg-stone-50 rounded-md transition-colors">+ Ticket</button>
-        </div>
-      </div>
+            }}
+            className={moduleSubNavButtonClass(currentScreen === s.id)}
+          >
+            {s.label}
+          </button>
+        ))}
+        <ModuleSubNavDivider />
+        <button type="button" onClick={() => setShowNewTicket(true)} className={moduleSubNavButtonClass(false)}>+ Ticket</button>
+      </ModuleSubNav>
 
       <AnimatePresence mode="wait">
         <motion.div key={currentScreen} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.25, ease: 'easeOut' }}>

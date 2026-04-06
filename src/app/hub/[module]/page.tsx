@@ -12,6 +12,10 @@ import Finance from '../../components/Finance';
 import Support from '../../components/Support';
 import Forms from '../../components/Forms';
 import Admin from '../../components/Admin';
+import TimeTracking from '../../components/bonsai/TimeTracking';
+import Meetings from '../../components/bonsai/Meetings';
+import Proposals from '../../components/bonsai/Proposals';
+import Contracts from '../../components/bonsai/Contracts';
 
 const MODULE_MAP: Record<HubModule, ReactNode> = {
   dashboard: <Dashboard />,
@@ -25,6 +29,10 @@ const MODULE_MAP: Record<HubModule, ReactNode> = {
   support: <Support />,
   forms: <Forms />,
   admin: <Admin />,
+  meetings: <Meetings />,
+  proposals: <Proposals />,
+  contracts: <Contracts />,
+  timetracking: <TimeTracking />,
 };
 
 type Props = { params: Promise<{ module: string }> };

@@ -10,6 +10,7 @@ import { BonsaiTabs } from './bonsai/BonsaiTabs';
 import { BonsaiStatusPill } from './bonsai/BonsaiStatusPill';
 import { BonsaiTimeline } from './bonsai/BonsaiTimeline';
 import { BonsaiInput } from './bonsai/BonsaiFormFields';
+import { ModuleSubNav, moduleSubNavButtonClass, ModuleSubNavDivider } from './ui/ModuleSubNav';
 
 type Screen = 'dashboard' | 'jobs' | 'pipeline' | 'job-detail' | 'candidates' | 'candidate-detail' | 'referrals' | 'client-portal' | 'client-job' | 'client-shortlist';
 
@@ -26,17 +27,18 @@ export default function Talent({ initialScreen = 'dashboard', hideNav = false }:
   const navBtn = (id: Screen, label: string, extra?: () => void) => (
     <button
       key={id}
+      type="button"
       onClick={() => { extra?.(); setCurrentScreen(id); }}
-      className={`px-3 py-1.5 text-[12px] rounded-md transition-all duration-200 ${
-        currentScreen === id ? 'bg-stone-800 text-white font-medium shadow-sm' : 'text-stone-400 hover:text-stone-600 hover:bg-stone-50'
-      }`}
-    >{label}</button>
+      className={moduleSubNavButtonClass(currentScreen === id)}
+    >
+      {label}
+    </button>
   );
 
   return (
     <div className="min-h-full">
-      {!hideNav && <div className="px-8 py-3 border-b border-stone-100/60">
-        <div className="flex items-center gap-1 flex-wrap">
+      {!hideNav && (
+        <ModuleSubNav>
           {navBtn('dashboard', 'Overview')}
           {navBtn('jobs', 'Jobs')}
           {navBtn('pipeline', 'Pipeline')}
@@ -44,15 +46,15 @@ export default function Talent({ initialScreen = 'dashboard', hideNav = false }:
           {navBtn('candidates', 'Candidates')}
           {navBtn('candidate-detail', 'Candidate', () => { if (!selectedCandidate) setSelectedCandidate({ id: '1', name: 'Alice Chen', role: 'Senior Frontend Developer', location: 'San Francisco', experience: '8 years' }); })}
           {navBtn('referrals', 'Referrals')}
-          <div className="w-px h-3.5 bg-stone-200/60 mx-1.5" />
-          <button onClick={() => setShowJobDrawer(true)} className="px-3 py-1.5 text-[12px] text-stone-400 hover:text-stone-600 hover:bg-stone-50 rounded-md transition-colors">+ Job</button>
-          <button onClick={() => setShowCandidateDrawer(true)} className="px-3 py-1.5 text-[12px] text-stone-400 hover:text-stone-600 hover:bg-stone-50 rounded-md transition-colors">+ Candidate</button>
-          <div className="w-px h-3.5 bg-stone-200/60 mx-1.5" />
+          <ModuleSubNavDivider />
+          <button type="button" onClick={() => setShowJobDrawer(true)} className={moduleSubNavButtonClass(false)}>+ Job</button>
+          <button type="button" onClick={() => setShowCandidateDrawer(true)} className={moduleSubNavButtonClass(false)}>+ Candidate</button>
+          <ModuleSubNavDivider />
           {navBtn('client-portal', 'Client Jobs')}
           {navBtn('client-job', 'Client Detail')}
           {navBtn('client-shortlist', 'Shortlist')}
-        </div>
-      </div>}
+        </ModuleSubNav>
+      )}
 
       <AnimatePresence mode="wait">
         <motion.div key={currentScreen} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.25, ease: 'easeOut' }}>

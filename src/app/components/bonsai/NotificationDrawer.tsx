@@ -1,6 +1,7 @@
 'use client';
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useRouter } from 'next/navigation';
 import { X, FileText, Clock, Users, CheckCircle, AlertTriangle, ArrowUpRight } from 'lucide-react';
 
 type Notification = {
@@ -11,12 +12,14 @@ type Notification = {
   read: boolean;
   type: 'approval' | 'info' | 'warning' | 'success';
   icon: React.ElementType;
+  /** Deep link into hub — approvals, finance, etc. */
+  href?: string;
 };
 
 const INITIAL_NOTIFICATIONS: Notification[] = [
-  { id: '1', title: 'Timesheet Approval Required', description: 'John Doe submitted 42 hours for Week 2', time: '5 min ago', read: false, type: 'approval', icon: Clock },
-  { id: '2', title: 'Invoice Overdue – INV-1245', description: 'Acme Corp $12,400 — 3 days past due', time: '1 hour ago', read: false, type: 'warning', icon: AlertTriangle },
-  { id: '3', title: 'Leave Request: Jane Smith', description: 'Vacation Feb 10-14, 2026 (5 days)', time: '2 hours ago', read: false, type: 'approval', icon: Users },
+  { id: '1', title: 'Timesheet Approval Required', description: 'John Doe submitted 42 hours for Week 2', time: '5 min ago', read: false, type: 'approval', icon: Clock, href: '/hub/projects/approvals' },
+  { id: '2', title: 'Invoice Overdue – INV-1245', description: 'Acme Corp $12,400 — 3 days past due', time: '1 hour ago', read: false, type: 'warning', icon: AlertTriangle, href: '/hub/finance/invoices' },
+  { id: '3', title: 'Leave Request: Jane Smith', description: 'Vacation Feb 10-14, 2026 (5 days)', time: '2 hours ago', read: false, type: 'approval', icon: Users, href: '/hub/people/approvals' },
   { id: '4', title: 'New Deal Created', description: 'Website Redesign for Acme Corp — $45K', time: '3 hours ago', read: true, type: 'info', icon: FileText },
   { id: '5', title: 'Project Milestone Completed', description: 'Q1 Launch milestone reached 100%', time: '5 hours ago', read: true, type: 'success', icon: CheckCircle },
   { id: '6', title: 'Candidate Applied', description: 'Senior Designer role — Alice Chen', time: 'Yesterday', read: true, type: 'info', icon: Users },
@@ -51,6 +54,7 @@ interface NotificationDrawerProps {
 }
 
 export function NotificationDrawer({ open, onClose }: NotificationDrawerProps) {
+  const router = useRouter();
   const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS);
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -143,7 +147,13 @@ export function NotificationDrawer({ open, onClose }: NotificationDrawerProps) {
                     initial={{ opacity: 0, x: 12 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: i * 0.04 }}
-                    onClick={() => markRead(notif.id)}
+                    onClick={() => {
+                      markRead(notif.id);
+                      if (notif.href) {
+                        router.push(notif.href);
+                        onClose();
+                      }
+                    }}
                     className="w-full flex items-start gap-3.5 px-6 py-4 text-left transition-[background-color] duration-[120ms] ease-out border-b border-[color:var(--border)] hover:bg-[var(--row-hover-bg)] data-[read=true]:opacity-60"
                     data-read={notif.read}
                   >
@@ -167,7 +177,14 @@ export function NotificationDrawer({ open, onClose }: NotificationDrawerProps) {
                       <p className="text-[11px] mt-0.5 line-clamp-2 text-stone-500 dark:text-stone-400">
                         {notif.description}
                       </p>
-                      <p className="text-[10px] mt-1.5 text-stone-400 dark:text-stone-500">{notif.time}</p>
+                      <div className="flex items-center justify-between gap-2 mt-1.5">
+                        <p className="text-[10px] text-stone-400 dark:text-stone-500">{notif.time}</p>
+                        {notif.href ? (
+                          <span className="text-[10px] font-medium text-stone-500 dark:text-stone-400">
+                            Open →
+                          </span>
+                        ) : null}
+                      </div>
                     </div>
                   </motion.button>
                 );
@@ -183,9 +200,13 @@ export function NotificationDrawer({ open, onClose }: NotificationDrawerProps) {
             >
               <button
                 type="button"
+                onClick={() => {
+                  router.push('/hub/admin');
+                  onClose();
+                }}
                 className="w-full text-center text-[12px] font-medium flex items-center justify-center gap-1 transition-colors text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200"
               >
-                View all notifications <ArrowUpRight className="w-3 h-3" />
+                Notification settings <ArrowUpRight className="w-3 h-3" />
               </button>
             </div>
           </motion.div>
