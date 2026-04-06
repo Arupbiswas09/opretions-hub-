@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Building2, UserCircle, Briefcase, ShieldCheck, ArrowRight } from 'lucide-react';
+import { Building2, UserCircle, Briefcase, ShieldCheck, ArrowRight, UserCheck } from 'lucide-react';
 import { motion } from 'motion/react';
 import { EASE_OUT_EXPO } from '../../lib/motion';
 
@@ -34,6 +34,12 @@ const PORTALS: {
     title: 'HRIS admin',
     description: 'Org data, approvals, and sensitive HR configuration.',
     icon: ShieldCheck,
+  },
+  {
+    slug: 'candidate',
+    title: 'Candidate portal',
+    description: 'Application status, interview schedule, documents, and offer package.',
+    icon: UserCheck,
   },
 ];
 

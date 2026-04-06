@@ -19,6 +19,8 @@ import {
   Zap,
   LifeBuoy,
   Inbox,
+  MessageSquare,
+  CheckSquare,
 } from 'lucide-react';
 
 /** Sidebar row: real link or in-app notifications (opens panel from shell). */
@@ -29,6 +31,8 @@ export type HubSidebarItem =
 export const HUB_SIDEBAR_TOP: HubSidebarItem[] = [
   { kind: 'link', label: 'Home', icon: Home, href: '/hub/dashboard' },
   { kind: 'notifications', label: 'Notifications', icon: Bell },
+  { kind: 'link', label: 'Communication', icon: MessageSquare, href: '/hub/communication' },
+  { kind: 'link', label: 'Work', icon: CheckSquare, href: '/hub/work' },
   { kind: 'link', label: 'Clients', icon: Building2, href: '/hub/clients' },
   { kind: 'link', label: 'Contacts', icon: Users, href: '/hub/contacts' },
   { kind: 'link', label: 'People', icon: UserCircle, href: '/hub/people' },

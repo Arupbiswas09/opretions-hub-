@@ -2,6 +2,8 @@ import type { ReactNode } from 'react';
 import { notFound } from 'next/navigation';
 import { HUB_MODULES, type HubModule } from '../../lib/hub-modules';
 import Dashboard from '../../components/Dashboard';
+import Communication from '../../components/Communication';
+import Work from '../../components/Work';
 import Sales from '../../components/Sales';
 import Contacts from '../../components/Contacts';
 import Clients from '../../components/Clients';
@@ -19,6 +21,8 @@ import Contracts from '../../components/bonsai/Contracts';
 
 const MODULE_MAP: Record<HubModule, ReactNode> = {
   dashboard: <Dashboard />,
+  communication: <Communication />,
+  work: <Work />,
   sales: <Sales />,
   contacts: <Contacts />,
   clients: <Clients />,

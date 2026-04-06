@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
-import { Home, Briefcase, FileText, DollarSign, Calendar, Users, FolderOpen, MessageSquare, ClipboardList, CheckSquare, FileCheck, ThumbsUp, Video, X, Check, Download, MessageCircle, User, BookOpen, Award, TrendingUp, Clock, Receipt, Shield, ChevronRight } from 'lucide-react';
+import { Home, Briefcase, FileText, DollarSign, Calendar, Users, FolderOpen, MessageSquare, ClipboardList, CheckSquare, FileCheck, ThumbsUp, Video, X, Check, Download, MessageCircle, User, BookOpen, Award, TrendingUp, Clock, Receipt, Shield, ChevronRight, Plus } from 'lucide-react';
 import { BonsaiTabs } from './bonsai/BonsaiTabs';
 import { BonsaiButton } from './bonsai/BonsaiButton';
 import { BonsaiStatusPill } from './bonsai/BonsaiStatusPill';
@@ -20,6 +20,7 @@ type ClientScreen = 'home' | 'projects' | 'requests' | 'documents' | 'invoices' 
 type EmployeeScreen = 'home' | 'projects' | 'tasks' | 'timesheets' | 'expenses' | 'leave' | 'documents' | 'onboarding' | 'onboarding-task' | 'profile' | 'profile-change-request' | 'training' | 'training-detail' | 'performance-reviews' | 'performance-review-detail' | 'meetings' | 'meeting-detail';
 type FreelancerScreen = 'home' | 'assignments' | 'tasks' | 'timesheets' | 'expenses' | 'documents' | 'onboarding' | 'contract-docs' | 'profile' | 'profile-change-request' | 'self-bills' | 'self-bill-detail';
 type HRISScreen = 'profile-requests' | 'profile-request-detail' | 'document-requests';
+type CandidateScreen = 'home' | 'application' | 'interviews' | 'documents' | 'offer';
 
 type PortalsProps = {
   /** When set (e.g. from `/hub/portals/[portal]`), initial tab matches URL. */
@@ -33,17 +34,19 @@ export default function Portals({ initialPortal = 'employee', urlSync = false }:
   const portalFromUrl = params?.portal as PortalType | undefined;
   const [portalType, setPortalType] = useState<PortalType>(initialPortal);
   const activePortal: PortalType =
-    urlSync && portalFromUrl && (['client', 'employee', 'freelancer', 'hris'] as const).includes(portalFromUrl)
+    urlSync && portalFromUrl && (['client', 'employee', 'freelancer', 'hris', 'candidate'] as const).includes(portalFromUrl)
       ? portalFromUrl
       : portalType;
   const [clientScreen, setClientScreen] = useState<ClientScreen>('home');
   const [employeeScreen, setEmployeeScreen] = useState<EmployeeScreen>('home');
   const [freelancerScreen, setFreelancerScreen] = useState<FreelancerScreen>('home');
   const [hrisScreen, setHRISScreen] = useState<HRISScreen>('profile-requests');
+  const [candidateScreen, setCandidateScreen] = useState<CandidateScreen>('home');
 
   const screenKey = activePortal === 'client' ? clientScreen
     : activePortal === 'employee' ? employeeScreen
     : activePortal === 'freelancer' ? freelancerScreen
+    : activePortal === 'candidate' ? candidateScreen
     : hrisScreen;
 
   return (
@@ -70,6 +73,9 @@ export default function Portals({ initialPortal = 'employee', urlSync = false }:
           )}
           {activePortal === 'hris' && (
             <HRISPortal currentScreen={hrisScreen} onNavigate={setHRISScreen} />
+          )}
+          {activePortal === 'candidate' && (
+            <CandidatePortal currentScreen={candidateScreen} onNavigate={setCandidateScreen} />
           )}
         </motion.div>
       </AnimatePresence>
@@ -1272,82 +1278,209 @@ function EmployeePortal({ currentScreen, onNavigate }: { currentScreen: Employee
 }
 
 // EP-01: Employee Portal Home
+type CockpitTab = 'my-work' | 'inbox' | 'capture';
+
 function EmployeeHome({ onNavigate }: { onNavigate: (screen: EmployeeScreen) => void }) {
+  const [tab, setTab] = useState<CockpitTab>('my-work');
+  const [captureText, setCaptureText] = useState('');
+  const [captures, setCaptures] = useState<{ id: number; text: string; time: string }[]>([
+    { id: 1, text: 'Follow up with Marcus about Nexus resource request', time: '9:41 AM' },
+    { id: 2, text: 'Check timesheet submission deadline this week', time: 'Yesterday' },
+  ]);
+
   const kpis = [
-    { label: 'Tasks due', value: '5', sub: 'this week' },
+    { label: 'Tasks due today', value: '3', sub: '2 overdue' },
     { label: 'Timesheet', value: '1', sub: 'not submitted' },
-    { label: 'In your queue', value: '3', sub: 'approvals' },
+    { label: 'Pending approvals', value: '2', sub: 'in queue' },
+    { label: 'Leave balance', value: '12d', sub: 'remaining' },
   ];
 
-  return (
-    <div className="max-w-4xl px-6 py-8 md:px-8">
-      <motion.div
-        className="mb-8"
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-      >
-        <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">Employee workspace</p>
-        <h1 className="text-[30px] font-semibold tracking-[-0.03em] text-foreground">Welcome back, John</h1>
-        <p className="mt-2 max-w-xl text-[14px] text-muted-foreground">
-          Time, tasks, and people workflows — everything that touches payroll and compliance stays here.
-        </p>
-      </motion.div>
+  const MY_TASKS = [
+    { id: 1, title: 'Submit design review feedback', project: 'Nexus Rebrand', due: 'Today', priority: 'high', done: false },
+    { id: 2, title: 'Complete tax form (W-4)', project: 'Onboarding', due: 'Today', priority: 'critical', done: false },
+    { id: 3, title: 'Log hours for last week', project: 'Timesheets', due: 'Today', priority: 'high', done: false },
+    { id: 4, title: 'Review NDA draft from legal', project: 'Nova HQ Renewal', due: 'Apr 9', priority: 'medium', done: false },
+    { id: 5, title: 'Prepare kick-off slides', project: 'Nexus Rebrand', due: 'Apr 10', priority: 'medium', done: true },
+  ];
 
-      <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
-        {kpis.map((kpi, i) => (
-          <HubStatTile key={kpi.label} label={kpi.label} value={kpi.value} sub={kpi.sub} delay={i * 0.05} />
-        ))}
+  const AI_INBOX = [
+    { id: 1, from: 'HR Team', initials: 'HR', subject: 'Benefits enrollment deadline — Apr 15', summary: 'Your benefits enrollment window closes on April 15. Action required to confirm your healthcare and pension selections.', time: '8:00 AM', urgent: true },
+    { id: 2, from: 'Marcus Webb', initials: 'MW', subject: 'Nexus resource request — heads-up', summary: 'Flagged the need for an extra dev on Nexus starting week 3. Wanted to give you a direct heads-up before the planning session.', time: 'Yesterday', urgent: false },
+    { id: 3, from: 'Payroll', initials: 'PY', subject: 'March payslip ready', summary: 'Your March payslip has been processed and is available in the documents section.', time: 'Mon', urgent: false },
+    { id: 4, from: 'Sarah Chen', initials: 'SC', subject: 'Q2 Campaign kick-off — Thursday 2pm', summary: 'Client review moved to Thursday 2pm. Deck should be ready by Wednesday EOD. Can you handle the case studies section?', time: 'Sun', urgent: false },
+  ];
+
+  const PRIORITY_DOT: Record<string, string> = { critical: '#EF4444', high: '#F97316', medium: '#EAB308', low: '#94A3B8' };
+
+  const handleCapture = () => {
+    if (!captureText.trim()) return;
+    setCaptures(prev => [{ id: Date.now(), text: captureText.trim(), time: 'Just now' }, ...prev]);
+    setCaptureText('');
+  };
+
+  return (
+    <div className="flex flex-col h-full min-h-0 overflow-y-auto">
+      {/* Header */}
+      <div className="px-6 pt-6 pb-4">
+        <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground mb-1">Monday, April 6</p>
+          <h1 className="text-[26px] font-semibold tracking-[-0.025em] text-foreground">Good morning, Priya</h1>
+          <p className="mt-1 text-[13px] text-muted-foreground">You have 3 tasks due today and 2 items awaiting your review.</p>
+        </motion.div>
+
+        {/* KPI row */}
+        <div className="mt-4 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+          {kpis.map((kpi, i) => (
+            <HubStatTile key={kpi.label} label={kpi.label} value={kpi.value} sub={kpi.sub} delay={i * 0.04} />
+          ))}
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <button
-          type="button"
-          onClick={() => onNavigate('tasks')}
-          className="portal-panel group p-5 text-left shadow-sm transition-shadow hover:shadow-md"
-        >
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-[13px] font-semibold text-foreground">Tasks this week</h3>
-            <span className="text-[14px] text-muted-foreground transition-colors group-hover:text-foreground">→</span>
-          </div>
-          <div className="space-y-2">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="rounded-lg border border-border bg-secondary/30 px-3 py-2.5">
-                <p className="text-[12px] font-medium text-foreground">Design review · Task {i}</p>
-                <p className="mt-0.5 text-[11px] text-muted-foreground">Website redesign · Due Jan {15 + i}</p>
-              </div>
-            ))}
-          </div>
-        </button>
-
-        <div className="portal-panel p-5 shadow-sm">
-          <h3 className="mb-4 text-[13px] font-semibold text-foreground">Timesheet</h3>
-          <div className="rounded-lg border border-border bg-secondary/40 p-4">
-            <p className="text-[13px] font-medium text-foreground">Week of Jan 13, 2026</p>
-            <p className="mt-0.5 text-[12px] text-muted-foreground">Not submitted · 42 hours logged</p>
-            <BonsaiButton size="sm" variant="primary" className="mt-3" onClick={() => onNavigate('timesheets')}>
-              Submit timesheet
-            </BonsaiButton>
-          </div>
+      {/* Cockpit tabs */}
+      <div className="px-6 border-b border-border">
+        <div className="flex items-end gap-0">
+          {([
+            { id: 'my-work' as CockpitTab, label: 'My Work', count: MY_TASKS.filter(t => !t.done).length },
+            { id: 'inbox' as CockpitTab, label: 'AI Inbox', count: AI_INBOX.filter(m => m.urgent).length },
+            { id: 'capture' as CockpitTab, label: 'Quick Capture', count: captures.length },
+          ] as const).map(t => (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className="flex items-center gap-1.5 px-4 py-2.5 text-[12px] font-medium border-b-2 transition-colors"
+              style={{
+                borderBottomColor: tab === t.id ? 'var(--color-primary, #2563EB)' : 'transparent',
+                color: tab === t.id ? 'var(--color-primary, #2563EB)' : 'var(--muted-foreground)',
+              }}
+            >
+              {t.label}
+              {t.count > 0 && (
+                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+                  style={{ background: tab === t.id ? 'var(--color-primary, #2563EB)' : 'var(--secondary)', color: tab === t.id ? 'white' : 'var(--muted-foreground)' }}>
+                  {t.count}
+                </span>
+              )}
+            </button>
+          ))}
         </div>
+      </div>
 
-        <button
-          type="button"
-          onClick={() => onNavigate('onboarding')}
-          className="portal-panel p-5 shadow-sm text-left transition-shadow hover:shadow-md lg:col-span-2"
-        >
-          <h3 className="mb-2 text-[13px] font-semibold text-foreground">Onboarding</h3>
-          <p className="text-[12px] text-muted-foreground">4 of 6 tasks complete — ID upload and tax forms pending.</p>
-        </button>
+      {/* Tab content */}
+      <div className="flex-1 px-6 py-4">
+        <AnimatePresence mode="wait">
+          {tab === 'my-work' && (
+            <motion.div key="my-work" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.18 }}>
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Today · Apr 6</p>
+                <button className="text-[11px] font-medium text-primary" onClick={() => onNavigate('tasks')}>View all →</button>
+              </div>
+              <div className="space-y-1.5 mb-6">
+                {MY_TASKS.filter(t => t.due === 'Today').map(task => (
+                  <div key={task.id} className="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors hover:bg-secondary/50 cursor-pointer"
+                    style={{ background: 'var(--popover)', border: '1px solid var(--border)' }}>
+                    <button className={`w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-colors ${task.done ? 'border-primary bg-primary' : 'border-border'}`}>
+                      {task.done && <Check className="w-2.5 h-2.5 text-white" />}
+                    </button>
+                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: PRIORITY_DOT[task.priority] ?? '#94A3B8' }} />
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-[13px] font-medium truncate ${task.done ? 'line-through opacity-50' : ''}`} style={{ color: 'var(--foreground)' }}>{task.title}</p>
+                      <p className="text-[11px]" style={{ color: 'var(--muted-foreground)' }}>{task.project}</p>
+                    </div>
+                    <span className="text-[10px] font-medium flex-shrink-0" style={{ color: '#EF4444' }}>{task.due}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">This week</p>
+              </div>
+              <div className="space-y-1.5">
+                {MY_TASKS.filter(t => t.due !== 'Today').map(task => (
+                  <div key={task.id} className="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors hover:bg-secondary/50 cursor-pointer"
+                    style={{ background: 'var(--popover)', border: '1px solid var(--border)' }}>
+                    <button className={`w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-colors ${task.done ? 'border-primary bg-primary' : 'border-border'}`}>
+                      {task.done && <Check className="w-2.5 h-2.5 text-white" />}
+                    </button>
+                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: PRIORITY_DOT[task.priority] ?? '#94A3B8' }} />
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-[13px] font-medium truncate ${task.done ? 'line-through opacity-50' : ''}`} style={{ color: 'var(--foreground)' }}>{task.title}</p>
+                      <p className="text-[11px]" style={{ color: 'var(--muted-foreground)' }}>{task.project}</p>
+                    </div>
+                    <span className="text-[10px] flex-shrink-0" style={{ color: 'var(--muted-foreground)' }}>{task.due}</span>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          )}
 
-        <button
-          type="button"
-          onClick={() => onNavigate('training')}
-          className="portal-panel p-5 shadow-sm text-left transition-shadow hover:shadow-md"
-        >
-          <h3 className="mb-2 text-[13px] font-semibold text-foreground">Training</h3>
-          <p className="text-[12px] text-muted-foreground">2 required courses · Code of conduct due Apr 12</p>
-        </button>
+          {tab === 'inbox' && (
+            <motion.div key="inbox" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.18 }}>
+              <p className="text-[11px] text-muted-foreground mb-3">AI-filtered messages relevant to you. Mark as done when actioned.</p>
+              <div className="space-y-2">
+                {AI_INBOX.map(msg => (
+                  <div key={msg.id} className="flex items-start gap-3 px-4 py-3 rounded-xl cursor-pointer transition-colors hover:bg-secondary/50"
+                    style={{ background: 'var(--popover)', border: msg.urgent ? '1px solid #EAB30840' : '1px solid var(--border)' }}>
+                    <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 text-[10px] font-bold text-white"
+                      style={{ background: msg.urgent ? '#EAB308' : 'var(--muted-foreground)' }}>
+                      {msg.initials}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-[12px] font-semibold text-foreground truncate">{msg.subject}</p>
+                        {msg.urgent && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded text-white flex-shrink-0" style={{ background: '#EAB308' }}>Urgent</span>}
+                      </div>
+                      <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">{msg.summary}</p>
+                      <div className="flex items-center gap-2 mt-1.5">
+                        <span className="text-[10px] text-muted-foreground">{msg.from}</span>
+                        <span className="text-[10px] text-muted-foreground">· {msg.time}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+
+          {tab === 'capture' && (
+            <motion.div key="capture" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.18 }}>
+              <p className="text-[11px] text-muted-foreground mb-3">Capture quick thoughts, ideas, and follow-ups. Convert to tasks later.</p>
+              {/* Input */}
+              <div className="flex items-start gap-2 mb-4">
+                <textarea
+                  className="flex-1 resize-none text-[13px] bg-transparent outline-none leading-relaxed px-4 py-3 rounded-xl"
+                  style={{ background: 'var(--popover)', border: '1px solid var(--border)', color: 'var(--foreground)', minHeight: 72 }}
+                  placeholder="What's on your mind? Press Enter to capture…"
+                  value={captureText}
+                  onChange={e => setCaptureText(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleCapture(); } }}
+                  rows={3}
+                />
+                <button
+                  onClick={handleCapture}
+                  className="mt-0.5 p-2.5 rounded-xl transition-colors flex-shrink-0"
+                  style={{ background: captureText ? 'var(--color-primary, #2563EB)' : 'var(--secondary)', color: captureText ? 'white' : 'var(--muted-foreground)' }}
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
+              {/* Captured items */}
+              <div className="space-y-1.5">
+                {captures.map(c => (
+                  <div key={c.id} className="flex items-start gap-3 px-4 py-3 rounded-xl"
+                    style={{ background: 'var(--popover)', border: '1px solid var(--border)' }}>
+                    <div className="w-1.5 h-1.5 rounded-full mt-2 flex-shrink-0" style={{ background: 'var(--muted-foreground)' }} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13px]" style={{ color: 'var(--foreground)' }}>{c.text}</p>
+                      <p className="text-[10px] mt-0.5" style={{ color: 'var(--muted-foreground)' }}>{c.time}</p>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button className="text-[10px] font-medium px-2 py-1 rounded" style={{ color: 'var(--color-primary, #2563EB)' }}>→ Task</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
@@ -2377,6 +2510,198 @@ function HRISPortal({ currentScreen, onNavigate }: { currentScreen: HRISScreen; 
             </div>
           )}
         </div>
+      </PortalMain>
+    </div>
+  );
+}
+
+// CP-04: Candidate Portal — application tracking, interview prep, offer stage
+function CandidatePortal({ currentScreen, onNavigate }: { currentScreen: CandidateScreen; onNavigate: (screen: CandidateScreen) => void }) {
+  const { addToast } = useToast();
+
+  const menuItems = [
+    { id: 'home', label: 'Dashboard', icon: Home },
+    { id: 'application', label: 'My Application', icon: ClipboardList },
+    { id: 'interviews', label: 'Interviews', icon: Video },
+    { id: 'documents', label: 'Documents', icon: FolderOpen },
+    { id: 'offer', label: 'Offer', icon: FileCheck },
+  ];
+
+  const navActive = (id: string) => currentScreen === id;
+
+  const STAGES = [
+    { id: 1, label: 'Applied', done: true, date: 'Mar 20' },
+    { id: 2, label: 'Screening', done: true, date: 'Mar 24' },
+    { id: 3, label: 'Technical', done: true, date: 'Apr 1' },
+    { id: 4, label: 'Final round', done: false, date: 'Apr 10' },
+    { id: 5, label: 'Offer', done: false, date: '—' },
+  ];
+
+  const INTERVIEWS = [
+    { id: 1, title: 'Final Round Interview', type: 'Video call', date: 'Thu, Apr 10 · 2:00 PM', interviewer: 'Sarah Chen, James Park', status: 'scheduled' },
+    { id: 2, title: 'Technical Assessment', type: 'Take-home', date: 'Tue, Apr 1 · Completed', interviewer: 'Engineering team', status: 'completed' },
+    { id: 3, title: 'Recruiter Screen', type: 'Video call', date: 'Mon, Mar 24 · Completed', interviewer: 'HR Team', status: 'completed' },
+  ];
+
+  return (
+    <div className="flex min-h-0 flex-1 overflow-hidden">
+      <PortalRail
+        brandLetter="C"
+        title="Candidate portal"
+        subtitle="Senior React Developer"
+        layoutId="portal-candidate-rail"
+        items={menuItems}
+        isItemActive={navActive}
+        onSelect={(id) => onNavigate(id as CandidateScreen)}
+        user={{ initials: 'CR', name: 'Carlos Ruiz', email: 'carlos@freelance.io' }}
+      />
+
+      <PortalMain>
+        {currentScreen === 'home' && (
+          <div className="max-w-3xl px-6 py-8">
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+              <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">Candidate workspace</p>
+              <h1 className="text-[28px] font-semibold tracking-[-0.025em] text-foreground">Hi Carlos, you're in the running!</h1>
+              <p className="mt-2 text-[13px] text-muted-foreground">Senior React Developer · Operations Hub · Full-time</p>
+            </motion.div>
+
+            {/* Progress pipeline */}
+            <div className="mt-8 mb-8">
+              <h2 className="text-[12px] font-semibold uppercase tracking-wider text-muted-foreground mb-4">Application progress</h2>
+              <div className="flex items-center gap-0">
+                {STAGES.map((stage, i) => (
+                  <React.Fragment key={stage.id}>
+                    <div className="flex flex-col items-center gap-1.5 flex-1">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold border-2 transition-colors ${stage.done ? 'bg-primary border-primary text-white' : i === STAGES.findIndex(s => !s.done) ? 'border-primary text-primary bg-background' : 'border-border text-muted-foreground bg-background'}`}>
+                        {stage.done ? <Check className="w-4 h-4" /> : stage.id}
+                      </div>
+                      <p className="text-[10px] font-medium text-center" style={{ color: stage.done ? 'var(--foreground)' : 'var(--muted-foreground)' }}>{stage.label}</p>
+                      <p className="text-[9px] text-center" style={{ color: 'var(--muted-foreground)' }}>{stage.date}</p>
+                    </div>
+                    {i < STAGES.length - 1 && (
+                      <div className="flex-1 h-0.5 mb-5 -mx-1" style={{ background: stage.done ? 'var(--color-primary, #2563EB)' : 'var(--border)' }} />
+                    )}
+                  </React.Fragment>
+                ))}
+              </div>
+            </div>
+
+            {/* Next step */}
+            <div className="portal-panel p-5 mb-4 border-l-4" style={{ borderLeftColor: 'var(--color-primary, #2563EB)' }}>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-primary mb-1">Next step</p>
+              <h3 className="text-[14px] font-semibold text-foreground">Final Round Interview</h3>
+              <p className="text-[12px] text-muted-foreground mt-0.5">Thursday, April 10 · 2:00 PM · Video call with Sarah Chen & James Park</p>
+              <div className="flex items-center gap-2 mt-3">
+                <BonsaiButton size="sm" onClick={() => addToast('Calendar invite sent to your email.', 'success')}>Add to calendar</BonsaiButton>
+                <BonsaiButton size="sm" variant="outline" onClick={() => onNavigate('interviews')}>View details</BonsaiButton>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <button type="button" onClick={() => onNavigate('documents')} className="portal-panel group p-4 text-left hover:shadow-md transition-shadow">
+                <h3 className="text-[13px] font-semibold text-foreground mb-1.5">Documents needed</h3>
+                <p className="text-[12px] text-muted-foreground">2 documents pending upload — ID and right to work.</p>
+                <p className="text-[11px] font-medium text-primary mt-2">Upload now →</p>
+              </button>
+              <button type="button" onClick={() => onNavigate('offer')} className="portal-panel group p-4 text-left hover:shadow-md transition-shadow">
+                <h3 className="text-[13px] font-semibold text-foreground mb-1.5">Offer package</h3>
+                <p className="text-[12px] text-muted-foreground">Available after final round. You'll be notified by email.</p>
+                <p className="text-[11px] font-medium text-muted-foreground mt-2">Pending →</p>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {currentScreen === 'interviews' && (
+          <div className="px-6 py-8 max-w-3xl">
+            <h1 className="text-[24px] font-semibold text-foreground mb-6">Interviews</h1>
+            <div className="space-y-3">
+              {INTERVIEWS.map(iv => (
+                <div key={iv.id} className="portal-panel p-5 flex items-start gap-4">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${iv.status === 'scheduled' ? 'bg-primary/10' : 'bg-secondary'}`}>
+                    <Video className="w-5 h-5" style={{ color: iv.status === 'scheduled' ? 'var(--color-primary, #2563EB)' : 'var(--muted-foreground)' }} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-[14px] font-semibold text-foreground">{iv.title}</h3>
+                      <BonsaiStatusPill status={iv.status === 'scheduled' ? 'inProgress' : 'completed'} label={iv.status === 'scheduled' ? 'Scheduled' : 'Completed'} />
+                    </div>
+                    <p className="text-[12px] text-muted-foreground mt-0.5">{iv.date}</p>
+                    <p className="text-[12px] text-muted-foreground">{iv.type} · {iv.interviewer}</p>
+                  </div>
+                  {iv.status === 'scheduled' && (
+                    <BonsaiButton size="sm" onClick={() => addToast('Video link copied to clipboard.', 'success')}>Join call</BonsaiButton>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {currentScreen === 'documents' && (
+          <div className="px-6 py-8 max-w-2xl">
+            <h1 className="text-[24px] font-semibold text-foreground mb-2">Documents</h1>
+            <p className="text-[13px] text-muted-foreground mb-6">Upload required documents for your application. All files are encrypted and handled securely.</p>
+            <div className="space-y-3">
+              {[
+                { name: 'Government-issued ID', status: 'required', uploaded: false },
+                { name: 'Right to work', status: 'required', uploaded: false },
+                { name: 'CV / Résumé', status: 'uploaded', uploaded: true },
+                { name: 'Portfolio', status: 'uploaded', uploaded: true },
+              ].map(doc => (
+                <div key={doc.name} className="portal-panel flex items-center justify-between gap-3 px-5 py-4">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${doc.uploaded ? 'bg-primary/10' : 'bg-secondary'}`}>
+                      <FileText className="w-4 h-4" style={{ color: doc.uploaded ? 'var(--color-primary, #2563EB)' : 'var(--muted-foreground)' }} />
+                    </div>
+                    <div>
+                      <p className="text-[13px] font-medium text-foreground">{doc.name}</p>
+                      <p className="text-[11px] text-muted-foreground">{doc.uploaded ? 'Uploaded' : 'Required'}</p>
+                    </div>
+                  </div>
+                  {doc.uploaded ? (
+                    <BonsaiStatusPill status="completed" label="Done" />
+                  ) : (
+                    <BonsaiButton size="sm" onClick={() => addToast(`${doc.name} upload dialog opened.`, 'info')}>Upload</BonsaiButton>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {currentScreen === 'application' && (
+          <div className="px-6 py-8 max-w-2xl">
+            <h1 className="text-[24px] font-semibold text-foreground mb-6">My Application</h1>
+            <div className="portal-panel divide-y divide-border">
+              {[
+                { label: 'Role', value: 'Senior React Developer' },
+                { label: 'Department', value: 'Engineering' },
+                { label: 'Location', value: 'Remote (UK / EU)' },
+                { label: 'Contract', value: 'Full-time permanent' },
+                { label: 'Applied', value: 'March 20, 2026' },
+                { label: 'Stage', value: 'Final Round' },
+                { label: 'Recruiter', value: 'HR Team — hr@company.com' },
+              ].map(row => (
+                <div key={row.label} className="flex items-center justify-between px-5 py-3.5">
+                  <span className="text-[12px] text-muted-foreground">{row.label}</span>
+                  <span className="text-[13px] font-medium text-foreground">{row.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {currentScreen === 'offer' && (
+          <div className="px-6 py-8 max-w-2xl flex flex-col items-center text-center pt-20">
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6" style={{ background: 'var(--secondary)' }}>
+              <FileCheck className="w-8 h-8" style={{ color: 'var(--muted-foreground)' }} />
+            </div>
+            <h1 className="text-[22px] font-semibold text-foreground mb-2">Offer package</h1>
+            <p className="text-[13px] text-muted-foreground max-w-sm">Your offer letter and compensation details will appear here after the final round interview. You'll receive an email notification.</p>
+            <div className="mt-6 px-4 py-2 rounded-lg text-[12px] font-medium" style={{ background: 'var(--secondary)', color: 'var(--muted-foreground)' }}>Pending — final round on Apr 10</div>
+          </div>
+        )}
       </PortalMain>
     </div>
   );

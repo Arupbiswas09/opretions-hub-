@@ -7,7 +7,7 @@ import { motion, AnimatePresence, MotionConfig } from 'motion/react';
 import {
   Settings, Search, Bell, Plus, Play,
   ChevronRight, ChevronDown, PanelLeftClose, PanelLeft,
-  LogOut, User, Sun, Moon, MoreHorizontal, Globe,
+  LogOut, User, Sun, Moon, MoreHorizontal, Globe, Users,
 } from 'lucide-react';
 import { pageTransition } from '../lib/motion';
 import { HUB_MODULES, type HubModule } from '../lib/hub-modules';
@@ -22,6 +22,7 @@ import {
 import { HUB_EVENTS, dispatchOpenCommandPalette } from '../lib/hub-events';
 import { NotificationDrawer } from './bonsai/NotificationDrawer';
 import { useTheme } from '../lib/theme';
+import { useUserRole, PERSONAS, type UserPersona } from '../lib/UserRoleContext';
 import {
   CreateClientDrawer, CreateDealDrawer, CreateProjectDrawer,
   CreateInvoiceDrawer, CreateTimeEntryDrawer, CreateProposalDrawer,
@@ -35,6 +36,8 @@ export { HUB_MODULES, type HubModule };
 
 const MODULE_DEFAULT_HREF: Record<HubModule, string> = {
   dashboard: '/hub/dashboard',
+  communication: '/hub/communication',
+  work: '/hub/work',
   sales: '/hub/sales/overview',
   contacts: '/hub/contacts',
   clients: '/hub/clients',
@@ -183,13 +186,16 @@ export default function HubShell({ children }: { children: React.ReactNode }) {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [quickAddOpen, setQuickAddOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [switchUserOpen, setSwitchUserOpen] = useState(false);
   /* Quick-create drawer state — which type is open */
   const [activeDrawer, setActiveDrawer] = useState<string | null>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const quickAddRef = useRef<HTMLDivElement>(null);
   const portalMenuRef = useRef<HTMLDivElement>(null);
+  const switchUserRef = useRef<HTMLDivElement>(null);
   const [portalMenuOpen, setPortalMenuOpen] = useState(false);
   const { isDark, toggleTheme } = useTheme();
+  const { persona, setPersona } = useUserRole();
 
   const openDrawer = (type: string) => {
     setQuickAddOpen(false);
@@ -207,6 +213,9 @@ export default function HubShell({ children }: { children: React.ReactNode }) {
       }
       if (portalMenuRef.current && !portalMenuRef.current.contains(e.target as Node)) {
         setPortalMenuOpen(false);
+      }
+      if (switchUserRef.current && !switchUserRef.current.contains(e.target as Node)) {
+        setSwitchUserOpen(false);
       }
     };
     document.addEventListener('mousedown', handler);
@@ -437,6 +446,7 @@ export default function HubShell({ children }: { children: React.ReactNode }) {
                           { href: '/hub/portals/employee', label: 'Employee portal' },
                           { href: '/hub/portals/freelancer', label: 'Freelancer portal' },
                           { href: '/hub/portals/hris', label: 'HRIS admin' },
+                          { href: '/hub/portals/candidate', label: 'Candidate portal' },
                         ].map(row => (
                           <Link
                             key={row.href}
@@ -537,12 +547,66 @@ export default function HubShell({ children }: { children: React.ReactNode }) {
                 </AnimatePresence>
               </div>
 
+              {/* Switch User (demo personas) */}
+              <div className="relative" ref={switchUserRef}>
+                <button
+                  onClick={() => setSwitchUserOpen(o => !o)}
+                  className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium transition-colors hover:bg-white/[0.05]"
+                  style={{ color: 'var(--muted-foreground)' }}
+                  title="Switch user persona"
+                >
+                  <Users className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline capitalize">{persona.role}</span>
+                  <ChevronDown className="w-2.5 h-2.5 opacity-60" />
+                </button>
+                <AnimatePresence>
+                  {switchUserOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.96, y: 4 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.97, y: 4 }}
+                      transition={{ duration: 0.12 }}
+                      className="absolute right-0 top-full mt-1.5 w-60 rounded-xl overflow-hidden z-50 py-1"
+                      style={{
+                        background: 'var(--popover)',
+                        backdropFilter: 'blur(24px)',
+                        border: '1px solid var(--border)',
+                        boxShadow: 'var(--shadow-lg)',
+                      }}
+                    >
+                      <p className="px-3 pt-2 pb-1.5 text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--muted-foreground)' }}>
+                        Simulate persona
+                      </p>
+                      {PERSONAS.map(p => (
+                        <button
+                          key={p.role}
+                          onClick={() => { setPersona(p); setSwitchUserOpen(false); }}
+                          className="w-full flex items-center gap-3 px-3 py-2 text-left transition-colors hover:bg-white/[0.05]"
+                        >
+                          <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-bold text-white"
+                            style={{ background: p.avatarColor }}>
+                            {p.initials}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[12px] font-medium" style={{ color: 'var(--foreground)' }}>{p.name}</p>
+                            <p className="text-[11px] capitalize" style={{ color: 'var(--muted-foreground)' }}>{p.role}</p>
+                          </div>
+                          {persona.role === p.role && (
+                            <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#2563EB' }} />
+                          )}
+                        </button>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
               {/* User */}
               <div className="relative" ref={userMenuRef}>
                 <button onClick={() => setUserMenuOpen(!userMenuOpen)}
                   className="w-7 h-7 rounded-full flex items-center justify-center"
-                  style={{ background: '#2563EB' }}>
-                  <span className="text-[9px] font-bold text-white">JD</span>
+                  style={{ background: persona.avatarColor }}>
+                  <span className="text-[9px] font-bold text-white">{persona.initials}</span>
                 </button>
                 <AnimatePresence>
                   {userMenuOpen && (
@@ -560,8 +624,12 @@ export default function HubShell({ children }: { children: React.ReactNode }) {
                       }}
                     >
                       <div className="px-3 py-2.5" style={{ borderBottom: '1px solid var(--border)' }}>
-                        <p className="text-[12px] font-medium" style={{ color: 'var(--foreground)' }}>John Doe</p>
-                        <p className="text-[11px]" style={{ color: 'var(--muted-foreground)' }}>john.doe@company.com</p>
+                        <p className="text-[12px] font-medium" style={{ color: 'var(--foreground)' }}>{persona.name}</p>
+                        <p className="text-[11px]" style={{ color: 'var(--muted-foreground)' }}>{persona.email}</p>
+                        <span className="inline-block mt-1 px-1.5 py-0.5 rounded text-[9px] font-semibold capitalize"
+                          style={{ background: `${persona.avatarColor}20`, color: persona.avatarColor }}>
+                          {persona.role}
+                        </span>
                       </div>
                       <div className="py-1">
                         {[{ label: 'Profile', icon: User }, { label: 'Settings', icon: Settings }].map(item => (

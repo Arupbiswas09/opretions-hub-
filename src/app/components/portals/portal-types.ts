@@ -1,1 +1,1 @@
-export type PortalType = 'client' | 'employee' | 'freelancer' | 'hris';
+export type PortalType = 'client' | 'employee' | 'freelancer' | 'hris' | 'candidate';

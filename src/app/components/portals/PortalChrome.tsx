@@ -20,7 +20,7 @@ export function PortalSwitcher({
   urlSync: boolean;
   onPortalChange: (p: PortalType) => void;
 }) {
-  const ids = ['client', 'employee', 'freelancer', 'hris'] as const;
+  const ids = ['client', 'employee', 'freelancer', 'hris', 'candidate'] as const;
   const label = (id: (typeof ids)[number]) =>
     id === 'hris' ? 'HRIS admin' : id.charAt(0).toUpperCase() + id.slice(1);
 

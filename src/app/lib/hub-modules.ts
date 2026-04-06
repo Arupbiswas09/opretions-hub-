@@ -1,5 +1,7 @@
 export const HUB_MODULES = [
   'dashboard',
+  'communication',
+  'work',
   'sales',
   'contacts',
   'clients',
