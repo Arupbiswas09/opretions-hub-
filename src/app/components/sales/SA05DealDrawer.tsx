@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import { BonsaiButton } from '../bonsai/BonsaiButton';
-import { BonsaiInput } from '../bonsai/BonsaiFormFields';
+import { BonsaiInput, BonsaiSelect } from '../bonsai/BonsaiFormFields';
 
 interface SA05DealDrawerProps {
   isOpen: boolean;
@@ -35,23 +35,38 @@ export function SA05DealDrawer({ isOpen, onClose, onSave, initialDeal }: SA05Dea
     <>
       {/* Overlay */}
       <div 
-        className="fixed inset-0 bg-black/50 z-40"
+        className="fixed inset-0 z-40 hub-overlay-backdrop"
         onClick={onClose}
       />
       
       {/* Drawer */}
-      <div className="fixed right-0 top-0 bottom-0 w-full max-w-2xl bg-white shadow-2xl z-50 overflow-y-auto">
+      <div 
+        className="fixed right-0 top-0 bottom-0 w-full max-w-2xl shadow-2xl z-50 overflow-y-auto"
+        style={{ background: 'var(--background-2)' }}
+      >
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-stone-200 px-6 py-4 flex items-center justify-between">
+        <div 
+          className="sticky top-0 px-6 py-4 flex items-center justify-between"
+          style={{ 
+            background: 'var(--background-2)',
+            borderBottom: '1px solid var(--border)' 
+          }}
+        >
           <div>
-            <h2 className="text-xl font-semibold text-stone-800">
+            <h2 className="text-xl font-semibold" style={{ color: 'var(--foreground)' }}>
               {initialDeal ? 'Edit Deal' : 'Create New Deal'}
             </h2>
-            <p className="text-sm text-stone-500">Fill in the details below</p>
+            <p className="text-sm" style={{ color: 'var(--muted-foreground)' }}>Fill in the details below</p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-lg"
+            className="p-2 rounded-lg transition-colors"
+            style={{ 
+              color: 'var(--muted-foreground)',
+              background: 'transparent'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.background = 'var(--muted)'}
+            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
           >
             <X className="w-5 h-5" />
           </button>
@@ -61,7 +76,7 @@ export function SA05DealDrawer({ isOpen, onClose, onSave, initialDeal }: SA05Dea
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* Deal Information */}
           <div>
-            <h3 className="font-semibold text-stone-800 mb-4">Deal Information</h3>
+            <h3 className="font-semibold mb-4" style={{ color: 'var(--foreground)' }}>Deal Information</h3>
             <div className="space-y-4">
               <BonsaiInput
                 label="Deal Name"
@@ -80,20 +95,16 @@ export function SA05DealDrawer({ isOpen, onClose, onSave, initialDeal }: SA05Dea
               />
 
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-stone-700 mb-2">
-                    Deal Type *
-                  </label>
-                  <select
-                    value={formData.type}
-                    onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                    className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                    required
-                  >
-                    <option value="Project">Project Deal</option>
-                    <option value="Talent">Talent Deal</option>
-                  </select>
-                </div>
+                <BonsaiSelect
+                  label="Deal Type *"
+                  value={formData.type}
+                  onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                  options={[
+                    { value: 'Project', label: 'Project Deal' },
+                    { value: 'Talent', label: 'Talent Deal' }
+                  ]}
+                  required
+                />
 
                 <BonsaiInput
                   label="Deal Value"
@@ -108,55 +119,43 @@ export function SA05DealDrawer({ isOpen, onClose, onSave, initialDeal }: SA05Dea
 
           {/* Sales Information */}
           <div>
-            <h3 className="font-semibold text-stone-800 mb-4">Sales Information</h3>
+            <h3 className="font-semibold mb-4" style={{ color: 'var(--foreground)' }}>Sales Information</h3>
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-stone-700 mb-2">
-                    Stage *
-                  </label>
-                  <select
-                    value={formData.stage}
-                    onChange={(e) => setFormData({ ...formData, stage: e.target.value })}
-                    className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                    required
-                  >
-                    {formData.type === 'Project' ? (
-                      <>
-                        <option value="New Lead">New Lead</option>
-                        <option value="Qualified">Qualified</option>
-                        <option value="Discovery Scheduled">Discovery Scheduled</option>
-                        <option value="Proposal Sent">Proposal Sent</option>
-                        <option value="Negotiation">Negotiation</option>
-                      </>
-                    ) : (
-                      <>
-                        <option value="New Request">New Request</option>
-                        <option value="Qualified">Qualified</option>
-                        <option value="Profiles Shared">Profiles Shared</option>
-                        <option value="Interviewing">Interviewing</option>
-                        <option value="Placement">Placement</option>
-                      </>
-                    )}
-                  </select>
-                </div>
+                <BonsaiSelect
+                  label="Stage *"
+                  value={formData.stage}
+                  onChange={(e) => setFormData({ ...formData, stage: e.target.value })}
+                  options={
+                    formData.type === 'Project' ? [
+                      { value: 'New Lead', label: 'New Lead' },
+                      { value: 'Qualified', label: 'Qualified' },
+                      { value: 'Discovery Scheduled', label: 'Discovery Scheduled' },
+                      { value: 'Proposal Sent', label: 'Proposal Sent' },
+                      { value: 'Negotiation', label: 'Negotiation' },
+                    ] : [
+                      { value: 'New Request', label: 'New Request' },
+                      { value: 'Qualified', label: 'Qualified' },
+                      { value: 'Profiles Shared', label: 'Profiles Shared' },
+                      { value: 'Interviewing', label: 'Interviewing' },
+                      { value: 'Placement', label: 'Placement' },
+                    ]
+                  }
+                  required
+                />
 
-                <div>
-                  <label className="block text-sm font-medium text-stone-700 mb-2">
-                    Owner *
-                  </label>
-                  <select
-                    value={formData.owner}
-                    onChange={(e) => setFormData({ ...formData, owner: e.target.value })}
-                    className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                    required
-                  >
-                    <option value="John Doe">John Doe</option>
-                    <option value="Jane Smith">Jane Smith</option>
-                    <option value="Mike Johnson">Mike Johnson</option>
-                    <option value="Sarah Lee">Sarah Lee</option>
-                  </select>
-                </div>
+                <BonsaiSelect
+                  label="Owner *"
+                  value={formData.owner}
+                  onChange={(e) => setFormData({ ...formData, owner: e.target.value })}
+                  options={[
+                    { value: 'John Doe', label: 'John Doe' },
+                    { value: 'Jane Smith', label: 'Jane Smith' },
+                    { value: 'Mike Johnson', label: 'Mike Johnson' },
+                    { value: 'Sarah Lee', label: 'Sarah Lee' },
+                  ]}
+                  required
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -168,7 +167,7 @@ export function SA05DealDrawer({ isOpen, onClose, onSave, initialDeal }: SA05Dea
                 />
 
                 <div>
-                  <label className="block text-sm font-medium text-stone-700 mb-2">
+                  <label className="block text-[13px] font-medium mb-2" style={{ color: 'var(--foreground)' }}>
                     Probability
                   </label>
                   <div className="flex items-center gap-3">
@@ -181,7 +180,7 @@ export function SA05DealDrawer({ isOpen, onClose, onSave, initialDeal }: SA05Dea
                       onChange={(e) => setFormData({ ...formData, probability: e.target.value })}
                       className="flex-1"
                     />
-                    <span className="text-sm font-medium text-stone-800 w-12">{formData.probability}%</span>
+                    <span className="text-[13px] font-medium w-12" style={{ color: 'var(--foreground)' }}>{formData.probability}%</span>
                   </div>
                 </div>
               </div>
@@ -190,20 +189,28 @@ export function SA05DealDrawer({ isOpen, onClose, onSave, initialDeal }: SA05Dea
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium text-stone-700 mb-2">
+            <label className="block text-[13px] font-medium mb-2" style={{ color: 'var(--foreground)' }}>
               Description
             </label>
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={4}
-              className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none"
+              className="w-full px-3.5 py-2.5 text-[13px] rounded-xl resize-none"
+              style={{
+                background: 'var(--input-background)',
+                border: '1px solid var(--border-strong)',
+                color: 'var(--foreground)',
+              }}
               placeholder="Brief description of the opportunity..."
             />
           </div>
 
           {/* Actions */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-stone-200">
+          <div 
+            className="flex items-center justify-end gap-3 pt-4"
+            style={{ borderTop: '1px solid var(--border)' }}
+          >
             <BonsaiButton variant="ghost" onClick={onClose} type="button">
               Cancel
             </BonsaiButton>

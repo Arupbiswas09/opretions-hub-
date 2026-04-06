@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import { BonsaiButton } from '../bonsai/BonsaiButton';
-import { BonsaiInput } from '../bonsai/BonsaiFormFields';
+import { BonsaiInput, BonsaiSelect } from '../bonsai/BonsaiFormFields';
 
 interface CO02ContactDrawerProps {
   isOpen: boolean;
@@ -43,23 +43,28 @@ export function CO02ContactDrawer({ isOpen, onClose, onSave, initialContact }: C
     <>
       {/* Overlay */}
       <div 
-        className="fixed inset-0 bg-black/50 z-40"
+        className="fixed inset-0 z-40 hub-overlay-backdrop"
         onClick={onClose}
       />
       
       {/* Drawer */}
-      <div className="fixed right-0 top-0 bottom-0 w-full max-w-2xl bg-white shadow-2xl z-50 overflow-y-auto">
+      <div className="fixed right-0 top-0 bottom-0 w-full max-w-2xl shadow-2xl z-50 overflow-y-auto"
+        style={{ background: 'var(--background-2)' }}>
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-stone-200 px-6 py-4 flex items-center justify-between">
+        <div className="sticky top-0 px-6 py-4 flex items-center justify-between"
+          style={{ background: 'var(--background-2)', borderBottom: '1px solid var(--border)' }}>
           <div>
-            <h2 className="text-xl font-semibold text-stone-800">
+            <h2 className="text-xl font-semibold" style={{ color: 'var(--foreground)' }}>
               {initialContact ? 'Edit Contact' : 'Create New Contact'}
             </h2>
-            <p className="text-sm text-stone-500">Fill in contact details</p>
+            <p className="text-sm" style={{ color: 'var(--muted-foreground)' }}>Fill in contact details</p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-lg"
+            className="p-2 rounded-lg transition-colors"
+            style={{ color: 'var(--muted-foreground)' }}
+            onMouseEnter={(e) => e.currentTarget.style.background = 'var(--muted)'}
+            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
           >
             <X className="w-5 h-5" />
           </button>
@@ -127,58 +132,50 @@ export function CO02ContactDrawer({ isOpen, onClose, onSave, initialContact }: C
             <h3 className="font-semibold text-stone-800 mb-4">Classification</h3>
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-stone-700 mb-2">
-                    Contact Type *
-                  </label>
-                  <select
-                    value={formData.type}
-                    onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                    className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                    required
-                  >
-                    <option value="Lead">Lead</option>
-                    <option value="Client">Client</option>
-                    <option value="Candidate">Candidate</option>
-                    <option value="Partner">Partner</option>
-                    <option value="Vendor">Vendor</option>
-                  </select>
-                </div>
+                <BonsaiSelect
+                  label="Contact Type *"
+                  value={formData.type}
+                  onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                  options={[
+                    { value: 'Lead', label: 'Lead' },
+                    { value: 'Client', label: 'Client' },
+                    { value: 'Candidate', label: 'Candidate' },
+                    { value: 'Partner', label: 'Partner' },
+                    { value: 'Vendor', label: 'Vendor' },
+                  ]}
+                  required
+                />
 
-                <div>
-                  <label className="block text-sm font-medium text-stone-700 mb-2">
-                    Source *
-                  </label>
-                  <select
-                    value={formData.source}
-                    onChange={(e) => setFormData({ ...formData, source: e.target.value })}
-                    className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                    required
-                  >
-                    <option value="Website">Website</option>
-                    <option value="Referral">Referral</option>
-                    <option value="LinkedIn">LinkedIn</option>
-                    <option value="Event">Event</option>
-                    <option value="Cold Outreach">Cold Outreach</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
+                <BonsaiSelect
+                  label="Source *"
+                  value={formData.source}
+                  onChange={(e) => setFormData({ ...formData, source: e.target.value })}
+                  options={[
+                    { value: 'Website', label: 'Website' },
+                    { value: 'Referral', label: 'Referral' },
+                    { value: 'LinkedIn', label: 'LinkedIn' },
+                    { value: 'Event', label: 'Event' },
+                    { value: 'Cold Outreach', label: 'Cold Outreach' },
+                    { value: 'Other', label: 'Other' },
+                  ]}
+                  required
+                />
               </div>
-
-              <BonsaiInput
-                label="Linked Client (optional)"
-                value={formData.linkedClient}
-                onChange={(e) => setFormData({ ...formData, linkedClient: e.target.value })}
-                placeholder="Select or type client name"
-              />
-
-              <BonsaiInput
-                label="Tags (comma-separated)"
-                value={formData.tags}
-                onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-                placeholder="VIP, Decision Maker, Qualified"
-              />
             </div>
+
+            <BonsaiInput
+              label="Linked Client (optional)"
+              value={formData.linkedClient}
+              onChange={(e) => setFormData({ ...formData, linkedClient: e.target.value })}
+              placeholder="Select or type client name"
+            />
+
+            <BonsaiInput
+              label="Tags (comma-separated)"
+              value={formData.tags}
+              onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+              placeholder="VIP, Decision Maker, Qualified"
+            />
           </div>
 
           {/* GDPR & Consent */}
@@ -186,46 +183,38 @@ export function CO02ContactDrawer({ isOpen, onClose, onSave, initialContact }: C
             <h3 className="font-semibold text-stone-800 mb-4">GDPR & Consent</h3>
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-stone-700 mb-2">
-                    Consent Status *
-                  </label>
-                  <select
-                    value={formData.consent}
-                    onChange={(e) => setFormData({ ...formData, consent: e.target.value })}
-                    className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                    required
-                  >
-                    <option value="Given">Given</option>
-                    <option value="Pending">Pending</option>
-                    <option value="Withdrawn">Withdrawn</option>
-                  </select>
-                </div>
-
-                <BonsaiInput
-                  label="Consent Date"
-                  type="date"
-                  value={formData.consentDate}
-                  onChange={(e) => setFormData({ ...formData, consentDate: e.target.value })}
+                <BonsaiSelect
+                  label="Consent Status *"
+                  value={formData.consent}
+                  onChange={(e) => setFormData({ ...formData, consent: e.target.value })}
+                  options={[
+                    { value: 'Given', label: 'Given' },
+                    { value: 'Pending', label: 'Pending' },
+                    { value: 'Withdrawn', label: 'Withdrawn' },
+                  ]}
+                  required
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-stone-700 mb-2">
-                  Data Processing Basis *
-                </label>
-                <select
-                  value={formData.dataProcessingBasis}
-                  onChange={(e) => setFormData({ ...formData, dataProcessingBasis: e.target.value })}
-                  className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                  required
-                >
-                  <option value="Consent">Consent</option>
-                  <option value="Contract">Contract</option>
-                  <option value="Legal Obligation">Legal Obligation</option>
-                  <option value="Legitimate Interest">Legitimate Interest</option>
-                </select>
-              </div>
+              <BonsaiInput
+                label="Consent Date"
+                type="date"
+                value={formData.consentDate}
+                onChange={(e) => setFormData({ ...formData, consentDate: e.target.value })}
+              />
+
+              <BonsaiSelect
+                label="Data Processing Basis *"
+                value={formData.dataProcessingBasis}
+                onChange={(e) => setFormData({ ...formData, dataProcessingBasis: e.target.value })}
+                options={[
+                  { value: 'Consent', label: 'Consent' },
+                  { value: 'Contract', label: 'Contract' },
+                  { value: 'Legal Obligation', label: 'Legal Obligation' },
+                  { value: 'Legitimate Interest', label: 'Legitimate Interest' },
+                ]}
+                required
+              />
 
               <div className="space-y-2">
                 <label className="flex items-center gap-2 cursor-pointer">

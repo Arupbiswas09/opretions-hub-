@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import { BonsaiButton } from '../bonsai/BonsaiButton';
-import { BonsaiInput } from '../bonsai/BonsaiFormFields';
+import { BonsaiInput, BonsaiSelect } from '../bonsai/BonsaiFormFields';
 
 interface PE02PersonDrawerProps {
   isOpen: boolean;
@@ -46,17 +46,25 @@ export function PE02PersonDrawer({ isOpen, onClose, onSave, initialPerson }: PE0
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/50 z-40" onClick={onClose} />
+      <div className="fixed inset-0 z-40 hub-overlay-backdrop" onClick={onClose} />
       
-      <div className="fixed right-0 top-0 bottom-0 w-full max-w-2xl bg-white shadow-2xl z-50 overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-stone-200 px-6 py-4 flex items-center justify-between">
+      <div className="fixed right-0 top-0 bottom-0 w-full max-w-2xl shadow-2xl z-50 overflow-y-auto"
+        style={{ background: 'var(--background-2)' }}>
+        <div className="sticky top-0 px-6 py-4 flex items-center justify-between"
+          style={{ background: 'var(--background-2)', borderBottom: '1px solid var(--border)' }}>
           <div>
-            <h2 className="text-xl font-semibold text-stone-800">
+            <h2 className="text-xl font-semibold" style={{ color: 'var(--foreground)' }}>
               {initialPerson ? 'Edit Person' : 'Add New Person'}
             </h2>
-            <p className="text-sm text-stone-500">Employee or freelancer details</p>
+            <p className="text-sm" style={{ color: 'var(--muted-foreground)' }}>Employee or freelancer details</p>
           </div>
-          <button onClick={onClose} className="p-2 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-lg">
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg transition-colors"
+            style={{ color: 'var(--muted-foreground)' }}
+            onMouseEnter={(e) => e.currentTarget.style.background = 'var(--muted)'}
+            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -140,22 +148,20 @@ export function PE02PersonDrawer({ isOpen, onClose, onSave, initialPerson }: PE0
                   onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                   placeholder="Senior Project Manager"
                 />
-                <div>
-                  <label className="block text-sm font-medium text-stone-700 mb-2">Department *</label>
-                  <select
-                    value={formData.department}
-                    onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                    className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                    required
-                  >
-                    <option value="">Select department</option>
-                    <option value="Operations">Operations</option>
-                    <option value="Design">Design</option>
-                    <option value="Engineering">Engineering</option>
-                    <option value="Sales">Sales</option>
-                    <option value="Marketing">Marketing</option>
-                  </select>
-                </div>
+                <BonsaiSelect
+                  label="Department *"
+                  value={formData.department}
+                  onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                  options={[
+                    { value: '', label: 'Select department' },
+                    { value: 'Operations', label: 'Operations' },
+                    { value: 'Design', label: 'Design' },
+                    { value: 'Engineering', label: 'Engineering' },
+                    { value: 'Sales', label: 'Sales' },
+                    { value: 'Marketing', label: 'Marketing' },
+                  ]}
+                  required
+                />
               </div>
             </div>
           </div>
@@ -252,18 +258,16 @@ export function PE02PersonDrawer({ isOpen, onClose, onSave, initialPerson }: PE0
                 placeholder="Project Management, Agile, Leadership"
               />
 
-              <div>
-                <label className="block text-sm font-medium text-stone-700 mb-2">Availability</label>
-                <select
-                  value={formData.availability}
-                  onChange={(e) => setFormData({ ...formData, availability: e.target.value })}
-                  className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                >
-                  <option value="Available">Available</option>
-                  <option value="Busy">Busy</option>
-                  <option value="On Leave">On Leave</option>
-                </select>
-              </div>
+              <BonsaiSelect
+                label="Availability"
+                value={formData.availability}
+                onChange={(e) => setFormData({ ...formData, availability: e.target.value })}
+                options={[
+                  { value: 'Available', label: 'Available' },
+                  { value: 'Busy', label: 'Busy' },
+                  { value: 'On Leave', label: 'On Leave' },
+                ]}
+              />
             </div>
           </div>
 
@@ -277,35 +281,33 @@ export function PE02PersonDrawer({ isOpen, onClose, onSave, initialPerson }: PE0
                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                 placeholder="San Francisco, CA"
               />
-              <div>
-                <label className="block text-sm font-medium text-stone-700 mb-2">Timezone</label>
-                <select
-                  value={formData.timezone}
-                  onChange={(e) => setFormData({ ...formData, timezone: e.target.value })}
-                  className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                >
-                  <option value="PST">PST - Pacific Time</option>
-                  <option value="MST">MST - Mountain Time</option>
-                  <option value="CST">CST - Central Time</option>
-                  <option value="EST">EST - Eastern Time</option>
-                  <option value="GMT">GMT - Greenwich Mean Time</option>
-                </select>
-              </div>
+              <BonsaiSelect
+                label="Timezone"
+                value={formData.timezone}
+                onChange={(e) => setFormData({ ...formData, timezone: e.target.value })}
+                options={[
+                  { value: 'PST', label: 'PST - Pacific Time' },
+                  { value: 'MST', label: 'MST - Mountain Time' },
+                  { value: 'CST', label: 'CST - Central Time' },
+                  { value: 'EST', label: 'EST - Eastern Time' },
+                  { value: 'GMT', label: 'GMT - Greenwich Mean Time' },
+                ]}
+              />
             </div>
           </div>
 
           {/* Status */}
           <div>
-            <label className="block text-sm font-medium text-stone-700 mb-2">Status</label>
-            <select
+            <BonsaiSelect
+              label="Status"
               value={formData.status}
               onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-              className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-            >
-              <option value="Active">Active</option>
-              <option value="Inactive">Inactive</option>
-              <option value="On Leave">On Leave</option>
-            </select>
+              options={[
+                { value: 'Active', label: 'Active' },
+                { value: 'Inactive', label: 'Inactive' },
+                { value: 'On Leave', label: 'On Leave' },
+              ]}
+            />
           </div>
 
           {/* Actions */}

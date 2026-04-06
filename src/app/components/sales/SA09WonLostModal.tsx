@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { BonsaiButton } from '../bonsai/BonsaiButton';
-import { BonsaiInput } from '../bonsai/BonsaiFormFields';
+import { BonsaiInput, BonsaiSelect } from '../bonsai/BonsaiFormFields';
 
 interface SA09WonLostModalProps {
   isOpen: boolean;
@@ -37,23 +37,33 @@ export function SA09WonLostModal({ isOpen, onClose, onSave, dealName }: SA09WonL
     <>
       {/* Overlay */}
       <div 
-        className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 hub-overlay-backdrop"
         onClick={onClose}
       >
         {/* Modal */}
         <div 
-          className="bg-white rounded-lg shadow-2xl w-full max-w-lg"
+          className="rounded-lg shadow-2xl w-full max-w-lg"
+          style={{ background: 'var(--background-2)' }}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="px-6 py-4 border-b border-stone-200 flex items-center justify-between">
+          <div 
+            className="px-6 py-4 flex items-center justify-between"
+            style={{ borderBottom: '1px solid var(--border)' }}
+          >
             <div>
-              <h2 className="text-xl font-semibold text-stone-800">Mark Deal as Won/Lost</h2>
-              <p className="text-sm text-stone-500">{dealName}</p>
+              <h2 className="text-xl font-semibold" style={{ color: 'var(--foreground)' }}>Mark Deal as Won/Lost</h2>
+              <p className="text-sm" style={{ color: 'var(--muted-foreground)' }}>{dealName}</p>
             </div>
             <button
               onClick={onClose}
-              className="p-2 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-lg"
+              className="p-2 rounded-lg transition-colors"
+              style={{ 
+                color: 'var(--muted-foreground)',
+                background: 'transparent'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = 'var(--muted)'}
+              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
             >
               <X className="w-5 h-5" />
             </button>
@@ -63,26 +73,29 @@ export function SA09WonLostModal({ isOpen, onClose, onSave, dealName }: SA09WonL
           <form onSubmit={handleSubmit} className="p-6 space-y-6">
             {/* Outcome Selection */}
             <div>
-              <label className="block text-sm font-medium text-stone-700 mb-3">
+              <label className="block text-[13px] font-medium mb-3" style={{ color: 'var(--foreground)' }}>
                 Select Outcome *
               </label>
               <div className="grid grid-cols-2 gap-3">
                 <button
                   type="button"
                   onClick={() => setOutcome('won')}
-                  className={`p-4 rounded-lg border-2 transition-all ${
-                    outcome === 'won'
-                      ? 'border-green-500 bg-stone-100'
-                      : 'border-stone-200 hover:border-green-300'
-                  }`}
+                  className="p-4 rounded-lg border-2 transition-all"
+                  style={{
+                    borderColor: outcome === 'won' ? 'var(--success)' : 'var(--border)',
+                    background: outcome === 'won' ? 'var(--success-muted)' : 'var(--background)',
+                  }}
                 >
                   <div className="flex flex-col items-center gap-2">
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                      outcome === 'won' ? 'bg-stone-1000' : 'bg-stone-100'
-                    }`}>
-                      <ThumbsUp className={`w-6 h-6 ${outcome === 'won' ? 'text-white' : 'text-stone-400'}`} />
+                    <div 
+                      className="w-12 h-12 rounded-full flex items-center justify-center"
+                      style={{
+                        background: outcome === 'won' ? 'var(--success)' : 'var(--muted)',
+                      }}
+                    >
+                      <ThumbsUp className={`w-6 h-6 ${outcome === 'won' ? 'text-white' : ''}`} style={{ color: outcome === 'won' ? 'white' : 'var(--muted-foreground)' }} />
                     </div>
-                    <span className={`font-medium ${outcome === 'won' ? 'text-stone-700' : 'text-stone-600'}`}>
+                    <span className="font-medium" style={{ color: 'var(--foreground)' }}>
                       Won
                     </span>
                   </div>
@@ -91,19 +104,22 @@ export function SA09WonLostModal({ isOpen, onClose, onSave, dealName }: SA09WonL
                 <button
                   type="button"
                   onClick={() => setOutcome('lost')}
-                  className={`p-4 rounded-lg border-2 transition-all ${
-                    outcome === 'lost'
-                      ? 'border-red-500 bg-stone-100'
-                      : 'border-stone-200 hover:border-red-300'
-                  }`}
+                  className="p-4 rounded-lg border-2 transition-all"
+                  style={{
+                    borderColor: outcome === 'lost' ? 'var(--destructive)' : 'var(--border)',
+                    background: outcome === 'lost' ? 'var(--warning-muted)' : 'var(--background)',
+                  }}
                 >
                   <div className="flex flex-col items-center gap-2">
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                      outcome === 'lost' ? 'bg-stone-1000' : 'bg-stone-100'
-                    }`}>
-                      <ThumbsDown className={`w-6 h-6 ${outcome === 'lost' ? 'text-white' : 'text-stone-400'}`} />
+                    <div 
+                      className="w-12 h-12 rounded-full flex items-center justify-center"
+                      style={{
+                        background: outcome === 'lost' ? 'var(--destructive)' : 'var(--muted)',
+                      }}
+                    >
+                      <ThumbsDown className={`w-6 h-6 ${outcome === 'lost' ? 'text-white' : ''}`} style={{ color: outcome === 'lost' ? 'white' : 'var(--muted-foreground)' }} />
                     </div>
-                    <span className={`font-medium ${outcome === 'lost' ? 'text-stone-700' : 'text-stone-600'}`}>
+                    <span className="font-medium" style={{ color: 'var(--foreground)' }}>
                       Lost
                     </span>
                   </div>
@@ -124,47 +140,44 @@ export function SA09WonLostModal({ isOpen, onClose, onSave, dealName }: SA09WonL
                   />
                 )}
 
-                <div>
-                  <label className="block text-sm font-medium text-stone-700 mb-2">
-                    {outcome === 'won' ? 'Why did we win?' : 'Why did we lose?'} *
-                  </label>
-                  <select
-                    value={formData.reason}
-                    onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
-                    className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                    required
-                  >
-                    <option value="">Select a reason...</option>
-                    {outcome === 'won' ? (
-                      <>
-                        <option value="best-price">Best Price</option>
-                        <option value="best-solution">Best Solution</option>
-                        <option value="relationship">Relationship</option>
-                        <option value="timing">Timing</option>
-                        <option value="other">Other</option>
-                      </>
-                    ) : (
-                      <>
-                        <option value="price">Price too high</option>
-                        <option value="competitor">Lost to competitor</option>
-                        <option value="timing">Bad timing</option>
-                        <option value="no-budget">No budget</option>
-                        <option value="requirements">Couldn't meet requirements</option>
-                        <option value="other">Other</option>
-                      </>
-                    )}
-                  </select>
-                </div>
+                <BonsaiSelect
+                  label={`${outcome === 'won' ? 'Why did we win?' : 'Why did we lose?'} *`}
+                  value={formData.reason}
+                  onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
+                  options={[
+                    { value: '', label: 'Select a reason...' },
+                    ...(outcome === 'won' ? [
+                      { value: 'best-price', label: 'Best Price' },
+                      { value: 'best-solution', label: 'Best Solution' },
+                      { value: 'relationship', label: 'Relationship' },
+                      { value: 'timing', label: 'Timing' },
+                      { value: 'other', label: 'Other' },
+                    ] : [
+                      { value: 'price', label: 'Price too high' },
+                      { value: 'competitor', label: 'Lost to competitor' },
+                      { value: 'timing', label: 'Bad timing' },
+                      { value: 'no-budget', label: 'No budget' },
+                      { value: 'requirements', label: 'Couldn\'t meet requirements' },
+                      { value: 'other', label: 'Other' },
+                    ])
+                  ]}
+                  required
+                />
 
                 <div>
-                  <label className="block text-sm font-medium text-stone-700 mb-2">
+                  <label className="block text-[13px] font-medium mb-2" style={{ color: 'var(--foreground)' }}>
                     Additional Notes
                   </label>
                   <textarea
                     value={formData.notes}
                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                     rows={4}
-                    className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none"
+                    className="w-full px-3.5 py-2.5 text-[13px] rounded-xl resize-none"
+                    style={{
+                      background: 'var(--input-background)',
+                      border: '1px solid var(--border-strong)',
+                      color: 'var(--foreground)',
+                    }}
                     placeholder="Add any additional context or learnings..."
                   />
                 </div>
@@ -172,7 +185,10 @@ export function SA09WonLostModal({ isOpen, onClose, onSave, dealName }: SA09WonL
             )}
 
             {/* Actions */}
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-stone-200">
+            <div 
+              className="flex items-center justify-end gap-3 pt-4"
+              style={{ borderTop: '1px solid var(--border)' }}
+            >
               <BonsaiButton variant="ghost" onClick={onClose} type="button">
                 Cancel
               </BonsaiButton>

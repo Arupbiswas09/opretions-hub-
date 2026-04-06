@@ -22,6 +22,7 @@ export { BonsaiTable } from './BonsaiTable';
 export { BonsaiKanban } from './BonsaiKanban';
 export { BonsaiGridCards } from './BonsaiGridCards';
 export { BonsaiTimeline } from './BonsaiTimeline';
+export { StatCard } from './StatCard';
 
 // Status & Feedback
 export { BonsaiStatusPill } from './BonsaiStatusPill';

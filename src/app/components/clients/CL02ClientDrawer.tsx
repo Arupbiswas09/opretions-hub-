@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import { BonsaiButton } from '../bonsai/BonsaiButton';
-import { BonsaiInput } from '../bonsai/BonsaiFormFields';
+import { BonsaiInput, BonsaiSelect } from '../bonsai/BonsaiFormFields';
 
 interface CL02ClientDrawerProps {
   isOpen: boolean;
@@ -51,23 +51,28 @@ export function CL02ClientDrawer({ isOpen, onClose, onSave, initialClient }: CL0
     <>
       {/* Overlay */}
       <div 
-        className="fixed inset-0 bg-black/50 z-40"
+        className="fixed inset-0 z-40 hub-overlay-backdrop"
         onClick={onClose}
       />
       
       {/* Drawer */}
-      <div className="fixed right-0 top-0 bottom-0 w-full max-w-2xl bg-white shadow-2xl z-50 overflow-y-auto">
+      <div className="fixed right-0 top-0 bottom-0 w-full max-w-2xl shadow-2xl z-50 overflow-y-auto"
+        style={{ background: 'var(--background-2)' }}>
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-stone-200 px-6 py-4 flex items-center justify-between">
+        <div className="sticky top-0 px-6 py-4 flex items-center justify-between"
+          style={{ background: 'var(--background-2)', borderBottom: '1px solid var(--border)' }}>
           <div>
-            <h2 className="text-xl font-semibold text-stone-800">
+            <h2 className="text-xl font-semibold" style={{ color: 'var(--foreground)' }}>
               {initialClient ? 'Edit Client' : 'Add New Client'}
             </h2>
-            <p className="text-sm text-stone-500">Fill in client organization details</p>
+            <p className="text-sm" style={{ color: 'var(--muted-foreground)' }}>Fill in client organization details</p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-lg"
+            className="p-2 rounded-lg transition-colors"
+            style={{ color: 'var(--muted-foreground)' }}
+            onMouseEnter={(e) => e.currentTarget.style.background = 'var(--muted)'}
+            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
           >
             <X className="w-5 h-5" />
           </button>
@@ -88,46 +93,38 @@ export function CL02ClientDrawer({ isOpen, onClose, onSave, initialClient }: CL0
               />
 
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-stone-700 mb-2">
-                    Industry *
-                  </label>
-                  <select
-                    value={formData.industry}
-                    onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
-                    className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                    required
-                  >
-                    <option value="Technology">Technology</option>
-                    <option value="Finance">Finance</option>
-                    <option value="Healthcare">Healthcare</option>
-                    <option value="Retail">Retail</option>
-                    <option value="Manufacturing">Manufacturing</option>
-                    <option value="Marketing">Marketing</option>
-                    <option value="Education">Education</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
+                <BonsaiSelect
+                  label="Industry *"
+                  value={formData.industry}
+                  onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
+                  options={[
+                    { value: 'Technology', label: 'Technology' },
+                    { value: 'Finance', label: 'Finance' },
+                    { value: 'Healthcare', label: 'Healthcare' },
+                    { value: 'Retail', label: 'Retail' },
+                    { value: 'Manufacturing', label: 'Manufacturing' },
+                    { value: 'Marketing', label: 'Marketing' },
+                    { value: 'Education', label: 'Education' },
+                    { value: 'Other', label: 'Other' },
+                  ]}
+                  required
+                />
 
-                <div>
-                  <label className="block text-sm font-medium text-stone-700 mb-2">
-                    Status *
-                  </label>
-                  <select
-                    value={formData.status}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                    className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                    required
-                  >
-                    <option value="Onboarding">Onboarding</option>
-                    <option value="Active">Active</option>
-                    <option value="Inactive">Inactive</option>
-                    <option value="Archived">Archived</option>
-                  </select>
-                </div>
+                <BonsaiSelect
+                  label="Status *"
+                  value={formData.status}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                  options={[
+                    { value: 'Onboarding', label: 'Onboarding' },
+                    { value: 'Active', label: 'Active' },
+                    { value: 'Inactive', label: 'Inactive' },
+                    { value: 'Archived', label: 'Archived' },
+                  ]}
+                  required
+                />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4">
                 <BonsaiInput
                   label="Website"
                   type="url"
@@ -187,25 +184,21 @@ export function CL02ClientDrawer({ isOpen, onClose, onSave, initialClient }: CL0
                   onChange={(e) => setFormData({ ...formData, zip: e.target.value })}
                   placeholder="94102"
                 />
-                <div>
-                  <label className="block text-sm font-medium text-stone-700 mb-2">
-                    Country
-                  </label>
-                  <select
-                    value={formData.country}
-                    onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                    className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                  >
-                    <option value="United States">United States</option>
-                    <option value="Canada">Canada</option>
-                    <option value="United Kingdom">United Kingdom</option>
-                    <option value="Australia">Australia</option>
-                    <option value="Other">Other</option>
-                  </select>
+                <BonsaiSelect
+                  label="Country"
+                  value={formData.country}
+                  onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                  options={[
+                    { value: 'United States', label: 'United States' },
+                    { value: 'Canada', label: 'Canada' },
+                    { value: 'United Kingdom', label: 'United Kingdom' },
+                    { value: 'Australia', label: 'Australia' },
+                    { value: 'Other', label: 'Other' },
+                  ]}
+                />
                 </div>
               </div>
             </div>
-          </div>
 
           {/* Billing Information */}
           <div>
@@ -237,22 +230,18 @@ export function CL02ClientDrawer({ isOpen, onClose, onSave, initialClient }: CL0
                 placeholder="XX-XXXXXXX"
               />
 
-              <div>
-                <label className="block text-sm font-medium text-stone-700 mb-2">
-                  Payment Terms
-                </label>
-                <select
-                  value={formData.paymentTerms}
-                  onChange={(e) => setFormData({ ...formData, paymentTerms: e.target.value })}
-                  className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                >
-                  <option value="Due on Receipt">Due on Receipt</option>
-                  <option value="Net 15">Net 15</option>
-                  <option value="Net 30">Net 30</option>
-                  <option value="Net 60">Net 60</option>
-                  <option value="Net 90">Net 90</option>
-                </select>
-              </div>
+              <BonsaiSelect
+                label="Payment Terms"
+                value={formData.paymentTerms}
+                onChange={(e) => setFormData({ ...formData, paymentTerms: e.target.value })}
+                options={[
+                  { value: 'Due on Receipt', label: 'Due on Receipt' },
+                  { value: 'Net 15', label: 'Net 15' },
+                  { value: 'Net 30', label: 'Net 30' },
+                  { value: 'Net 60', label: 'Net 60' },
+                  { value: 'Net 90', label: 'Net 90' },
+                ]}
+              />
             </div>
           </div>
 

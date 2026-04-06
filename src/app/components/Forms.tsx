@@ -7,6 +7,7 @@ import { BonsaiTabs } from './bonsai/BonsaiTabs';
 import { BonsaiStatusPill } from './bonsai/BonsaiStatusPill';
 import { BonsaiTimeline } from './bonsai/BonsaiTimeline';
 import { BonsaiInput } from './bonsai/BonsaiFormFields';
+import { StatCard } from './bonsai/StatCard';
 import { EnhancedTable } from './operations/EnhancedTable';
 import { moduleSubNavButtonClass, ModuleSubNavDivider } from './ui/ModuleSubNav';
 
@@ -94,22 +95,10 @@ function FormsDashboard({ onNavigate, onCreate }: any) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="hub-surface hub-surface-elevated p-6">
-          <p className="text-sm text-muted-foreground mb-1">Total Forms</p>
-          <p className="text-3xl font-semibold text-foreground">8</p>
-        </div>
-        <div className="hub-surface hub-surface-elevated p-6">
-          <p className="text-sm text-muted-foreground mb-1">Published</p>
-          <p className="text-3xl font-semibold text-muted-foreground">5</p>
-        </div>
-        <div className="hub-surface hub-surface-elevated p-6">
-          <p className="text-sm text-muted-foreground mb-1">Submissions (Month)</p>
-          <p className="text-3xl font-semibold text-primary">24</p>
-        </div>
-        <div className="hub-surface hub-surface-elevated p-6">
-          <p className="text-sm text-muted-foreground mb-1">Pending Review</p>
-          <p className="text-3xl font-semibold text-muted-foreground">3</p>
-        </div>
+        <StatCard label="Total Forms" value="8" variant="elevated" />
+        <StatCard label="Published" value="5" variant="elevated" />
+        <StatCard label="Submissions (Month)" value="24" variant="elevated" />
+        <StatCard label="Pending Review" value="3" variant="elevated" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

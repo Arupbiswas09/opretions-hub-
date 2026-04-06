@@ -7,6 +7,7 @@ import {
   LineChart, Line, CartesianGrid,
 } from 'recharts';
 import { BonsaiButton } from '../bonsai/BonsaiButton';
+import { StatCard } from '../bonsai/StatCard';
 import { staggerContainer, fadeInUp, cardInteraction, easeOutQuart, EASE_OUT_EXPO } from '../../lib/motion';
 import { useTheme } from '../../lib/theme';
 
@@ -142,39 +143,21 @@ export function SA01Dashboard({ onNavigateToDeals, onNavigateToPipeline, onCreat
 
       {/* ── Stats row ─── */}
       <motion.div
-        className="mb-7 grid grid-cols-2 gap-px overflow-hidden rounded-2xl lg:grid-cols-4"
-        style={{ background: 'var(--border)' }}
+        className="mb-7 grid grid-cols-2 gap-4 lg:grid-cols-4"
         variants={staggerContainer}
         initial="hidden"
         animate="visible"
       >
         {STATS.map((s) => (
-          <motion.div
+          <StatCard
             key={s.label}
-            className="flex flex-col gap-1 px-4 py-5 sm:px-6 sm:py-6"
-            style={{
-              background: 'var(--glass-bg)',
-              backdropFilter: 'blur(20px) saturate(180%)',
-            }}
-            variants={fadeInUp}
-            {...cardInteraction}
-          >
-            <p className="text-[10px] font-semibold uppercase tracking-[0.1em]
-                          text-stone-400 dark:text-stone-500">{s.label}</p>
-            <p className="text-[32px] font-bold tracking-[-0.03em] leading-none mt-1.5
-                          text-stone-900 dark:text-stone-50">
-              <AnimatedStat to={s.val} prefix={s.pre} suffix={s.suf} />
-            </p>
-            <div className="flex items-center gap-2 mt-1">
-              {s.up
-                ? <TrendingUp className="w-3 h-3 flex-shrink-0 text-emerald-500 dark:text-emerald-400" />
-                : <TrendingDown className="w-3 h-3 flex-shrink-0 text-stone-400 dark:text-stone-500" />}
-              <span className={`text-[11px] font-medium ${s.up ? 'text-stone-700 dark:text-stone-200' : 'text-stone-400 dark:text-stone-500'}`}>
-                {s.delta}
-              </span>
-              <span className="text-[11px] text-stone-400 dark:text-stone-500">{s.sub}</span>
-            </div>
-          </motion.div>
+            label={s.label}
+            value={<AnimatedStat to={s.val} prefix={s.pre} suffix={s.suf} />}
+            trend={s.delta}
+            trendUp={s.up}
+            sublabel={s.sub}
+            variant="glass"
+          />
         ))}
       </motion.div>
 
