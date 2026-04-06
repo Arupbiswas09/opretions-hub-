@@ -116,10 +116,10 @@ export default function TimeTracking() {
       {/* ═══ Live Timer — the hero section ═══ */}
       <motion.div variants={item}>
         <Card className="mb-5">
-          <div className="px-5 py-4">
-            <div className="flex items-center gap-4">
+          <div className="px-3 py-4 sm:px-5">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:gap-4">
               {/* Task description input */}
-              <div className="flex-1 relative">
+              <div className="relative min-w-0 flex-1">
                 <input
                   type="text"
                   placeholder="What are you working on?"
@@ -131,7 +131,7 @@ export default function TimeTracking() {
               </div>
 
               {/* Project picker */}
-              <div className="relative">
+              <div className="relative shrink-0">
                 <button
                   onClick={() => setShowProjectPicker(!showProjectPicker)}
                   className="flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors text-[12px]"
@@ -184,7 +184,7 @@ export default function TimeTracking() {
               {/* Billable tag */}
               <button
                 type="button"
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] transition-colors"
+                className="flex w-fit items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] transition-colors"
                 style={{
                   background: 'var(--success-muted)',
                   color: 'var(--success)',
@@ -196,7 +196,7 @@ export default function TimeTracking() {
               </button>
 
               {/* Timer display */}
-              <div className="flex items-center gap-3">
+              <div className="flex w-full flex-wrap items-center justify-between gap-3 sm:w-auto sm:justify-end">
                 <span
                   className={`text-[22px] font-mono font-semibold tabular-nums ${isRunning ? 'timer-pulse' : ''}`}
                   style={{ color: isRunning ? 'var(--success)' : 'var(--foreground)' }}
@@ -248,9 +248,11 @@ export default function TimeTracking() {
       {/* ═══ Weekly Timesheet Grid ═══ */}
       <motion.div variants={item} className="mb-5">
         <Card>
-          <div className="px-5 py-3 flex items-center justify-between"
-            style={{ borderBottom: '1px solid var(--border)' }}>
-            <div className="flex items-center gap-3">
+          <div
+            className="flex flex-col gap-3 px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5"
+            style={{ borderBottom: '1px solid var(--border)' }}
+          >
+            <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
               <h2 className="text-[14px] font-semibold" style={{ color: 'var(--foreground)' }}>
                 Weekly Timesheet
               </h2>
@@ -268,7 +270,7 @@ export default function TimeTracking() {
                 </button>
               </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <span className="text-[12px]" style={{ color: 'var(--muted-foreground)' }}>
                 Total:{' '}
                 <strong style={{ color: 'var(--foreground)' }}>{weekTotal}h</strong>
@@ -279,8 +281,9 @@ export default function TimeTracking() {
             </div>
           </div>
 
+          <div className="overflow-x-auto [-webkit-overflow-scrolling:touch]">
           {/* Header */}
-          <div className="grid grid-cols-[1fr_repeat(7,64px)_64px] gap-0">
+          <div className="grid min-w-[720px] grid-cols-[1fr_repeat(7,64px)_64px] gap-0">
             <div className="px-4 py-2.5 text-[10px] font-medium uppercase tracking-wider"
               style={{ color: 'var(--muted-foreground)', borderBottom: '1px solid var(--border)' }}>
               Project
@@ -309,7 +312,7 @@ export default function TimeTracking() {
           {TIMESHEET_DATA.map((row, ri) => {
             const rowTotal = row.hours.reduce((s, h) => s + h, 0);
             return (
-              <div key={ri} className="grid grid-cols-[1fr_repeat(7,64px)_64px] gap-0 group transition-colors hover:bg-white/[0.02]"
+              <div key={ri} className="grid min-w-[720px] grid-cols-[1fr_repeat(7,64px)_64px] gap-0 group transition-colors hover:bg-white/[0.02]"
                 style={{ borderBottom: ri < TIMESHEET_DATA.length - 1 ? '1px solid var(--border-subtle)' : 'none' }}>
                 {/* Project cell */}
                 <div className="px-4 py-3 flex items-center gap-2.5">
@@ -345,7 +348,7 @@ export default function TimeTracking() {
           })}
 
           {/* Footer totals */}
-          <div className="grid grid-cols-[1fr_repeat(7,64px)_64px] gap-0"
+          <div className="grid min-w-[720px] grid-cols-[1fr_repeat(7,64px)_64px] gap-0"
             style={{ borderTop: '1px solid var(--border)', background: 'var(--glass-bg)' }}>
             <div className="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider"
               style={{ color: 'var(--muted-foreground)' }}>
@@ -371,14 +374,17 @@ export default function TimeTracking() {
               </span>
             </div>
           </div>
+          </div>
         </Card>
       </motion.div>
 
       {/* ═══ Recent Time Entries ═══ */}
       <motion.div variants={item}>
         <Card>
-          <div className="px-5 py-3 flex items-center justify-between"
-            style={{ borderBottom: '1px solid var(--border)' }}>
+          <div
+            className="flex flex-col gap-2 px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5"
+            style={{ borderBottom: '1px solid var(--border)' }}
+          >
             <h2 className="text-[14px] font-semibold" style={{ color: 'var(--foreground)' }}>
               Recent Entries
             </h2>
@@ -391,7 +397,7 @@ export default function TimeTracking() {
             {RECENT_ENTRIES.map((entry, i) => (
               <div
                 key={entry.id}
-                className="flex items-center gap-4 px-5 py-3 transition-colors hover:bg-white/[0.02]"
+                className="flex items-center gap-3 px-3 py-3 transition-colors hover:bg-white/[0.02] sm:gap-4 sm:px-5"
                 style={{
                   borderBottom: i < RECENT_ENTRIES.length - 1 ? '1px solid var(--border-subtle)' : 'none',
                 }}

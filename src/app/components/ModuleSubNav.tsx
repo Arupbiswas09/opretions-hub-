@@ -24,8 +24,8 @@ export function ModuleSubNav({ tabs, actions }: ModuleSubNavProps) {
   const pathname = usePathname();
 
   return (
-    <div className="px-8 py-3" style={{ borderBottom: '1px solid var(--border)' }}>
-      <div className="flex items-center gap-1">
+    <div className="px-3 py-3 sm:px-5 lg:px-8" style={{ borderBottom: '1px solid var(--border)' }}>
+      <div className="flex min-w-0 flex-nowrap items-center gap-1 overflow-x-auto pb-0.5 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {tabs.map((tab) => {
           const active =
             pathname === tab.href ||
@@ -34,7 +34,7 @@ export function ModuleSubNav({ tabs, actions }: ModuleSubNavProps) {
             <Link
               key={tab.href}
               href={tab.href}
-              className={`relative px-3.5 py-[6px] text-[12px] rounded-full transition-all duration-200 font-medium`}
+              className={`relative shrink-0 px-3.5 py-[6px] text-[12px] rounded-full transition-all duration-200 font-medium`}
               style={{
                 background: active ? 'var(--glass-bg-strong)' : 'transparent',
                 border: active ? '1px solid var(--border-strong)' : '1px solid transparent',
@@ -66,7 +66,7 @@ export function ModuleSubNav({ tabs, actions }: ModuleSubNavProps) {
                 <Link
                   key={action.label}
                   href={action.href}
-                  className="px-3 py-1.5 text-[12px] rounded-full transition-colors"
+                  className="shrink-0 px-3 py-1.5 text-[12px] rounded-full transition-colors"
                   style={{ color: 'var(--foreground-muted)' }}
                 >
                   {action.label}
@@ -76,7 +76,7 @@ export function ModuleSubNav({ tabs, actions }: ModuleSubNavProps) {
                   key={action.label}
                   type="button"
                   onClick={action.onClick}
-                  className="px-3 py-1.5 text-[12px] rounded-full transition-colors"
+                  className="shrink-0 px-3 py-1.5 text-[12px] rounded-full transition-colors"
                   style={{ color: 'var(--foreground-muted)' }}
                 >
                   {action.label}

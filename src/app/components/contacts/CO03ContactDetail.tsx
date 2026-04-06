@@ -116,7 +116,7 @@ export function CO03ContactDetail({ contact, onEdit, onLinkClient }: CO03Contact
   };
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div className="flex items-start gap-4">

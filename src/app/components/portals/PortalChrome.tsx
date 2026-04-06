@@ -4,8 +4,11 @@ import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { motion } from 'motion/react';
 import type { LucideIcon } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import { cn } from '../ui/utils';
 import type { PortalType } from './portal-types';
+import { usePortalNav } from './PortalNavContext';
+import { useMediaQuery } from '../../lib/use-media-query';
 
 /**
  * Top bar: switch Client / Employee / Freelancer / HRIS.
@@ -20,13 +23,15 @@ export function PortalSwitcher({
   urlSync: boolean;
   onPortalChange: (p: PortalType) => void;
 }) {
+  const portalNav = usePortalNav();
+  const isLg = useMediaQuery('(min-width: 1024px)');
   const ids = ['client', 'employee', 'freelancer', 'hris', 'candidate'] as const;
   const label = (id: (typeof ids)[number]) =>
     id === 'hris' ? 'HRIS admin' : id.charAt(0).toUpperCase() + id.slice(1);
 
   const btn = (isOn: boolean) =>
     cn(
-      'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all duration-200 border',
+      'flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-[12px] font-medium transition-all duration-200 border',
       isOn
         ? 'border-primary/25 bg-primary/10 text-foreground shadow-sm'
         : 'border-transparent text-muted-foreground hover:bg-secondary hover:text-foreground',
@@ -34,7 +39,17 @@ export function PortalSwitcher({
 
   return (
     <div className="sticky top-0 z-20 border-b border-border bg-background/90 backdrop-blur-xl supports-[backdrop-filter]:bg-background/75">
-      <div className="flex flex-wrap items-center gap-1 px-4 py-2.5">
+      <div className="flex flex-wrap items-center gap-1 px-3 py-2 sm:px-4 sm:py-2.5">
+        {portalNav && !isLg && (
+          <button
+            type="button"
+            className="hub-touch-target -ml-1 mr-0.5 shrink-0 rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground"
+            aria-label="Open portal menu"
+            onClick={() => portalNav.openMobileRail()}
+          >
+            <Menu className="h-5 w-5" strokeWidth={1.75} />
+          </button>
+        )}
         {ids.map((id) => {
           const isOn = active === id;
           const content = (
@@ -81,8 +96,35 @@ export function PortalRail({
   onSelect: (id: string) => void;
   user: { initials: string; name: string; email: string };
 }) {
+  const portalNav = usePortalNav();
+  const isLg = useMediaQuery('(min-width: 1024px)');
+  const railOpen = portalNav?.mobileRailOpen ?? false;
+
+  const onPick = (id: string) => {
+    onSelect(id);
+    portalNav?.closeMobileRail();
+  };
+
   return (
-    <aside className="flex min-h-0 w-[240px] shrink-0 flex-col self-stretch border-r border-border bg-sidebar/95 backdrop-blur-xl dark:bg-[color:var(--sidebar)]">
+    <>
+      {!isLg && railOpen && (
+        <button
+          type="button"
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-[2px] lg:hidden"
+          aria-label="Close menu"
+          onClick={() => portalNav?.closeMobileRail()}
+        />
+      )}
+      <aside
+        className={cn(
+          'flex min-h-0 shrink-0 flex-col self-stretch border-r border-border bg-sidebar/95 backdrop-blur-xl dark:bg-[color:var(--sidebar)]',
+          'w-[min(280px,88vw)] lg:w-[240px]',
+          'max-lg:fixed max-lg:inset-y-0 max-lg:left-0 max-lg:z-50 max-lg:max-h-[100dvh]',
+          'transition-transform duration-200 ease-out lg:relative lg:z-auto lg:translate-x-0 lg:shadow-none',
+          !isLg && !railOpen && '-translate-x-full',
+          !isLg && railOpen && 'translate-x-0 shadow-2xl',
+        )}
+      >
       <div className="border-b border-border px-5 py-5">
         <div className="flex items-center gap-2.5">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground shadow-sm">
@@ -103,7 +145,7 @@ export function PortalRail({
             <button
               key={item.id}
               type="button"
-              onClick={() => onSelect(item.id)}
+              onClick={() => onPick(item.id)}
               className={cn(
                 'relative flex w-full items-center gap-2.5 rounded-[10px] px-3 py-[7px] text-left transition-colors',
                 active
@@ -137,6 +179,7 @@ export function PortalRail({
         </div>
       </div>
     </aside>
+    </>
   );
 }
 

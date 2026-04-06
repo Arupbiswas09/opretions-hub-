@@ -96,7 +96,7 @@ function PipelineColumn({
   const totalStr = total === 0 ? '$0' : total >= 1000 ? `$${(total / 1000).toFixed(0)}K` : `$${total}`;
 
   return (
-    <div className="flex-1 min-w-[200px] max-w-[260px]">
+    <div className="w-[min(260px,85vw)] shrink-0 sm:min-w-[200px] sm:max-w-[260px] sm:flex-1">
       {/* Column header — exactly like Bonsai: title + count / $total */}
       <div className="flex items-center gap-2 mb-3 px-1">
         <div className="w-[3px] h-4 rounded-full flex-shrink-0" style={{ background: column.color }} />
@@ -244,9 +244,12 @@ export function SA03Pipeline({ onDealClick, onCreateDeal }: SA03PipelineProps) {
   const totalDeals = columns.reduce((s, col) => s + col.cards.length, 0);
 
   return (
-    <div className="p-6">
+    <div className="min-w-0 px-3 py-4 sm:p-6">
       {/* ── Bonsai-style page header: "NEW / All Deals ▾ +" */}
-      <div className="flex items-center gap-3 mb-4 pb-4" style={{ borderBottom: '1px solid var(--border)' }}>
+      <div
+        className="mb-4 flex flex-col gap-3 pb-4 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3"
+        style={{ borderBottom: '1px solid var(--border)' }}
+      >
         <span className="text-[11px] font-semibold uppercase tracking-[0.07em] px-2 py-0.5 rounded-md"
           style={{ background: 'var(--primary)', color: '#FFFFFF' }}>
           NEW
@@ -274,7 +277,7 @@ export function SA03Pipeline({ onDealClick, onCreateDeal }: SA03PipelineProps) {
           <Plus className="w-3.5 h-3.5" />
         </button>
 
-        <div className="ml-auto flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
           {/* Filter + Sort like Bonsai */}
           <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-colors"
             style={{
@@ -318,7 +321,7 @@ export function SA03Pipeline({ onDealClick, onCreateDeal }: SA03PipelineProps) {
       </div>
 
       {/* ── Summary row ── */}
-      <div className="flex items-center gap-6 mb-5">
+      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
         <div>
           <span className="text-[12px]" style={{ color: 'var(--muted-foreground)' }}>Total value </span>
           <span className="text-[13px] font-semibold tabular-nums" style={{ color: 'var(--foreground)' }}>
@@ -332,7 +335,7 @@ export function SA03Pipeline({ onDealClick, onCreateDeal }: SA03PipelineProps) {
           </span>
         </div>
         {/* Pipeline type tabs */}
-        <div className="ml-auto flex items-center gap-1">
+        <div className="flex flex-wrap items-center gap-1 sm:ml-auto">
           {(['project', 'talent'] as const).map(type => (
             <button key={type}
               onClick={() => setPipelineType(type)}
@@ -349,7 +352,7 @@ export function SA03Pipeline({ onDealClick, onCreateDeal }: SA03PipelineProps) {
       </div>
 
       {/* ── Kanban board ── */}
-      <div className="flex gap-4 overflow-x-auto pb-6">
+      <div className="-mx-1 flex gap-4 overflow-x-auto pb-6 px-1 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {columns.map(col => (
           <PipelineColumn
             key={col.id}

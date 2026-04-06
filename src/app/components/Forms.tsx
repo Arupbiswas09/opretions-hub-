@@ -28,8 +28,8 @@ export default function Forms() {
 
   return (
     <div className="min-h-full">
-      <div className="px-8 py-3 border-b border-border">
-        <div className="flex items-center gap-1 flex-wrap">
+      <div className="border-b border-border px-3 py-3 sm:px-5 lg:px-8">
+        <div className="flex min-w-0 flex-nowrap items-center gap-1 overflow-x-auto pb-0.5 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <button type="button" onClick={() => setView('internal')} className={moduleSubNavButtonClass(view === 'internal')}>Internal</button>
           <button type="button" onClick={() => setView('portal')} className={moduleSubNavButtonClass(view === 'portal')}>Portals</button>
 
@@ -82,7 +82,7 @@ export default function Forms() {
 // FM-01: Forms Dashboard
 function FormsDashboard({ onNavigate, onCreate }: any) {
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-semibold text-foreground">Forms & Intake</h1>
@@ -171,7 +171,7 @@ function FormsList({ onNavigate, onCreate, onFormClick }: any) {
   ];
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-semibold text-foreground">Forms</h1>
@@ -243,7 +243,7 @@ function FormBuilder({ form, onBack, onPreview, onSend }: any) {
   ];
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <button onClick={onBack} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6">
         ← Back to Forms
       </button>
@@ -409,7 +409,7 @@ function PreviewTab({ onPreview }: any) {
 // FM-04: Form Preview
 function FormPreview({ onBack }: any) {
   return (
-    <div className="p-8 max-w-3xl mx-auto">
+    <div className="mx-auto w-full max-w-3xl px-3 py-6 sm:p-8">
       <button onClick={onBack} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6">
         ← Back to Builder
       </button>
@@ -467,7 +467,7 @@ function SubmissionDetail({ onBack }: any) {
   ];
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <button onClick={onBack} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6">
         ← Back to Submissions
       </button>
@@ -563,7 +563,7 @@ function SubmissionsList({ onNavigate }: any) {
   ];
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <h1 className="text-2xl font-semibold text-foreground mb-6">Form Submissions</h1>
 
       <div className="hub-surface hub-surface-elevated">

@@ -41,8 +41,8 @@ export default function Admin() {
 
   return (
     <div className="min-h-full">
-      <div className="px-8 py-3 border-b border-border">
-        <div className="flex items-center gap-1 flex-wrap">
+      <div className="border-b border-border px-3 py-3 sm:px-5 lg:px-8">
+        <div className="flex min-w-0 flex-nowrap items-center gap-1 overflow-x-auto pb-0.5 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {navBtn('overview', 'Overview')}
           {navBtn('modules', 'Modules', s => s.startsWith('modules'))}
           {navBtn('permissions', 'Permissions', s => s.startsWith('permissions'))}
@@ -128,7 +128,7 @@ function AdminOverview({ onNavigate }: { onNavigate: (screen: Screen) => void })
   ];
 
   return (
-    <div className="max-w-3xl mx-auto px-8 py-10">
+    <div className="mx-auto w-full max-w-3xl px-3 py-8 sm:px-6 sm:py-10 lg:px-8">
       <div className="mb-10">
         <h1 className="text-[28px] font-semibold text-foreground tracking-[-0.02em] leading-tight">Admin Settings</h1>
         <p className="text-[14px] text-muted-foreground/80 mt-1.5">Configure system settings, permissions, and workflows</p>
@@ -183,7 +183,7 @@ function ModulesSettings({ onNavigate }: { onNavigate: (screen: Screen) => void 
   };
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-foreground">Module Management</h1>
@@ -250,7 +250,7 @@ function ModulesSidebarPreview({ onNavigate }: { onNavigate: (screen: Screen) =>
   ];
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <button
         onClick={() => onNavigate('modules')}
         className="flex items-center gap-2 text-sm text-foreground/90 hover:text-foreground mb-6"
@@ -316,7 +316,7 @@ function PermissionsMatrix({ onNavigate, showDrawer, setShowDrawer }: { onNaviga
   };
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-foreground">Roles & Permissions</h1>
         <p className="text-sm text-muted-foreground">Configure access control by role and module</p>
@@ -438,7 +438,7 @@ function CustomFieldsBuilder({ onNavigate }: { onNavigate: (screen: Screen) => v
   ]);
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-foreground">Custom Fields</h1>
         <p className="text-sm text-muted-foreground">Add custom fields to modules and entities</p>
@@ -561,7 +561,7 @@ function CustomFieldsBuilder({ onNavigate }: { onNavigate: (screen: Screen) => v
 // AD-05: Portal Settings Overview
 function PortalSettings({ onNavigate }: { onNavigate: (screen: Screen) => void }) {
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-foreground">Portal Settings</h1>
         <p className="text-sm text-muted-foreground">Configure client, employee, and freelancer portal features</p>
@@ -621,7 +621,7 @@ function ClientPortalSettings({ onNavigate }: { onNavigate: (screen: Screen) => 
   };
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <button
         onClick={() => onNavigate('portals')}
         className="flex items-center gap-2 text-sm text-foreground/90 hover:text-foreground mb-6"
@@ -702,7 +702,7 @@ function EmployeePortalSettings({ onNavigate }: { onNavigate: (screen: Screen) =
   };
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <button
         onClick={() => onNavigate('portals')}
         className="flex items-center gap-2 text-sm text-foreground/90 hover:text-foreground mb-6"
@@ -768,7 +768,7 @@ function FreelancerPortalSettings({ onNavigate }: { onNavigate: (screen: Screen)
   };
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <button
         onClick={() => onNavigate('portals')}
         className="flex items-center gap-2 text-sm text-foreground/90 hover:text-foreground mb-6"
@@ -834,7 +834,7 @@ function ApprovalsConfiguration({ onNavigate }: { onNavigate: (screen: Screen) =
   };
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-foreground">Approvals Configuration</h1>
         <p className="text-sm text-muted-foreground">Configure approval workflows and default approvers</p>
@@ -917,7 +917,7 @@ function IntegrationsSettings() {
   };
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-foreground">Integrations</h1>
         <p className="text-sm text-muted-foreground">Connect external services and tools</p>
@@ -1010,7 +1010,7 @@ function AuditLog({ onNavigate }: { onNavigate: (screen: Screen) => void }) {
   ];
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-foreground">Audit Log</h1>
@@ -1062,7 +1062,7 @@ function AuditLog({ onNavigate }: { onNavigate: (screen: Screen) => void }) {
 // AD-09: GDPR & Data Privacy Settings
 function GDPRSettings({ onNavigate }: { onNavigate: (screen: Screen) => void }) {
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <button
         onClick={() => onNavigate('audit')}
         className="flex items-center gap-2 text-sm text-foreground/90 hover:text-foreground mb-6"
@@ -1137,7 +1137,7 @@ function EntitySchemaManager({ onNavigate }: { onNavigate: (screen: Screen) => v
   ];
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-foreground">Entity Schema Manager</h1>
         <p className="text-sm text-muted-foreground">Configure fields and layouts for entities</p>
@@ -1172,7 +1172,7 @@ function EntityFieldsList({ onNavigate }: { onNavigate: (screen: Screen) => void
   ]);
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <button
         onClick={() => onNavigate('schema')}
         className="flex items-center gap-2 text-sm text-foreground/90 hover:text-foreground mb-6"
@@ -1233,7 +1233,7 @@ function EntityFieldsList({ onNavigate }: { onNavigate: (screen: Screen) => void
 // AD-14: Field Layout Designer
 function FieldLayoutDesigner({ onNavigate }: { onNavigate: (screen: Screen) => void }) {
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <button
         onClick={() => onNavigate('schema-fields')}
         className="flex items-center gap-2 text-sm text-foreground/90 hover:text-foreground mb-6"
@@ -1284,7 +1284,7 @@ function PipelineManager({ onNavigate }: { onNavigate: (screen: Screen) => void 
   ];
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-foreground">Pipeline Manager</h1>
         <p className="text-sm text-muted-foreground">Configure pipeline stages for deals, jobs, candidates, and projects</p>
@@ -1321,7 +1321,7 @@ function PipelineStageEditor({ onNavigate }: { onNavigate: (screen: Screen) => v
   ]);
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <button
         onClick={() => onNavigate('pipelines')}
         className="flex items-center gap-2 text-sm text-foreground/90 hover:text-foreground mb-6"
@@ -1394,7 +1394,7 @@ function FormMappingDashboard({ onNavigate }: { onNavigate: (screen: Screen) => 
   ];
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-foreground">Form Mapping</h1>
         <p className="text-sm text-muted-foreground">Map form questions to system fields</p>
@@ -1437,7 +1437,7 @@ function FormMappingDetail({ onNavigate }: { onNavigate: (screen: Screen) => voi
   ];
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <button
         onClick={() => onNavigate('form-mapping')}
         className="flex items-center gap-2 text-sm text-foreground/90 hover:text-foreground mb-6"
@@ -1500,7 +1500,7 @@ function SubmissionMappingPreview({ onNavigate }: { onNavigate: (screen: Screen)
   ];
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <button
         onClick={() => onNavigate('form-mapping-detail')}
         className="flex items-center gap-2 text-sm text-foreground/90 hover:text-foreground mb-6"
@@ -1551,7 +1551,7 @@ function PortalDataUpdateRules({ onNavigate }: { onNavigate: (screen: Screen) =>
   const [activeTab, setActiveTab] = useState('client');
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-foreground">Portal Data Update Rules</h1>
         <p className="text-sm text-muted-foreground">Control self-serve profile updates with approval</p>
@@ -1606,7 +1606,7 @@ function AllowedFieldsConfig({ onNavigate }: { onNavigate: (screen: Screen) => v
   ];
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <button
         onClick={() => onNavigate('portal-rules')}
         className="flex items-center gap-2 text-sm text-foreground/90 hover:text-foreground mb-6"
@@ -1645,7 +1645,7 @@ function AllowedFieldsConfig({ onNavigate }: { onNavigate: (screen: Screen) => v
 // AD-42: Approval Rules Config
 function ApprovalRulesConfig({ onNavigate }: { onNavigate: (screen: Screen) => void }) {
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <button
         onClick={() => onNavigate('portal-rules')}
         className="flex items-center gap-2 text-sm text-foreground/90 hover:text-foreground mb-6"

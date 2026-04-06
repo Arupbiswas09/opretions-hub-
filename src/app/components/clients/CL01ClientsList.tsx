@@ -151,15 +151,18 @@ export function CL01ClientsList({ onClientClick, onCreateClient }: CL01ClientsLi
   return (
     <div>
       {/* ── Toolbar — Bonsai exact: Search · Filter · Sort · ··· · New Client ── */}
-      <div className="px-6 py-3 flex items-center gap-2" style={{ borderBottom: '1px solid var(--border)' }}>
+      <div
+        className="flex flex-wrap items-center gap-2 px-3 py-3 sm:px-6"
+        style={{ borderBottom: '1px solid var(--border)' }}
+      >
         {/* Search */}
-        <div className="relative flex items-center flex-1 max-w-xs">
+        <div className="relative flex min-w-0 flex-1 basis-[200px] sm:max-w-xs">
           <Search className="absolute left-2.5 w-3.5 h-3.5 pointer-events-none" style={{ color: 'var(--muted-foreground)' }} />
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search…"
-            className="w-full pl-8 pr-3 py-[6px] text-[12px] rounded-lg focus:outline-none"
+            className="w-full rounded-lg py-[6px] pl-8 pr-3 text-[12px] focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
             style={{
               background: 'var(--search-bg)',
               border: '1px solid var(--search-border)',
@@ -187,10 +190,11 @@ export function CL01ClientsList({ onClientClick, onCreateClient }: CL01ClientsLi
           <MoreHorizontal className="w-4 h-4" />
         </button>
 
-        <div className="ml-auto">
+        <div className="ml-auto flex w-full justify-end sm:w-auto">
           <button
+            type="button"
             onClick={onCreateClient}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-medium"
+            className="flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-[12px] font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
             style={{ background: 'var(--primary)', color: '#FFFFFF' }}>
             <Plus className="w-3.5 h-3.5" />
             New Client
@@ -199,8 +203,8 @@ export function CL01ClientsList({ onClientClick, onCreateClient }: CL01ClientsLi
       </div>
 
       {/* ── Table — Bonsai exact columns: Client · Contact Name · Contact Email · Tags · ··· ── */}
-      <div className="overflow-x-auto">
-        <table className="w-full">
+      <div className="overflow-x-auto [-webkit-overflow-scrolling:touch]">
+        <table className="min-w-[640px] w-full">
           <thead>
             <tr style={{ background: 'var(--glass-bg)' }}>
               <th style={{ ...TH_STYLE, width: 36, padding: '10px 12px' }}>

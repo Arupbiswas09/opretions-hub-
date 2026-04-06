@@ -123,8 +123,8 @@ const PRIORITY_CONFIG: Record<Priority, { label: string; color: string; icon: Re
 const TASK_STATUS_CONFIG: Record<TaskStatus, { label: string; color: string; bg: string }> = {
   todo: { label: 'To do', color: 'var(--muted-foreground)', bg: 'var(--secondary)' },
   'in-progress': { label: 'In progress', color: '#2563EB', bg: '#2563EB15' },
-  review: { label: 'In review', color: '#8B5CF6', bg: '#8B5CF615' },
-  done: { label: 'Done', color: '#10B981', bg: '#10B98115' },
+  review: { label: 'In review', color: '#2563EB', bg: 'rgba(37,99,235,0.12)' },
+  done: { label: 'Done', color: 'var(--muted-foreground)', bg: 'var(--secondary)' },
 };
 
 const ISSUE_STATUS_CONFIG: Record<IssueStatus, { label: string; color: string }> = {
@@ -195,64 +195,126 @@ function TasksTab() {
   }), [filter, search]);
 
   return (
-    <div className="flex flex-col h-full min-h-0">
+    <div className="flex h-full min-h-0 flex-col">
       {/* Toolbar */}
-      <div className="flex items-center gap-3 px-5 py-3" style={{ borderBottom: '1px solid var(--border)' }}>
-        <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg flex-1 max-w-56" style={{ background: 'var(--secondary)', border: '1px solid var(--border)' }}>
-          <Search className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--muted-foreground)' }} />
-          <input className="bg-transparent flex-1 text-[12px] outline-none" style={{ color: 'var(--foreground)' }} placeholder="Search tasks…" value={search} onChange={e => setSearch(e.target.value)} />
+      <div
+        className="flex flex-col gap-3 border-b px-3 py-3 sm:flex-row sm:items-center sm:px-5"
+        style={{ borderColor: 'var(--border)' }}
+      >
+        <div
+          className="flex max-w-full flex-1 items-center gap-1.5 rounded-lg px-2.5 py-1.5 sm:max-w-56"
+          style={{ background: 'var(--secondary)', border: '1px solid var(--border)' }}
+        >
+          <Search className="h-3.5 w-3.5 shrink-0" style={{ color: 'var(--muted-foreground)' }} />
+          <input
+            className="min-w-0 flex-1 bg-transparent text-[12px] outline-none"
+            style={{ color: 'var(--foreground)' }}
+            placeholder="Search tasks…"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1 sm:flex-[2]">
           {(['all', 'todo', 'in-progress', 'review', 'done'] as const).map(s => (
-            <button key={s} onClick={() => setFilter(s)}
-              className="px-2.5 py-1 rounded-lg text-[11px] font-medium capitalize transition-colors"
-              style={{ background: filter === s ? '#2563EB' : 'var(--secondary)', color: filter === s ? 'white' : 'var(--muted-foreground)' }}>
+            <button
+              key={s}
+              type="button"
+              onClick={() => setFilter(s)}
+              className="rounded-lg px-2 py-1 text-[10px] font-medium capitalize transition-colors sm:px-2.5 sm:text-[11px]"
+              style={{
+                background: filter === s ? '#2563EB' : 'var(--secondary)',
+                color: filter === s ? 'white' : 'var(--muted-foreground)',
+              }}
+            >
               {s === 'all' ? 'All' : TASK_STATUS_CONFIG[s as TaskStatus].label}
             </button>
           ))}
         </div>
-        <div className="ml-auto flex items-center gap-1">
+        <div className="flex items-center justify-end gap-1 sm:ml-auto">
           {([['list', List], ['board', Kanban]] as const).map(([v, Icon]) => (
-            <button key={v} onClick={() => setView(v)}
-              className="p-1.5 rounded-lg transition-colors"
-              style={{ background: view === v ? '#2563EB15' : 'transparent', color: view === v ? '#2563EB' : 'var(--muted-foreground)' }}>
-              <Icon className="w-4 h-4" />
+            <button
+              key={v}
+              type="button"
+              onClick={() => setView(v)}
+              className="rounded-lg p-2 transition-colors sm:p-1.5"
+              style={{
+                background: view === v ? '#2563EB15' : 'transparent',
+                color: view === v ? '#2563EB' : 'var(--muted-foreground)',
+              }}
+            >
+              <Icon className="h-4 w-4" />
             </button>
           ))}
           <BonsaiButton size="sm">
-            <Plus className="w-3.5 h-3.5 mr-1" />
-            New task
+            <Plus className="h-3.5 w-3.5 sm:mr-1" />
+            <span className="hidden sm:inline">New task</span>
           </BonsaiButton>
         </div>
       </div>
 
       {view === 'list' ? (
-        <div className="flex-1 overflow-y-auto">
-          {/* Header row */}
-          <div className="grid grid-cols-[1fr_140px_90px_80px_80px] gap-3 px-5 py-2 text-[10px] font-medium uppercase tracking-wider sticky top-0 z-10"
-            style={{ borderBottom: '1px solid var(--border)', background: 'var(--background)', color: 'var(--muted-foreground)' }}>
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          {/* Mobile cards */}
+          <div className="space-y-2 p-3 md:hidden">
+            {filtered.map(task => {
+              const s = TASK_STATUS_CONFIG[task.status];
+              return (
+                <div
+                  key={task.id}
+                  className="cursor-pointer rounded-xl border p-3 transition-colors hover:bg-secondary/40"
+                  style={{ borderColor: 'var(--border)', background: 'var(--popover)' }}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex min-w-0 flex-1 items-start gap-2">
+                      <PriorityBadge priority={task.priority} />
+                      <span
+                        className={cn('text-[13px] font-medium leading-snug', task.status === 'done' && 'line-through opacity-60')}
+                        style={{ color: 'var(--foreground)' }}
+                      >
+                        {task.title}
+                      </span>
+                    </div>
+                    <Avatar initials={task.assigneeInitials} size="xs" />
+                  </div>
+                  <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]" style={{ color: 'var(--muted-foreground)' }}>
+                    <span>{task.project}</span>
+                    <span>·</span>
+                    <span>{task.dueDate}</span>
+                    <StatusChip label={s.label} color={s.color} bg={s.bg} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          {/* Desktop table */}
+          <div className="hidden md:block">
+          <div
+            className="sticky top-0 z-10 grid grid-cols-[1fr_140px_90px_80px_80px] gap-3 border-b px-5 py-2 text-[10px] font-medium uppercase tracking-wider"
+            style={{ borderColor: 'var(--border)', background: 'var(--background)', color: 'var(--muted-foreground)' }}
+          >
             <span>Task</span><span>Project</span><span>Status</span><span>Due</span><span>Assignee</span>
           </div>
           {filtered.map(task => {
             const s = TASK_STATUS_CONFIG[task.status];
             return (
-              <div key={task.id} className="grid grid-cols-[1fr_140px_90px_80px_80px] gap-3 items-center px-5 py-3 border-b transition-colors hover:bg-secondary/30 cursor-pointer group"
+              <div key={task.id} className="group grid cursor-pointer grid-cols-[1fr_140px_90px_80px_80px] gap-3 items-center border-b px-5 py-3 transition-colors hover:bg-secondary/30"
                 style={{ borderColor: 'var(--border)' }}>
-                <div className="flex items-center gap-2 min-w-0">
+                <div className="flex min-w-0 items-center gap-2">
                   <PriorityBadge priority={task.priority} />
-                  <Circle className="w-3.5 h-3.5 flex-shrink-0 text-muted-foreground group-hover:text-primary transition-colors" style={{ color: 'var(--muted-foreground)' }} />
-                  <span className={cn('text-[13px] truncate', task.status === 'done' && 'line-through opacity-60')} style={{ color: 'var(--foreground)' }}>{task.title}</span>
+                  <Circle className="h-3.5 w-3.5 shrink-0 text-muted-foreground transition-colors group-hover:text-primary" style={{ color: 'var(--muted-foreground)' }} />
+                  <span className={cn('truncate text-[13px]', task.status === 'done' && 'line-through opacity-60')} style={{ color: 'var(--foreground)' }}>{task.title}</span>
                   {task.tags.map(tag => (
-                    <span key={tag} className="px-1.5 py-0.5 rounded text-[9px] font-medium hidden lg:inline-flex" style={{ background: 'var(--secondary)', color: 'var(--muted-foreground)' }}>{tag}</span>
+                    <span key={tag} className="hidden rounded px-1.5 py-0.5 text-[9px] font-medium lg:inline-flex" style={{ background: 'var(--secondary)', color: 'var(--muted-foreground)' }}>{tag}</span>
                   ))}
                 </div>
-                <span className="text-[12px] truncate" style={{ color: 'var(--muted-foreground)' }}>{task.project}</span>
+                <span className="truncate text-[12px]" style={{ color: 'var(--muted-foreground)' }}>{task.project}</span>
                 <StatusChip label={s.label} color={s.color} bg={s.bg} />
                 <span className="text-[12px]" style={{ color: 'var(--muted-foreground)' }}>{task.dueDate}</span>
                 <Avatar initials={task.assigneeInitials} />
               </div>
             );
           })}
+          </div>
         </div>
       ) : (
         <div className="flex-1 overflow-x-auto overflow-y-hidden">
@@ -308,11 +370,18 @@ function TasksTab() {
 function IssuesTab() {
   const [filter, setFilter] = useState<IssueStatus | 'all'>('all');
   const filtered = filter === 'all' ? ISSUES : ISSUES.filter(i => i.status === filter);
-  const TYPE_COLOR: Record<Issue['type'], string> = { bug: '#EF4444', feature: '#2563EB', improvement: '#10B981' };
+  const TYPE_COLOR: Record<Issue['type'], string> = {
+    bug: 'var(--destructive)',
+    feature: 'var(--primary)',
+    improvement: 'var(--primary)',
+  };
 
   return (
     <div className="flex flex-col h-full min-h-0">
-      <div className="flex items-center gap-3 px-5 py-3" style={{ borderBottom: '1px solid var(--border)' }}>
+      <div
+        className="flex flex-wrap items-center gap-2 px-3 py-3 sm:gap-3 sm:px-5"
+        style={{ borderBottom: '1px solid var(--border)' }}
+      >
         <div className="flex items-center gap-1">
           {(['all', 'open', 'in-progress', 'resolved'] as const).map(s => (
             <button key={s} onClick={() => setFilter(s)}
@@ -334,7 +403,7 @@ function IssuesTab() {
           const s = ISSUE_STATUS_CONFIG[issue.status];
           const Icon = TYPE_ICONS[issue.type] ?? AlertCircle;
           return (
-            <div key={issue.id} className="flex items-start gap-3 px-5 py-3.5 border-b transition-colors hover:bg-secondary/30 cursor-pointer"
+            <div key={issue.id} className="flex cursor-pointer items-start gap-3 border-b px-3 py-3.5 transition-colors hover:bg-secondary/30 sm:px-5"
               style={{ borderColor: 'var(--border)' }}>
               <div className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0 mt-0.5"
                 style={{ background: `${TYPE_COLOR[issue.type]}20` }}>
@@ -387,7 +456,10 @@ function ApprovalsTab() {
           <button className="text-[11px] font-medium" style={{ color: '#2563EB' }}>Review all →</button>
         </div>
       )}
-      <div className="flex items-center gap-3 px-5 py-3" style={{ borderBottom: '1px solid var(--border)' }}>
+      <div
+        className="flex flex-wrap items-center gap-2 px-3 py-3 sm:gap-3 sm:px-5"
+        style={{ borderBottom: '1px solid var(--border)' }}
+      >
         <div className="flex items-center gap-1">
           {(['all', 'pending', 'needs-info', 'approved', 'rejected'] as const).map(s => (
             <button key={s} onClick={() => setFilter(s)}
@@ -403,7 +475,7 @@ function ApprovalsTab() {
           const s = APPROVAL_STATUS_CONFIG[appr.status];
           const Icon = TYPE_ICONS[appr.type] ?? CheckSquare;
           return (
-            <div key={appr.id} className="flex items-center gap-4 px-5 py-3.5 border-b transition-colors hover:bg-secondary/30 cursor-pointer"
+            <div key={appr.id} className="flex cursor-pointer items-center gap-3 border-b px-3 py-3.5 transition-colors hover:bg-secondary/30 sm:gap-4 sm:px-5"
               style={{ borderColor: 'var(--border)' }}>
               <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
                 style={{ background: 'var(--secondary)' }}>
@@ -450,7 +522,10 @@ function RequestsTab() {
 
   return (
     <div className="flex flex-col h-full min-h-0">
-      <div className="flex items-center gap-3 px-5 py-3" style={{ borderBottom: '1px solid var(--border)' }}>
+      <div
+        className="flex flex-wrap items-center gap-2 px-3 py-3 sm:gap-3 sm:px-5"
+        style={{ borderBottom: '1px solid var(--border)' }}
+      >
         <div className="flex items-center gap-1">
           {(['all', 'open', 'in-progress', 'resolved'] as const).map(s => (
             <button key={s} onClick={() => setFilter(s)}
@@ -472,7 +547,7 @@ function RequestsTab() {
           const s = REQ_STATUS[req.status];
           const Icon = TYPE_ICONS[req.type] ?? Inbox;
           return (
-            <div key={req.id} className="flex items-center gap-4 px-5 py-3.5 border-b transition-colors hover:bg-secondary/30 cursor-pointer"
+            <div key={req.id} className="flex cursor-pointer items-center gap-3 border-b px-3 py-3.5 transition-colors hover:bg-secondary/30 sm:gap-4 sm:px-5"
               style={{ borderColor: 'var(--border)' }}>
               <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
                 style={{ background: 'var(--secondary)' }}>
@@ -513,29 +588,30 @@ export default function Work() {
   const [tab, setTab] = useState<WorkTab>('tasks');
 
   return (
-    <div className="flex flex-col h-full min-h-0" style={{ background: 'var(--background)' }}>
+    <div className="flex h-full min-h-0 flex-col" style={{ background: 'var(--background)' }}>
       {/* Page header */}
-      <div className="px-5 pt-5 pb-0" style={{ borderBottom: '1px solid var(--border)' }}>
-        <h1 className="text-[18px] font-semibold mb-4" style={{ color: 'var(--foreground)' }}>Work</h1>
+      <div className="px-4 pb-0 pt-4 sm:px-6 sm:pt-5" style={{ borderBottom: '1px solid var(--border)' }}>
+        <h1 className="mb-3 text-[17px] font-semibold sm:mb-4 sm:text-[18px]" style={{ color: 'var(--foreground)' }}>Work</h1>
 
         {/* Summary stat row */}
-        <div className="flex items-center gap-4 mb-4">
+        <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-2 sm:mb-4">
           {TAB_CONFIG.map(t => (
             <div key={t.id} className="flex items-center gap-1.5">
-              <t.icon className="w-3.5 h-3.5" style={{ color: 'var(--muted-foreground)' }} />
+              <t.icon className="h-3.5 w-3.5" style={{ color: 'var(--muted-foreground)' }} />
               <span className="text-[13px] font-semibold" style={{ color: 'var(--foreground)' }}>{t.count}</span>
-              <span className="text-[12px]" style={{ color: 'var(--muted-foreground)' }}>{t.label.toLowerCase()}</span>
+              <span className="text-[11px] sm:text-[12px]" style={{ color: 'var(--muted-foreground)' }}>{t.label.toLowerCase()}</span>
             </div>
           ))}
         </div>
 
         {/* Tabs */}
-        <div className="flex items-end gap-0">
+        <div className="-mx-1 flex items-end gap-0 overflow-x-auto pb-px sm:mx-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {TAB_CONFIG.map(t => (
             <button
               key={t.id}
+              type="button"
               onClick={() => setTab(t.id)}
-              className="flex items-center gap-1.5 px-4 py-2.5 text-[13px] font-medium border-b-2 transition-colors relative"
+              className="relative flex shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-2.5 text-[12px] font-medium transition-colors sm:px-4 sm:text-[13px]"
               style={{
                 borderBottomColor: tab === t.id ? '#2563EB' : 'transparent',
                 color: tab === t.id ? '#2563EB' : 'var(--muted-foreground)',

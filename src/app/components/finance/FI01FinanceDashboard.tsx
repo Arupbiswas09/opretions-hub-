@@ -159,11 +159,11 @@ export function FI01FinanceDashboard({ onNavigateToInvoices, onNavigateToExpense
   ];
 
   return (
-    <div className="p-8 max-w-[1100px]">
+    <div className="w-full min-w-0 px-3 py-5 sm:px-5 lg:px-8">
 
       {/* Header */}
       <motion.div
-        className="flex items-end justify-between mb-6"
+        className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, ease: EASE_OUT_EXPO }}
@@ -179,7 +179,7 @@ export function FI01FinanceDashboard({ onNavigateToInvoices, onNavigateToExpense
       </motion.div>
 
       {/* ── KPI Cards ── */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {KPI_CARDS.map((card, i) => {
           const Icon = card.icon;
           return (
@@ -218,11 +218,11 @@ export function FI01FinanceDashboard({ onNavigateToInvoices, onNavigateToExpense
       </div>
 
       {/* ── Revenue Chart + Expense Breakdown ── */}
-      <div className="grid grid-cols-[1fr_300px] gap-5 mb-6">
+      <div className="mb-6 grid grid-cols-1 gap-5 xl:grid-cols-[1fr_300px]">
 
         {/* Revenue area chart */}
         <GlassPanel delay={0.22}>
-          <div className="px-6 pt-5 pb-2 flex items-center justify-between">
+          <div className="flex flex-col gap-3 px-4 pt-5 pb-2 sm:flex-row sm:items-start sm:justify-between sm:px-6">
             <div>
               <h3 className="text-[14px] font-semibold tracking-[-0.01em]"
                 style={{ color: 'var(--foreground)' }}>
@@ -230,7 +230,7 @@ export function FI01FinanceDashboard({ onNavigateToInvoices, onNavigateToExpense
               </h3>
               <p className="text-[11px] mt-0.5" style={{ color: 'var(--foreground-muted)' }}>Last 6 months</p>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex flex-wrap items-center gap-3 sm:gap-4">
               {[
                 { label: 'Revenue',  color: revColor  },
                 { label: 'Expenses', color: expColor  },
@@ -243,7 +243,7 @@ export function FI01FinanceDashboard({ onNavigateToInvoices, onNavigateToExpense
               ))}
             </div>
           </div>
-          <div className="px-2 pb-4">
+          <div className="min-w-0 px-1 pb-4 sm:px-2">
             <ResponsiveContainer width="100%" height={220}>
               <AreaChart data={REVENUE_DATA} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
                 <defs>
@@ -370,7 +370,7 @@ export function FI01FinanceDashboard({ onNavigateToInvoices, onNavigateToExpense
       </div>
 
       {/* ── Invoice volume + Profitability Table ── */}
-      <div className="grid grid-cols-[1fr_1fr] gap-5 mb-6">
+      <div className="mb-6 grid grid-cols-1 gap-5 lg:grid-cols-2">
 
         {/* Monthly invoice volume chart */}
         <GlassPanel delay={0.30}>

@@ -26,18 +26,20 @@ export function BonsaiTabs({ tabs, value, onValueChange, className }: BonsaiTabs
   }, [value]);
 
   return (
-    <div className={cn("border-b border-stone-200/60", className)}>
-      <div ref={containerRef} className="flex gap-0 relative">
+    <div className={cn('min-w-0 border-b border-stone-200/60 dark:border-white/10', className)}>
+      <div className="overflow-x-auto [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div ref={containerRef} className="relative flex min-w-0 gap-0">
         {tabs.map((tab) => (
           <button
             key={tab.value}
             data-value={tab.value}
+            type="button"
             onClick={() => onValueChange(tab.value)}
             className={cn(
-              "px-4 py-2.5 text-[13px] transition-colors relative",
+              'relative shrink-0 rounded-md px-3 py-2.5 text-[12px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 sm:px-4 sm:text-[13px]',
               value === tab.value
-                ? "text-stone-800 font-medium"
-                : "text-stone-400 hover:text-stone-600"
+                ? 'font-medium text-stone-800 dark:text-stone-100'
+                : 'text-stone-400 hover:text-stone-600 dark:text-stone-500 dark:hover:text-stone-300'
             )}
           >
             <span>{tab.label}</span>
@@ -50,9 +52,10 @@ export function BonsaiTabs({ tabs, value, onValueChange, className }: BonsaiTabs
         ))}
         {/* Animated sliding indicator */}
         <div
-          className="absolute bottom-0 h-[2px] bg-stone-800 rounded-full transition-all duration-300 ease-[cubic-bezier(0.25,0.46,0.45,0.94)]"
+          className="absolute bottom-0 h-[2px] rounded-full bg-stone-800 transition-all duration-300 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] dark:bg-stone-200"
           style={{ left: indicator.left, width: indicator.width }}
         />
+        </div>
       </div>
     </div>
   );

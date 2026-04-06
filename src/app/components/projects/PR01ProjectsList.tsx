@@ -95,18 +95,18 @@ export function PR01ProjectsList({ onProjectClick, onCreateProject }: PR01Projec
   const totalSpent = projects.reduce((s, p) => s + p.spent, 0);
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
           <p className="eyebrow-label mb-1">Projects</p>
           <h1 className="text-[28px] font-semibold tracking-[-0.025em]"
             style={{ color: 'var(--foreground)' }}>All Projects</h1>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 sm:gap-3">
           {/* View Switcher */}
           <div
-            className="flex items-center gap-1 rounded-full p-1"
+            className="flex shrink-0 items-center gap-1 rounded-full p-1"
             style={{ background: 'var(--glass-bg)', border: '1px solid var(--border)' }}
           >
             {[
@@ -116,8 +116,9 @@ export function PR01ProjectsList({ onProjectClick, onCreateProject }: PR01Projec
             ].map(({ mode, icon: Icon }) => (
               <button
                 key={mode}
+                type="button"
                 onClick={() => setViewMode(mode)}
-                className="p-2 rounded-full transition-all duration-150"
+                className="rounded-full p-2 transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
                 style={{
                   background: viewMode === mode ? 'var(--primary)' : 'transparent',
                   color: viewMode === mode ? '#FFFFFF' : 'var(--foreground-muted)',
@@ -257,11 +258,11 @@ export function PR01ProjectsList({ onProjectClick, onCreateProject }: PR01Projec
       )}
 
       {viewMode === 'kanban' && (
-        <div className="flex gap-4">
+        <div className="-mx-1 flex gap-4 overflow-x-auto pb-2 [-webkit-overflow-scrolling:touch] px-1 sm:mx-0 sm:overflow-visible sm:px-0">
           {['Planning', 'In Progress', 'On Hold', 'Completed'].map((stage, idx) => {
             const stageProjects = projects.filter(p => p.status === stage);
             return (
-              <div key={stage} className="flex-1 min-w-0">
+              <div key={stage} className="w-[min(100%,280px)] shrink-0 sm:w-auto sm:min-w-0 sm:flex-1">
                 <div className="flex items-center gap-2 mb-3">
                   <div className="w-[6px] h-[6px] rounded-full"
                     style={{ background: 'var(--primary)', opacity: [1, 0.7, 0.45, 0.25][idx] }} />

@@ -22,7 +22,7 @@ export function T03GridPage({ title, subtitle }: T03GridPageProps) {
   }));
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <BonsaiPageHeader
         title={title}
         subtitle={subtitle || `Browse and manage your ${title.toLowerCase()}`}

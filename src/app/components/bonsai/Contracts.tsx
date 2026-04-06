@@ -111,7 +111,7 @@ export default function Contracts() {
 
       <motion.div variants={stagger} initial="hidden" animate="show" className="space-y-5">
       {/* ═══ Status Summary ═══ */}
-      <motion.div variants={fadeItem} className="grid grid-cols-3 gap-3">
+      <motion.div variants={fadeItem} className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <Card>
           <div className="px-4 py-3.5 flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg flex items-center justify-center"
@@ -151,16 +151,17 @@ export default function Contracts() {
       </motion.div>
 
       {/* ═══ Filter + Search ═══ */}
-      <motion.div variants={fadeItem} className="flex items-center gap-3">
-        <div className="flex items-center gap-1.5">
+      <motion.div variants={fadeItem} className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="-mx-1 flex min-w-0 flex-nowrap items-center gap-1.5 overflow-x-auto px-1 pb-0.5 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {(['all', ...Object.keys(STATUS_MAP)] as const).map(status => {
             const isActive = filterStatus === status;
             const cfg = status === 'all' ? null : STATUS_MAP[status as ContractStatus];
             return (
               <button
                 key={status}
+                type="button"
                 onClick={() => setFilterStatus(status as ContractStatus | 'all')}
-                className="px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all"
+                className="shrink-0 rounded-lg px-3 py-1.5 text-[12px] font-medium transition-all"
                 style={{
                   background: isActive ? (cfg?.bg || 'rgba(255,255,255,0.08)') : 'transparent',
                   color: isActive ? (cfg?.color || 'var(--foreground)') : 'var(--muted-foreground)',
@@ -172,8 +173,7 @@ export default function Contracts() {
             );
           })}
         </div>
-        <div className="flex-1" />
-        <div className="relative w-[240px]">
+        <div className="relative w-full sm:ml-auto sm:max-w-[240px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5"
             style={{ color: 'var(--muted-foreground)' }} />
           <input
@@ -194,8 +194,9 @@ export default function Contracts() {
       {/* ═══ Contracts Table ═══ */}
       <motion.div variants={fadeItem}>
         <Card>
+          <div className="overflow-x-auto [-webkit-overflow-scrolling:touch]">
           {/* Header */}
-          <div className="grid grid-cols-[1fr_120px_90px_90px_90px_70px_40px] gap-3 px-5 py-2.5"
+          <div className="grid min-w-[720px] grid-cols-[1fr_120px_90px_90px_90px_70px_40px] gap-3 px-3 py-2.5 sm:px-5"
             style={{ borderBottom: '1px solid var(--border)', background: 'var(--glass-bg)' }}>
             {['Contract', 'Client', 'Status', 'Start', 'End', 'Value', ''].map(h => (
               <span key={h} className="text-[10px] font-medium uppercase tracking-wider"
@@ -208,7 +209,7 @@ export default function Contracts() {
             return (
               <div
                 key={contract.id}
-                className="grid grid-cols-[1fr_120px_90px_90px_90px_70px_40px] gap-3 px-5 py-3 items-center transition-colors hover:bg-white/[0.02] group"
+                className="grid min-w-[720px] grid-cols-[1fr_120px_90px_90px_90px_70px_40px] gap-3 px-3 py-3 transition-colors hover:bg-white/[0.02] group sm:px-5 items-center"
                 style={{
                   borderBottom: i < filtered.length - 1 ? '1px solid var(--border-subtle)' : 'none',
                 }}
@@ -249,6 +250,7 @@ export default function Contracts() {
               </div>
             );
           })}
+          </div>
         </Card>
       </motion.div>
     </motion.div>

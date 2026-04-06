@@ -56,14 +56,14 @@ export function FI02InvoicesList({ onInvoiceClick, onCreate, onGenerateFromTimes
   const totalAmount = invoices.reduce((s, i) => s + i.amount, 0);
 
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-between mb-6">
-        <div>
+    <div className="px-3 py-6 sm:p-8">
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
           <p className="eyebrow-label mb-1">Finance</p>
           <h1 className="text-[28px] font-semibold tracking-[-0.025em]"
             style={{ color: 'var(--foreground)' }}>Invoices</h1>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 flex-wrap items-stretch justify-end gap-2 sm:items-center">
           <BonsaiButton variant="ghost" size="sm" icon={<Download />}>
             Export
           </BonsaiButton>

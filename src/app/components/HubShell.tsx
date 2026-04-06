@@ -7,7 +7,7 @@ import { motion, AnimatePresence, MotionConfig } from 'motion/react';
 import {
   Settings, Search, Bell, Plus, Play,
   ChevronRight, ChevronDown, PanelLeftClose, PanelLeft,
-  LogOut, User, Sun, Moon, MoreHorizontal, Globe, Users,
+  LogOut, User, Sun, Moon, MoreHorizontal, MoreVertical, Globe, Users, Menu,
 } from 'lucide-react';
 import { pageTransition } from '../lib/motion';
 import { HUB_MODULES, type HubModule } from '../lib/hub-modules';
@@ -23,6 +23,7 @@ import { HUB_EVENTS, dispatchOpenCommandPalette } from '../lib/hub-events';
 import { NotificationDrawer } from './bonsai/NotificationDrawer';
 import { useTheme } from '../lib/theme';
 import { useUserRole, PERSONAS, type UserPersona } from '../lib/UserRoleContext';
+import { useMediaQuery } from '../lib/use-media-query';
 import {
   CreateClientDrawer, CreateDealDrawer, CreateProjectDrawer,
   CreateInvoiceDrawer, CreateTimeEntryDrawer, CreateProposalDrawer,
@@ -79,7 +80,7 @@ function portalLabelFromPath(pathname: string): string | null {
 
 /* ── Sidebar row: link or action (e.g. notifications panel) ── */
 function NavRow({
-  label, icon: Icon, href, onClick, active, collapsed,
+  label, icon: Icon, href, onClick, active, collapsed, onNavigate,
 }: {
   label: string;
   icon: React.ElementType;
@@ -87,6 +88,8 @@ function NavRow({
   onClick?: () => void;
   active: boolean;
   collapsed: boolean;
+  /** Called after following a sidebar link (e.g. close mobile drawer). */
+  onNavigate?: () => void;
 }) {
   const className = `group relative flex items-center rounded-lg transition-all duration-200 w-full text-left ${
     collapsed ? 'justify-center px-0 py-2.5' : 'px-3 py-[7px] gap-2.5'
@@ -127,7 +130,7 @@ function NavRow({
     );
   }
   return (
-    <Link href={href!} className={className} style={style}>
+    <Link href={href!} className={className} style={style} onClick={() => onNavigate?.()}>
       {body}
     </Link>
   );
@@ -139,6 +142,7 @@ function renderSidebarItem(
   collapsed: boolean,
   notifOpen: boolean,
   onOpenNotif: () => void,
+  onAfterNav?: () => void,
 ) {
   if (item.kind === 'notifications') {
     return (
@@ -146,7 +150,10 @@ function renderSidebarItem(
         key={item.label}
         label={item.label}
         icon={item.icon}
-        onClick={onOpenNotif}
+        onClick={() => {
+          onOpenNotif();
+          onAfterNav?.();
+        }}
         active={notifOpen}
         collapsed={collapsed}
       />
@@ -161,6 +168,7 @@ function renderSidebarItem(
       href={item.href}
       active={active}
       collapsed={collapsed}
+      onNavigate={onAfterNav}
     />
   );
 }
@@ -181,6 +189,7 @@ function SectionHeader({ label, collapsed }: { label: string; collapsed: boolean
 ═══════════════════════════════════════════════════════════════ */
 export default function HubShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -193,9 +202,20 @@ export default function HubShell({ children }: { children: React.ReactNode }) {
   const quickAddRef = useRef<HTMLDivElement>(null);
   const portalMenuRef = useRef<HTMLDivElement>(null);
   const switchUserRef = useRef<HTMLDivElement>(null);
+  const mobileMoreRef = useRef<HTMLDivElement>(null);
+  const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
   const [portalMenuOpen, setPortalMenuOpen] = useState(false);
   const { isDark, toggleTheme } = useTheme();
   const { persona, setPersona } = useUserRole();
+  const isLg = useMediaQuery('(min-width: 1024px)');
+  const closeMobileNav = () => setMobileNavOpen(false);
+
+  const canSection = (section: 'top' | 'workspace' | 'productivity' | 'bottom') =>
+    persona.accessGroups.includes(section);
+
+  useEffect(() => {
+    setMobileNavOpen(false);
+  }, [pathname]);
 
   const openDrawer = (type: string) => {
     setQuickAddOpen(false);
@@ -216,6 +236,9 @@ export default function HubShell({ children }: { children: React.ReactNode }) {
       }
       if (switchUserRef.current && !switchUserRef.current.contains(e.target as Node)) {
         setSwitchUserOpen(false);
+      }
+      if (mobileMoreRef.current && !mobileMoreRef.current.contains(e.target as Node)) {
+        setMobileMoreOpen(false);
       }
     };
     document.addEventListener('mousedown', handler);
@@ -239,26 +262,46 @@ export default function HubShell({ children }: { children: React.ReactNode }) {
   const mod = moduleFromPath(pathname);
   const sw = collapsed ? 56 : 220;
   const homeHref = '/hub/dashboard';
+  const pathSegs = pathname.split('/').filter(Boolean);
+  const isDeepPortalRoute = pathSegs[0] === 'hub' && pathSegs[1] === 'portals' && pathSegs.length >= 3;
 
   return (
     <MotionConfig reducedMotion="user">
-      <div className="flex h-[100dvh] min-h-0 overflow-hidden">
+      <div className="flex h-[100dvh] min-h-0 min-w-0 overflow-hidden">
+
+        {/* Mobile sidebar backdrop */}
+        {!isPortalView && !isLg && mobileNavOpen && (
+          <button
+            type="button"
+            aria-label="Close navigation"
+            className="fixed inset-0 z-30 bg-black/50 backdrop-blur-[1px] lg:hidden"
+            onClick={closeMobileNav}
+          />
+        )}
 
         {/* ── Sidebar ── */}
         {!isPortalView && (
           <aside
-            className="fixed inset-y-0 left-0 z-30 flex flex-col"
+            className={cn(
+              'flex flex-col flex-shrink-0',
+              'max-lg:fixed max-lg:inset-y-0 max-lg:left-0 max-lg:z-40',
+              'max-lg:transition-transform max-lg:duration-200 max-lg:ease-out',
+              !isLg && !mobileNavOpen && 'max-lg:-translate-x-full',
+              'lg:static lg:translate-x-0',
+            )}
             style={{
               width: sw,
-              transition: 'width 0.2s ease',
+              minWidth: sw,
+              maxWidth: sw,
+              transition: 'width 0.2s ease, min-width 0.2s ease, max-width 0.2s ease',
               background: 'var(--sidebar-glass)',
               borderRight: '1px solid var(--sidebar-divider)',
             }}
           >
             {/* Logo / workspace name */}
-            <div className="h-[52px] flex items-center px-3"
+            <div className="h-[52px] min-h-[52px] flex items-center px-3"
               style={{ borderBottom: '1px solid var(--sidebar-divider)' }}>
-              <Link href={homeHref} className="flex items-center gap-2 min-w-0 w-full">
+              <Link href={homeHref} onClick={closeMobileNav} className="flex items-center gap-2 min-w-0 w-full">
                 <div className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0"
                   style={{
                     background: '#2563EB',
@@ -271,7 +314,6 @@ export default function HubShell({ children }: { children: React.ReactNode }) {
                       style={{ color: 'var(--foreground)' }}>
                       Operations Hub
                     </span>
-                    <ChevronDown className="w-3 h-3 flex-shrink-0" style={{ color: 'var(--muted-foreground)' }} />
                   </div>
                 )}
               </Link>
@@ -299,25 +341,34 @@ export default function HubShell({ children }: { children: React.ReactNode }) {
               </div>
             )}
 
-            {/* Navigation */}
+            {/* Navigation — sections respect simulated persona */}
             <nav className="flex-1 px-2 py-1 overflow-y-auto space-y-[1px]">
-              {HUB_SIDEBAR_TOP.map(item =>
-                renderSidebarItem(item, pathname, collapsed, notifOpen, () => setNotifOpen(true)),
+              {canSection('top') && HUB_SIDEBAR_TOP.map(item =>
+                renderSidebarItem(item, pathname, collapsed, notifOpen, () => setNotifOpen(true), closeMobileNav),
               )}
 
-              <SectionHeader label="Workspace" collapsed={collapsed} />
-              {HUB_SIDEBAR_WORKSPACE.map(item =>
-                renderSidebarItem(item, pathname, collapsed, notifOpen, () => setNotifOpen(true)),
+              {canSection('workspace') && (
+                <>
+                  <SectionHeader label="Workspace" collapsed={collapsed} />
+                  {HUB_SIDEBAR_WORKSPACE.map(item =>
+                    renderSidebarItem(item, pathname, collapsed, notifOpen, () => setNotifOpen(true), closeMobileNav),
+                  )}
+                </>
               )}
 
-              <SectionHeader label="Productivity" collapsed={collapsed} />
-              {HUB_SIDEBAR_PRODUCTIVITY.map(item =>
-                renderSidebarItem(item, pathname, collapsed, notifOpen, () => setNotifOpen(true)),
+              {canSection('productivity') && (
+                <>
+                  <SectionHeader label="Productivity" collapsed={collapsed} />
+                  {HUB_SIDEBAR_PRODUCTIVITY.map(item =>
+                    renderSidebarItem(item, pathname, collapsed, notifOpen, () => setNotifOpen(true), closeMobileNav),
+                  )}
+                </>
               )}
 
-              {!collapsed && (
+              {canSection('workspace') && !collapsed && (
                 <Link
                   href="/hub/admin"
+                  onClick={closeMobileNav}
                   className="flex items-center gap-2.5 px-3 py-[7px] rounded-lg w-full transition-colors hover:bg-white/[0.04]"
                   style={{ color: 'var(--muted-foreground)' }}
                 >
@@ -326,11 +377,13 @@ export default function HubShell({ children }: { children: React.ReactNode }) {
                 </Link>
               )}
 
-              <div style={{ borderTop: '1px solid var(--sidebar-divider)', marginTop: 8, paddingTop: 8 }}>
-                {HUB_SIDEBAR_BOTTOM.map(item =>
-                  renderSidebarItem(item, pathname, collapsed, notifOpen, () => setNotifOpen(true)),
-                )}
-              </div>
+              {canSection('bottom') && (
+                <div style={{ borderTop: '1px solid var(--sidebar-divider)', marginTop: 8, paddingTop: 8 }}>
+                  {HUB_SIDEBAR_BOTTOM.map(item =>
+                    renderSidebarItem(item, pathname, collapsed, notifOpen, () => setNotifOpen(true), closeMobileNav),
+                  )}
+                </div>
+              )}
             </nav>
 
             {/* Collapse */}
@@ -348,13 +401,12 @@ export default function HubShell({ children }: { children: React.ReactNode }) {
 
         {/* ── Main ── */}
         <div
-          className="flex min-h-0 flex-1 flex-col overflow-hidden"
-          style={{ marginLeft: !isPortalView ? sw : 0, transition: 'margin-left 0.2s ease' }}
+          className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
         >
 
           {/* ── Topbar — Bonsai style: breadcrumb left, actions right ── */}
           <header
-            className="sticky top-0 z-20 h-[52px] flex items-center justify-between px-5"
+            className="sticky top-0 z-20 flex h-[52px] min-h-[52px] min-w-0 items-center justify-between gap-1 px-2 sm:gap-2 sm:px-4"
             style={{
               background: 'var(--topbar-bg)',
               backdropFilter: 'blur(24px) saturate(180%)',
@@ -362,15 +414,26 @@ export default function HubShell({ children }: { children: React.ReactNode }) {
               borderBottom: '1px solid var(--topbar-border)',
             }}
           >
-            {/* Breadcrumb */}
+            {/* Breadcrumb + mobile menu */}
             {(() => {
               const segments = pathname.split('/').filter(Boolean);
               const subSeg = segments[2];
               const subLabel = subSeg ? SUB_ROUTE_LABEL[subSeg] : null;
               const modLabel = mod ? (mod.charAt(0).toUpperCase() + mod.slice(1)) : null;
               return (
-                <div className="flex items-center gap-2 text-[13px]">
-                  <Link href={homeHref} className="font-medium"
+                <div className="flex min-w-0 flex-1 items-center gap-1.5 sm:gap-2 text-[12px] sm:text-[13px]">
+                  {!isPortalView && !isLg && (
+                    <button
+                      type="button"
+                      className="hub-touch-target shrink-0 rounded-lg text-muted-foreground hover:bg-secondary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                      aria-label="Open navigation"
+                      onClick={() => setMobileNavOpen(true)}
+                    >
+                      <Menu className="h-5 w-5" strokeWidth={1.75} />
+                    </button>
+                  )}
+                  <div className="flex min-w-0 items-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                  <Link href={homeHref} className="font-medium shrink-0"
                     style={{ color: 'var(--muted-foreground)' }}>
                     {isPortalView ? (portalLabelFromPath(pathname) ?? 'Portal') : 'Home'}
                   </Link>
@@ -386,16 +449,17 @@ export default function HubShell({ children }: { children: React.ReactNode }) {
                   )}
                   {!isPortalView && subLabel && (
                     <>
-                      <ChevronRight className="w-3 h-3" style={{ color: 'var(--muted-foreground)' }} />
-                      <span className="font-semibold" style={{ color: 'var(--foreground)' }}>{subLabel}</span>
+                      <ChevronRight className="w-3 h-3 shrink-0" style={{ color: 'var(--muted-foreground)' }} />
+                      <span className="font-semibold truncate" style={{ color: 'var(--foreground)' }}>{subLabel}</span>
                     </>
                   )}
+                  </div>
                 </div>
               );
             })()}
 
             {/* Right actions — Bonsai exact: ▶ + 👤 */}
-            <div className="flex items-center gap-1.5">
+            <div className="flex min-w-0 shrink-0 items-center gap-0.5 sm:gap-1.5">
               {/* Internal ↔ Portals (doc: view switcher) */}
               {isPortalView ? (
                 <Link
@@ -410,13 +474,13 @@ export default function HubShell({ children }: { children: React.ReactNode }) {
                   <button
                     type="button"
                     onClick={() => setPortalMenuOpen(o => !o)}
-                    className="flex items-center gap-1 px-2 py-1.5 rounded-lg transition-colors hover:bg-white/[0.05] text-[12px] font-medium"
+                    className="hub-touch-target flex items-center gap-1 rounded-lg px-1.5 py-1.5 text-[12px] font-medium transition-colors hover:bg-white/[0.05] sm:px-2"
                     style={{ color: 'var(--muted-foreground)' }}
                     title="Open a client, employee, or freelancer portal"
                   >
                     <Globe className="w-3.5 h-3.5" />
                     <span className="hidden sm:inline">Portals</span>
-                    <ChevronDown className="w-3 h-3 opacity-60" />
+                    <ChevronDown className="hidden w-3 h-3 opacity-60 sm:inline" />
                   </button>
                   <AnimatePresence>
                     {portalMenuOpen && (
@@ -464,100 +528,203 @@ export default function HubShell({ children }: { children: React.ReactNode }) {
                 </div>
               )}
 
-              {/* Theme toggle */}
-              <button
-                type="button"
-                onClick={toggleTheme}
-                className="p-[6px] rounded-lg transition-colors"
-                style={{ color: 'var(--muted-foreground)' }}
-              >
-                {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-              </button>
-
-              {/* Notifications — same panel as sidebar item */}
-              <button
-                type="button"
-                onClick={() => setNotifOpen(true)}
-                className="relative p-[6px] rounded-lg transition-colors hover:bg-white/[0.05]"
-                title="Notifications"
-                style={{ color: 'var(--muted-foreground)' }}
-              >
-                <Bell className="w-4 h-4" />
-                <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-red-500" aria-hidden />
-              </button>
-
-              {/* Play — opens quick time entry drawer */}
-              <button
-                type="button"
-                onClick={() => openDrawer('time')}
-                className="p-[6px] rounded-lg transition-colors hover:bg-white/[0.05]"
-                title="Log time"
-                style={{ color: 'var(--muted-foreground)' }}
-              >
-                <Play className="w-4 h-4" />
-              </button>
-
-              {/* Plus — Quick Add dropdown like Bonsai */}
-              <div className="relative" ref={quickAddRef}>
+              {/* Tablet/desktop: full toolbar */}
+              <div className="hidden items-center gap-0.5 sm:gap-1.5 md:flex">
+                {/* Theme toggle */}
                 <button
-                  onClick={() => setQuickAddOpen(!quickAddOpen)}
-                  className="p-[6px] rounded-lg transition-colors"
-                  style={{ color: 'var(--muted-foreground)' }}>
-                  <Plus className="w-4 h-4" />
+                  type="button"
+                  onClick={toggleTheme}
+                  className="hub-touch-target rounded-lg transition-colors"
+                  style={{ color: 'var(--muted-foreground)' }}
+                >
+                  {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                 </button>
-                <AnimatePresence>
-                  {quickAddOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.96, y: 4 }}
-                      animate={{ opacity: 1, scale: 1, y: 0 }}
-                      exit={{ opacity: 0, scale: 0.97, y: 4 }}
-                      transition={{ duration: 0.12 }}
-                      className="absolute right-0 top-full mt-1.5 w-44 rounded-lg overflow-hidden z-50"
-                      style={{
-                        background: 'var(--popover)',
-                        border: '1px solid var(--border)',
-                        boxShadow: 'var(--shadow-lg)',
-                      }}>
-                      <div className="py-1">
+
+                {/* Notifications — same panel as sidebar item */}
+                <button
+                  type="button"
+                  onClick={() => setNotifOpen(true)}
+                  className="hub-touch-target relative rounded-lg transition-colors hover:bg-white/[0.05]"
+                  title="Notifications"
+                  style={{ color: 'var(--muted-foreground)' }}
+                >
+                  <Bell className="w-4 h-4" />
+                  <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-red-500" aria-hidden />
+                </button>
+
+                {/* Play — opens quick time entry drawer */}
+                <button
+                  type="button"
+                  onClick={() => openDrawer('time')}
+                  className="hub-touch-target rounded-lg transition-colors hover:bg-white/[0.05]"
+                  title="Log time"
+                  style={{ color: 'var(--muted-foreground)' }}
+                >
+                  <Play className="w-4 h-4" />
+                </button>
+
+                {/* Plus — Quick Add dropdown like Bonsai */}
+                <div className="relative" ref={quickAddRef}>
+                  <button
+                    type="button"
+                    onClick={() => setQuickAddOpen(!quickAddOpen)}
+                    className="hub-touch-target rounded-lg transition-colors"
+                    style={{ color: 'var(--muted-foreground)' }}>
+                    <Plus className="w-4 h-4" />
+                  </button>
+                  <AnimatePresence>
+                    {quickAddOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.96, y: 4 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.97, y: 4 }}
+                        transition={{ duration: 0.12 }}
+                        className="absolute right-0 top-full mt-1.5 w-44 rounded-lg overflow-hidden z-50"
+                        style={{
+                          background: 'var(--popover)',
+                          border: '1px solid var(--border)',
+                          boxShadow: 'var(--shadow-lg)',
+                        }}>
+                        <div className="py-1">
+                          {[
+                            { label: 'Client', type: 'client' },
+                            { label: 'Contact', type: 'contact' },
+                            { label: 'Deal', type: 'deal' },
+                            { label: 'Project', type: 'project' },
+                            { label: 'Task', type: 'task' },
+                            { label: 'Time Entry', type: 'time' },
+                            { label: 'Invoice', type: 'invoice' },
+                            { label: 'Proposal', type: 'proposal' },
+                            { label: 'Contract', type: 'contract' },
+                            { label: 'Form', type: 'form' },
+                            { label: 'Expense', type: 'expense' },
+                          ].map(item => (
+                            <button
+                              key={item.label}
+                              type="button"
+                              onClick={() => openDrawer(item.type)}
+                              className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-left transition-colors hover:bg-white/[0.05]"
+                              style={{ color: 'var(--foreground)' }}>
+                              <div className="h-2 w-2 shrink-0 rounded-full bg-primary opacity-80" />
+                              {item.label}
+                            </button>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </div>
+
+              {/* Phone: overflow menu (theme, alerts, time, create) */}
+              <div className="relative md:hidden" ref={mobileMoreRef}>
+                  <button
+                    type="button"
+                    onClick={() => setMobileMoreOpen(o => !o)}
+                    className="hub-touch-target rounded-lg transition-colors hover:bg-white/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                    style={{ color: 'var(--muted-foreground)' }}
+                    aria-label="More actions"
+                    aria-expanded={mobileMoreOpen}
+                  >
+                    <MoreVertical className="w-4 h-4" />
+                  </button>
+                  <AnimatePresence>
+                    {mobileMoreOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.96, y: 4 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.97, y: 4 }}
+                        transition={{ duration: 0.12 }}
+                        className="absolute right-0 top-full z-50 mt-1.5 max-h-[min(70vh,420px)] w-[min(18rem,calc(100vw-2rem))] overflow-y-auto rounded-xl py-1"
+                        style={{
+                          background: 'var(--popover)',
+                          border: '1px solid var(--border)',
+                          boxShadow: 'var(--shadow-lg)',
+                        }}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => {
+                            toggleTheme();
+                            setMobileMoreOpen(false);
+                          }}
+                          className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-[13px] transition-colors hover:bg-white/[0.05]"
+                          style={{ color: 'var(--foreground)' }}
+                        >
+                          {isDark ? <Sun className="w-4 h-4 shrink-0" /> : <Moon className="w-4 h-4 shrink-0" />}
+                          {isDark ? 'Light mode' : 'Dark mode'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setNotifOpen(true);
+                            setMobileMoreOpen(false);
+                          }}
+                          className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-[13px] transition-colors hover:bg-white/[0.05]"
+                          style={{ color: 'var(--foreground)' }}
+                        >
+                          <Bell className="w-4 h-4 shrink-0" />
+                          Notifications
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            openDrawer('time');
+                            setMobileMoreOpen(false);
+                          }}
+                          className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-[13px] transition-colors hover:bg-white/[0.05]"
+                          style={{ color: 'var(--foreground)' }}
+                        >
+                          <Play className="w-4 h-4 shrink-0" />
+                          Log time
+                        </button>
+                        <div className="my-1" style={{ borderTop: '1px solid var(--border-subtle)' }} />
+                        <p className="px-3 pt-1 pb-0.5 text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--muted-foreground)' }}>
+                          Create
+                        </p>
                         {[
-                          { label: 'Client',     color: '#2563EB', type: 'client' },
-                          { label: 'Contact',    color: '#3B82F6', type: 'contact' },
-                          { label: 'Deal',       color: '#0EA5E9', type: 'deal' },
-                          { label: 'Project',    color: '#0D9488', type: 'project' },
-                          { label: 'Task',       color: '#10B981', type: 'task' },
-                          { label: 'Time Entry', color: '#22C55E', type: 'time' },
-                          { label: 'Invoice',    color: '#84CC16', type: 'invoice' },
-                          { label: 'Proposal',   color: '#2563EB', type: 'proposal' },
-                          { label: 'Contract',   color: '#0D9488', type: 'contract' },
-                          { label: 'Form',       color: '#3B82F6', type: 'form' },
-                          { label: 'Expense',    color: '#FBBF24', type: 'expense' },
+                          { label: 'Client', type: 'client' },
+                          { label: 'Contact', type: 'contact' },
+                          { label: 'Deal', type: 'deal' },
+                          { label: 'Project', type: 'project' },
+                          { label: 'Task', type: 'task' },
+                          { label: 'Time Entry', type: 'time' },
+                          { label: 'Invoice', type: 'invoice' },
+                          { label: 'Proposal', type: 'proposal' },
+                          { label: 'Contract', type: 'contract' },
+                          { label: 'Form', type: 'form' },
+                          { label: 'Expense', type: 'expense' },
                         ].map(item => (
                           <button
                             key={item.label}
-                            onClick={() => openDrawer(item.type)}
-                            className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-left transition-colors hover:bg-white/[0.05]"
-                            style={{ color: 'var(--foreground)' }}>
-                            <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: item.color }} />
+                            type="button"
+                            onClick={() => {
+                              openDrawer(item.type);
+                              setMobileMoreOpen(false);
+                            }}
+                            className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-[13px] transition-colors hover:bg-white/[0.05]"
+                            style={{ color: 'var(--foreground)' }}
+                          >
+                            <div className="h-2 w-2 shrink-0 rounded-full bg-primary opacity-80" />
                             {item.label}
                           </button>
                         ))}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
 
               {/* Switch User (demo personas) */}
               <div className="relative" ref={switchUserRef}>
                 <button
                   onClick={() => setSwitchUserOpen(o => !o)}
-                  className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium transition-colors hover:bg-white/[0.05]"
+                  className="flex min-h-[44px] min-w-[44px] items-center justify-center gap-1 rounded-lg px-2 text-[11px] font-medium transition-colors hover:bg-white/[0.05] sm:min-w-0 sm:justify-start"
                   style={{ color: 'var(--muted-foreground)' }}
                   title="Switch user persona"
                 >
                   <Users className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline capitalize">{persona.role}</span>
-                  <ChevronDown className="w-2.5 h-2.5 opacity-60" />
+                  <ChevronDown className="hidden w-2.5 opacity-60 sm:inline" />
                 </button>
                 <AnimatePresence>
                   {switchUserOpen && (
@@ -604,9 +771,9 @@ export default function HubShell({ children }: { children: React.ReactNode }) {
               {/* User */}
               <div className="relative" ref={userMenuRef}>
                 <button onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  className="w-7 h-7 rounded-full flex items-center justify-center"
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full sm:h-9 sm:w-9"
                   style={{ background: persona.avatarColor }}>
-                  <span className="text-[9px] font-bold text-white">{persona.initials}</span>
+                  <span className="text-[10px] font-bold text-white sm:text-[9px]">{persona.initials}</span>
                 </button>
                 <AnimatePresence>
                   {userMenuOpen && (
@@ -662,14 +829,18 @@ export default function HubShell({ children }: { children: React.ReactNode }) {
           {/* Content — portal workspace fills viewport below header; inner column scrolls only */}
           <main
             className={cn(
-              'min-h-0 flex-1',
+              'min-h-0 min-w-0 flex-1 overflow-x-hidden',
               isPortalWorkspace ? 'flex flex-col overflow-hidden' : 'overflow-y-auto',
             )}
           >
             <AnimatePresence mode="wait">
               <motion.div
                 key={pathname}
-                className={cn(isPortalWorkspace && 'flex h-full min-h-0 flex-1 flex-col')}
+                className={cn(
+                  isPortalWorkspace && 'flex h-full min-h-0 flex-1 flex-col',
+                  !isDeepPortalRoute && 'hub-main-container w-full min-h-0 min-w-0',
+                  isDeepPortalRoute && 'w-full min-h-0 flex-1',
+                )}
                 {...pageTransition}
               >
                 {children}

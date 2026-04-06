@@ -52,7 +52,7 @@ export function PE03PersonDetail({ person, onEdit, onRequestLeave, onSubmitExpen
   };
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div className="flex items-start gap-4">

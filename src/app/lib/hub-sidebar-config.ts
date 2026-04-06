@@ -49,7 +49,7 @@ export const HUB_SIDEBAR_WORKSPACE: HubSidebarItem[] = [
 
 export const HUB_SIDEBAR_PRODUCTIVITY: HubSidebarItem[] = [
   { kind: 'link', label: 'Projects', icon: FolderKanban, href: '/hub/projects' },
-  { kind: 'link', label: 'Tasks', icon: LayoutGrid, href: '/hub/forms' },
+  { kind: 'link', label: 'Tasks', icon: LayoutGrid, href: '/hub/work' },
   { kind: 'link', label: 'Time Tracking', icon: Clock, href: '/hub/timetracking' },
   { kind: 'link', label: 'Timesheets', icon: FileText, href: '/hub/projects/timesheets' },
   { kind: 'link', label: 'Approvals', icon: Inbox, href: '/hub/projects/approvals' },

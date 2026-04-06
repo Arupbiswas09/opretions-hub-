@@ -90,8 +90,10 @@ export default function Meetings() {
       {/* ═══ Week Strip ═══ */}
       <motion.div variants={fadeItem}>
         <Card>
-          <div className="px-4 py-3 flex items-center justify-between"
-            style={{ borderBottom: '1px solid var(--border)' }}>
+          <div
+            className="flex flex-col gap-3 px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-4"
+            style={{ borderBottom: '1px solid var(--border)' }}
+          >
             <div className="flex items-center gap-2">
               <button className="p-1 rounded-md transition-colors hover:bg-white/5"
                 style={{ color: 'var(--muted-foreground)' }}>
@@ -110,7 +112,8 @@ export default function Meetings() {
               Today
             </button>
           </div>
-          <div className="grid grid-cols-7 gap-0">
+          <div className="overflow-x-auto [-webkit-overflow-scrolling:touch]">
+          <div className="grid min-w-[560px] grid-cols-7 gap-0">
             {WEEK_DATES.map((d, i) => (
               <button
                 key={i}
@@ -140,14 +143,17 @@ export default function Meetings() {
               </button>
             ))}
           </div>
+          </div>
         </Card>
       </motion.div>
 
       {/* ═══ Upcoming Meetings List ═══ */}
       <motion.div variants={fadeItem}>
         <Card>
-          <div className="px-5 py-3 flex items-center justify-between"
-            style={{ borderBottom: '1px solid var(--border)' }}>
+          <div
+            className="flex flex-col gap-2 px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5"
+            style={{ borderBottom: '1px solid var(--border)' }}
+          >
             <h2 className="text-[14px] font-semibold" style={{ color: 'var(--foreground)' }}>
               Upcoming
             </h2>
@@ -163,7 +169,7 @@ export default function Meetings() {
             {UPCOMING.map((meeting, i) => (
               <div
                 key={meeting.id}
-                className="flex items-center gap-4 px-5 py-3.5 transition-colors hover:bg-white/[0.02] group"
+                className="group flex flex-col gap-3 px-3 py-3.5 transition-colors hover:bg-white/[0.02] sm:flex-row sm:items-center sm:gap-4 sm:px-5"
                 style={{
                   borderBottom: i < UPCOMING.length - 1 ? '1px solid var(--border-subtle)' : 'none',
                 }}

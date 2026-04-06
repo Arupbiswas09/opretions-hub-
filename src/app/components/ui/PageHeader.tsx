@@ -3,8 +3,12 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { EASE_OUT_EXPO } from '../../lib/motion';
+import { cn } from './utils';
 
-/** Max-width + horizontal padding aligned with Dashboard. */
+/**
+ * Page body inside `hub-main-container`: full width of the shell column,
+ * responsive vertical padding only (horizontal gutter comes from the shell).
+ */
 export function HubPageShell({
   children,
   className = '',
@@ -16,7 +20,13 @@ export function HubPageShell({
   narrow?: boolean;
 }) {
   return (
-    <div className={`mx-auto px-10 py-8 ${narrow ? 'max-w-[1000px]' : 'max-w-[1120px]'} ${className}`}>
+    <div
+      className={cn(
+        'mx-auto w-full min-w-0 py-4 sm:py-6 lg:py-8',
+        narrow && 'max-w-[min(1000px,100%)]',
+        className,
+      )}
+    >
       {children}
     </div>
   );
@@ -39,12 +49,12 @@ export function PageHeader({
   animate?: boolean;
 }) {
   const inner = (
-    <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8">
-      <div>
-        <p className="text-[10px] font-semibold uppercase tracking-[0.1em] mb-1 text-muted-foreground">
+    <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div className="min-w-0">
+        <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
           {eyebrow}
         </p>
-        <h1 className="text-[28px] font-semibold tracking-[-0.025em] text-foreground leading-tight">
+        <h1 className="text-[22px] font-semibold leading-tight tracking-[-0.025em] text-foreground sm:text-[28px]">
           {title}
         </h1>
         {description ? (

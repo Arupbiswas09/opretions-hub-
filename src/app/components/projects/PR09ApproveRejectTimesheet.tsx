@@ -40,7 +40,7 @@ export function PR09ApproveRejectTimesheet({ timesheet, onBack, onApprove, onRej
   };
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <button onClick={onBack} className="flex items-center gap-2 text-sm text-stone-600 hover:text-stone-800 mb-6">
         <ArrowLeft className="w-4 h-4" />
         Back to Approvals

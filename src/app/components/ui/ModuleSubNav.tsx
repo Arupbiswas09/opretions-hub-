@@ -5,15 +5,20 @@ import { cn } from './utils';
 
 export function ModuleSubNav({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={cn('px-8 py-3', className)} style={{ borderBottom: '1px solid var(--border)' }}>
-      <div className="flex items-center gap-1 flex-wrap">{children}</div>
+    <div
+      className={cn('px-3 py-3 sm:px-5 lg:px-8', className)}
+      style={{ borderBottom: '1px solid var(--border)' }}
+    >
+      <div className="flex min-w-0 flex-nowrap items-center gap-1 overflow-x-auto pb-0.5 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {children}
+      </div>
     </div>
   );
 }
 
 export function moduleSubNavButtonClass(active: boolean): string {
   return cn(
-    'px-3 py-1.5 text-[12px] rounded-md transition-all duration-200 border border-transparent',
+    'shrink-0 px-3 py-1.5 text-[12px] rounded-md transition-all duration-200 border border-transparent',
     active
       ? 'bg-primary/12 text-primary font-medium border-primary/20 shadow-sm dark:bg-white/10 dark:text-foreground dark:border-white/[0.12] dark:shadow-none'
       : 'text-muted-foreground hover:text-foreground hover:bg-secondary hover:border-border/80 dark:hover:bg-white/[0.06] dark:hover:border-transparent',

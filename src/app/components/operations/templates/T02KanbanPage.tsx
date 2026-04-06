@@ -91,7 +91,7 @@ export function T02KanbanPage({ title, subtitle }: T02KanbanPageProps) {
   ];
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <BonsaiPageHeader
         title={title}
         subtitle={subtitle || `Manage workflow and track progress`}

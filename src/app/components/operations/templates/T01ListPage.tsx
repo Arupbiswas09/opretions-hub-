@@ -24,7 +24,7 @@ export function T01ListPage({ title, subtitle }: T01ListPageProps) {
 
   return (
     <>
-      <div className="p-8">
+      <div className="px-3 py-6 sm:p-8">
         <BonsaiPageHeader
           title={title}
           subtitle={subtitle || `Manage and organize your ${title.toLowerCase()}`}

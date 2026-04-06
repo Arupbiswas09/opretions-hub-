@@ -30,7 +30,7 @@ export function T04DetailPage({ title, subtitle, moduleTabs = [] }: T04DetailPag
       <div className="flex h-full">
         {/* Main Content */}
         <div className="flex-1 overflow-auto">
-          <div className="p-8">
+          <div className="px-3 py-6 sm:p-8">
             {/* Header */}
             <div className="flex items-start justify-between mb-6">
               <div className="flex-1">

@@ -113,7 +113,7 @@ export default function Proposals() {
 
       <motion.div variants={stagger} initial="hidden" animate="show" className="space-y-5">
       {/* ═══ Pipeline Summary KPIs ═══ */}
-      <motion.div variants={fadeItem} className="grid grid-cols-4 gap-3">
+      <motion.div variants={fadeItem} className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {[
           { label: 'TOTAL PROPOSALS', value: PROPOSALS.length.toString(), sub: 'All time' },
           { label: 'PIPELINE VALUE', value: `$${(totalValue / 1000).toFixed(0)}K`, sub: 'Combined' },
@@ -136,7 +136,7 @@ export default function Proposals() {
 
       {/* ═══ Status Filter Tabs ═══ */}
       <motion.div variants={fadeItem}>
-        <div className="flex items-center gap-1.5">
+        <div className="-mx-1 flex min-w-0 flex-nowrap items-center gap-1.5 overflow-x-auto px-1 pb-0.5 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {(['all', ...Object.keys(STATUS_CONFIG)] as const).map(status => {
             const isActive = filterStatus === status;
             const cfg = status === 'all' ? null : STATUS_CONFIG[status as ProposalStatus];
@@ -145,8 +145,9 @@ export default function Proposals() {
             return (
               <button
                 key={status}
+                type="button"
                 onClick={() => setFilterStatus(status as ProposalStatus | 'all')}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all"
+                className="flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-medium transition-all"
                 style={{
                   background: isActive ? (cfg?.bg || 'rgba(255,255,255,0.08)') : 'transparent',
                   color: isActive ? (cfg?.color || 'var(--foreground)') : 'var(--muted-foreground)',
@@ -184,8 +185,9 @@ export default function Proposals() {
       {/* ═══ Proposals List ═══ */}
       <motion.div variants={fadeItem}>
         <Card>
+          <div className="overflow-x-auto [-webkit-overflow-scrolling:touch]">
           {/* Header */}
-          <div className="grid grid-cols-[1fr_120px_100px_100px_80px_40px] gap-4 px-5 py-2.5"
+          <div className="grid min-w-[640px] grid-cols-[1fr_120px_100px_100px_80px_40px] gap-4 px-3 py-2.5 sm:px-5"
             style={{ borderBottom: '1px solid var(--border)', background: 'var(--glass-bg)' }}>
             {['Proposal', 'Client', 'Amount', 'Status', 'Date', ''].map(h => (
               <span key={h} className="text-[10px] font-medium uppercase tracking-wider"
@@ -198,7 +200,7 @@ export default function Proposals() {
             return (
               <div
                 key={proposal.id}
-                className="grid grid-cols-[1fr_120px_100px_100px_80px_40px] gap-4 px-5 py-3 items-center transition-colors hover:bg-white/[0.02] group"
+                className="grid min-w-[640px] grid-cols-[1fr_120px_100px_100px_80px_40px] gap-4 px-3 py-3 transition-colors hover:bg-white/[0.02] group sm:px-5 items-center"
                 style={{
                   borderBottom: i < filtered.length - 1 ? '1px solid var(--border-subtle)' : 'none',
                 }}
@@ -238,6 +240,7 @@ export default function Proposals() {
               </div>
             );
           })}
+          </div>
           {filtered.length === 0 && (
             <div className="px-5 py-12 text-center">
               <FileText className="w-8 h-8 mx-auto mb-2" style={{ color: 'var(--muted-foreground)' }} />

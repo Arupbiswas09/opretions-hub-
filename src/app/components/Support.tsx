@@ -103,13 +103,13 @@ function TicketsList({ viewMode, onViewModeChange, onTicketClick, onNewTicket }:
   };
 
   return (
-    <div className="p-8 max-w-[1120px] mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <div>
+    <div className="w-full min-w-0 px-3 py-6 sm:p-8">
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
           <h1 className="text-2xl font-semibold text-foreground">Support Tickets</h1>
           <p className="text-sm text-muted-foreground">Manage customer support requests</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-shrink-0 flex-wrap items-center gap-3">
           <div className="hub-surface hub-surface-elevated flex items-center gap-1 p-1">
             <button
               type="button"
@@ -211,7 +211,7 @@ function TicketDetail({ ticket, onBack }: any) {
       : 'bg-muted text-muted-foreground';
 
   return (
-    <div className="p-8 max-w-[1120px] mx-auto">
+    <div className="w-full min-w-0 px-3 py-6 sm:p-8">
       <button type="button" onClick={onBack} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors">
         ← Back to Tickets
       </button>

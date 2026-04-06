@@ -117,14 +117,14 @@ export function SA01Dashboard({ onNavigateToDeals, onNavigateToPipeline, onCreat
 
   return (
     <motion.div
-      className="px-8 py-8 max-w-[1100px]"
+      className="w-full min-w-0 px-3 py-6 sm:px-6 lg:px-8"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.25 }}
     >
       {/* ── Header ──────────────────────────────────────── */}
       <motion.div
-        className="flex items-end justify-between mb-8"
+        className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, ease: EASE_OUT_EXPO }}
@@ -142,7 +142,7 @@ export function SA01Dashboard({ onNavigateToDeals, onNavigateToPipeline, onCreat
 
       {/* ── Stats row ─── */}
       <motion.div
-        className="grid grid-cols-4 gap-px rounded-2xl overflow-hidden mb-7"
+        className="mb-7 grid grid-cols-2 gap-px overflow-hidden rounded-2xl lg:grid-cols-4"
         style={{ background: 'var(--border)' }}
         variants={staggerContainer}
         initial="hidden"
@@ -151,7 +151,7 @@ export function SA01Dashboard({ onNavigateToDeals, onNavigateToPipeline, onCreat
         {STATS.map((s) => (
           <motion.div
             key={s.label}
-            className="flex flex-col gap-1 px-6 py-6"
+            className="flex flex-col gap-1 px-4 py-5 sm:px-6 sm:py-6"
             style={{
               background: 'var(--glass-bg)',
               backdropFilter: 'blur(20px) saturate(180%)',
@@ -179,7 +179,7 @@ export function SA01Dashboard({ onNavigateToDeals, onNavigateToPipeline, onCreat
       </motion.div>
 
       {/* ── Pipeline funnel + Monthly performance ── */}
-      <div className="grid grid-cols-[1fr_280px] gap-5 mb-7">
+      <div className="mb-7 grid grid-cols-1 gap-5 xl:grid-cols-[1fr_280px]">
 
         {/* Visual funnel */}
         <motion.div
@@ -328,8 +328,10 @@ export function SA01Dashboard({ onNavigateToDeals, onNavigateToPipeline, onCreat
         className="rounded-2xl overflow-hidden"
         style={glassPanel}
       >
-        <div className="flex items-center justify-between px-6 py-4"
-          style={{ borderBottom: '1px solid var(--border)' }}>
+        <div
+          className="flex items-center justify-between px-3 py-4 sm:px-6"
+          style={{ borderBottom: '1px solid var(--border)' }}
+        >
           <h3 className="text-[13px] font-semibold text-stone-800 dark:text-stone-100">Hot Deals</h3>
           <button onClick={onNavigateToDeals}
             className="text-[12px] flex items-center gap-1 group transition-colors
@@ -342,7 +344,7 @@ export function SA01Dashboard({ onNavigateToDeals, onNavigateToPipeline, onCreat
           {RECENT_DEALS.map((deal, i) => (
             <motion.button
               key={deal.name}
-              className="w-full flex items-center gap-4 px-6 py-4 text-left group transition-colors"
+              className="group flex w-full items-center gap-3 px-3 py-4 text-left transition-colors sm:gap-4 sm:px-6"
               style={{ borderBottom: i < RECENT_DEALS.length - 1 ? '1px solid var(--border)' : 'none' }}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}

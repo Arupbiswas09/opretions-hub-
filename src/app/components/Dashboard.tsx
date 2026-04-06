@@ -109,9 +109,9 @@ const TIME_DATA = [
 
 /* ─── Project timeline ─── */
 const PROJECTS_TIMELINE = [
-  { name: 'Website Redesign', start: 10, end: 75, color: '#1e40af' },
-  { name: 'Mobile App Dev', start: 20, end: 90, color: '#0f766e' },
-  { name: 'Brand Identity', start: 0, end: 55, color: '#b45309' },
+  { name: 'Website Redesign', start: 10, end: 75, color: '#2563EB' },
+  { name: 'Mobile App Dev', start: 20, end: 90, color: '#1D4ED8' },
+  { name: 'Brand Identity', start: 0, end: 55, color: '#3B82F6' },
 ];
 
 /** Doc §4.1 — pending approvals widget → real approval routes */
@@ -161,30 +161,32 @@ export default function Dashboard() {
       variants={container}
       initial="hidden"
       animate="show"
-      className="px-8 py-6 max-w-[1000px]"
+      className="hub-page-container w-full min-w-0 py-4 sm:py-6 lg:py-8"
     >
 
       {/* ═══ Greeting ══════════════════════════════════════════ */}
-      <motion.div variants={item} className="mb-8">
-        <p className="text-[12px] mb-1 uppercase tracking-[0.06em] font-medium"
+      <motion.div variants={item} className="mb-6 sm:mb-8">
+        <p className="mb-1 text-[11px] font-medium uppercase tracking-[0.06em] sm:text-[12px]"
           style={{ color: 'var(--muted-foreground)' }}>{dateStr}</p>
-        <h1 className="text-[26px] font-semibold tracking-[-0.02em]"
+        <h1 className="text-[22px] font-semibold leading-tight tracking-[-0.02em] sm:text-[26px]"
           style={{ color: 'var(--foreground)' }}>
           {greeting}, John.
         </h1>
       </motion.div>
 
       {/* ═══ Top row: Project Timeline + Activity ═════════════ */}
-      <motion.div variants={item} className="grid grid-cols-[1fr_280px] gap-5 mb-5">
+      <motion.div variants={item} className="mb-5 grid min-w-0 grid-cols-1 gap-4 sm:gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(240px,280px)]">
         {/* Project Timeline — Bonsai: Gantt bars with date axis */}
         <Section>
-          <div className="px-5 py-4 flex items-center justify-between"
-            style={{ borderBottom: '1px solid var(--border)' }}>
+          <div
+            className="flex items-center justify-between px-3 py-4 sm:px-5"
+            style={{ borderBottom: '1px solid var(--border)' }}
+          >
             <h2 className="text-[14px] font-semibold" style={{ color: 'var(--foreground)' }}>
               Project Timeline
             </h2>
           </div>
-          <div className="px-5 py-4">
+          <div className="min-w-0 px-3 py-4 sm:px-5">
             {/* Date axis */}
             <div className="flex items-center justify-between mb-4 px-1">
               {['MAR 22', 'TODAY', 'APR 19'].map((d, i) => (
@@ -222,21 +224,28 @@ export default function Dashboard() {
 
         {/* Activity — Bonsai: timestamped activity list */}
         <Section>
-          <div className="px-5 py-4 flex items-center justify-between"
-            style={{ borderBottom: '1px solid var(--border)' }}>
+          <div
+            className="flex items-center justify-between px-3 py-4 sm:px-5"
+            style={{ borderBottom: '1px solid var(--border)' }}
+          >
             <h2 className="text-[14px] font-semibold" style={{ color: 'var(--foreground)' }}>
               Activity
             </h2>
           </div>
-          <div className="px-5 py-4 space-y-4">
+          <div className="space-y-4 px-3 py-4 sm:px-5">
             {[
-              { text: 'Operations Hub created Project.', time: 'Apr 5, 2026 9:54PM', color: '#2563EB' },
-              { text: 'Operations Hub created project Engineering Project.', time: 'Apr 5, 2026 9:54PM', color: '#0D9488' },
-              { text: 'Invoice INV-2026-001 was sent', time: 'Apr 5, 2026 8:30PM', color: '#CCFF00' },
+              { text: 'Operations Hub created Project.', time: 'Apr 5, 2026 9:54PM', tone: 'primary' as const },
+              { text: 'Operations Hub created project Engineering Project.', time: 'Apr 5, 2026 9:54PM', tone: 'muted' as const },
+              { text: 'Invoice INV-2026-001 was sent', time: 'Apr 5, 2026 8:30PM', tone: 'primary' as const },
             ].map((item, i) => (
               <div key={i} className="flex items-start gap-3">
-                <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0"
-                  style={{ background: item.color }} />
+                <div
+                  className="mt-1.5 h-2 w-2 shrink-0 rounded-full"
+                  style={{
+                    background: item.tone === 'primary' ? 'var(--primary)' : 'var(--muted-foreground)',
+                    opacity: item.tone === 'primary' ? 1 : 0.45,
+                  }}
+                />
                 <div className="flex-1 min-w-0">
                   <p className="text-[12px] leading-relaxed" style={{ color: 'var(--foreground)' }}>
                     {item.text}
@@ -254,12 +263,14 @@ export default function Dashboard() {
       {/* ═══ Profit & Loss ════════════════════════════════════ */}
       <motion.div variants={item}>
       <Section className="mb-5">
-        <div className="px-5 py-4 flex items-center justify-between"
-          style={{ borderBottom: '1px solid var(--border)' }}>
+        <div
+          className="flex flex-col gap-3 px-3 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-5"
+          style={{ borderBottom: '1px solid var(--border)' }}
+        >
           <h2 className="text-[14px] font-semibold" style={{ color: 'var(--foreground)' }}>
             Profit & Loss
           </h2>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <select className="text-[12px] px-2.5 py-1 rounded-md appearance-none cursor-pointer"
               style={{
                 background: 'var(--glass-bg)',
@@ -304,7 +315,7 @@ export default function Dashboard() {
           </ResponsiveContainer>
         </div>
         {/* Summary row — Bonsai exact */}
-        <div className="px-5 py-3 flex items-center gap-8" style={{ borderTop: '1px solid var(--border)' }}>
+        <div className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-6 lg:gap-8" style={{ borderTop: '1px solid var(--border)' }}>
           {[
             { label: 'Outstanding', value: '$0.00' },
             { label: 'Overdue', value: '$0.00' },
@@ -324,12 +335,14 @@ export default function Dashboard() {
       {/* ═══ Time Tracked ═════════════════════════════════════ */}
       <motion.div variants={item}>
       <Section className="mb-5">
-        <div className="px-5 py-4 flex items-center justify-between"
-          style={{ borderBottom: '1px solid var(--border)' }}>
+        <div
+          className="flex flex-col gap-3 px-3 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5"
+          style={{ borderBottom: '1px solid var(--border)' }}
+        >
           <h2 className="text-[14px] font-semibold" style={{ color: 'var(--foreground)' }}>
             Time Tracked
           </h2>
-          <select className="text-[12px] px-2.5 py-1 rounded-md appearance-none cursor-pointer"
+          <select className="w-fit max-w-full text-[12px] px-2.5 py-1 rounded-md appearance-none cursor-pointer"
             style={{
               background: 'var(--glass-bg)',
               border: '1px solid var(--border)',
@@ -351,7 +364,7 @@ export default function Dashboard() {
           </ResponsiveContainer>
         </div>
         {/* Summary row */}
-        <div className="px-5 py-3 flex items-center gap-8" style={{ borderTop: '1px solid var(--border)' }}>
+        <div className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:flex-wrap sm:gap-6 lg:gap-8" style={{ borderTop: '1px solid var(--border)' }}>
           {[
             { label: 'Total Hours', value: `${totalHours.toFixed(0)}h 0m` },
             { label: 'Billable Hours', value: `${billableHours}h 0m` },
@@ -370,8 +383,10 @@ export default function Dashboard() {
       {/* ═══ Pending approvals — command center (doc §4.1) ═══════════ */}
       <motion.div variants={item}>
         <Section className="mb-5">
-          <div className="px-5 py-4 flex items-center justify-between"
-            style={{ borderBottom: '1px solid var(--border)' }}>
+          <div
+            className="flex items-center justify-between px-3 py-4 sm:px-5"
+            style={{ borderBottom: '1px solid var(--border)' }}
+          >
             <h2 className="text-[14px] font-semibold" style={{ color: 'var(--foreground)' }}>
               Pending approvals
             </h2>
@@ -385,7 +400,7 @@ export default function Dashboard() {
               <Link
                 key={row.id}
                 href={row.href}
-                className="flex items-center gap-3 px-5 py-3.5 transition-colors hover:bg-white/[0.03]"
+                className="flex items-center gap-3 px-3 py-3.5 transition-colors hover:bg-white/[0.03] sm:px-5"
                 style={{ borderBottom: i < PENDING_APPROVALS.length - 1 ? '1px solid var(--border-subtle)' : 'none' }}
               >
                 <div className="flex-1 min-w-0">
@@ -414,8 +429,10 @@ export default function Dashboard() {
       {/* ═══ My Tasks — Bonsai: clean task list with checkboxes ═════ */}
       <motion.div variants={item}>
       <Section className="mb-5">
-        <div className="px-5 py-4 flex items-center justify-between"
-          style={{ borderBottom: '1px solid var(--border)' }}>
+        <div
+          className="flex items-center justify-between px-3 py-4 sm:px-5"
+          style={{ borderBottom: '1px solid var(--border)' }}
+        >
           <h2 className="text-[14px] font-semibold" style={{ color: 'var(--foreground)' }}>
             My Tasks
           </h2>
@@ -426,7 +443,7 @@ export default function Dashboard() {
         </div>
         <div>
           {tasks.length === 0 ? (
-            <div className="px-5 py-8 text-center">
+            <div className="px-3 py-8 text-center sm:px-5">
               <p className="text-[13px]" style={{ color: 'var(--muted-foreground)' }}>
                 No tasks created yet.
               </p>
@@ -440,7 +457,7 @@ export default function Dashboard() {
                 <button
                   key={task.id}
                   onClick={() => toggleTask(task.id)}
-                  className="w-full flex items-center gap-3 px-5 py-3 text-left transition-colors"
+                  className="w-full flex items-center gap-3 px-3 py-3 text-left transition-colors sm:px-5"
                   style={{ borderBottom: i < tasks.length - 1 ? '1px solid var(--border)' : 'none' }}
                 >
                   <div className="w-[18px] h-[18px] rounded-[4px] flex items-center justify-center flex-shrink-0 transition-colors"

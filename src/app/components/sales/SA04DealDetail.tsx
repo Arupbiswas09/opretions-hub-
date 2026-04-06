@@ -41,7 +41,7 @@ export function SA04DealDetail({
   ];
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div className="flex-1">

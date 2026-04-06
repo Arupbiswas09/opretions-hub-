@@ -96,23 +96,23 @@ function JobDetail({ job, onBack, onAddCandidate, onScheduleInterview }: any) {
   ];
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <button onClick={onBack} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6">
         ← Back to Jobs
       </button>
 
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-semibold text-foreground mb-2">{job.title}</h1>
-          <div className="flex items-center gap-3 text-sm text-muted-foreground">
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="mb-2 text-xl font-semibold text-foreground sm:text-2xl">{job.title}</h1>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
             <span>{job.client}</span>
-            <span>•</span>
+            <span className="hidden sm:inline">•</span>
             <span>{job.type}</span>
-            <span>•</span>
+            <span className="hidden sm:inline">•</span>
             <span>{job.location}</span>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-shrink-0 flex-wrap items-center gap-2">
           <BonsaiStatusPill status="pending" label={job.stage} />
           <BonsaiButton variant="ghost" size="sm">Edit</BonsaiButton>
         </div>
@@ -175,16 +175,16 @@ function JobCandidatesPipeline({ onAddCandidate }: any) {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted-foreground">Candidate pipeline by application stage</p>
         <BonsaiButton size="sm" icon={<Plus />} onClick={onAddCandidate}>
           Add Candidate
         </BonsaiButton>
       </div>
 
-      <div className="flex gap-4 overflow-x-auto pb-4">
+      <div className="-mx-1 flex gap-4 overflow-x-auto pb-4 px-1 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {stages.map((stage) => (
-          <div key={stage.name} className="flex-shrink-0 w-64">
+          <div key={stage.name} className="w-[min(16rem,82vw)] shrink-0 sm:w-64">
             <div className="bg-secondary rounded-t-lg px-4 py-3 flex items-center justify-between">
               <h3 className="font-semibold text-foreground text-sm">{stage.name}</h3>
               <span className="text-xs font-medium text-muted-foreground bg-border px-2 py-1 rounded-full">
@@ -343,7 +343,7 @@ function CandidatesList({ onCandidateClick, onCreate }: any) {
   ];
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-semibold text-foreground">Talent Pool</h1>
@@ -442,7 +442,7 @@ function CandidateDetail({ candidate, onBack }: any) {
   ];
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <button onClick={onBack} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6">
         ← Back to Candidates
       </button>
@@ -504,7 +504,7 @@ function CandidateDetail({ candidate, onBack }: any) {
 // TA-14: Referral Portal
 function ReferralPortal() {
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <h1 className="text-2xl font-semibold text-foreground mb-6">Employee Referral Portal</h1>
       
       <div className="hub-surface hub-surface-elevated p-6 mb-6">

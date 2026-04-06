@@ -82,7 +82,7 @@ function ProfileChangeRequestsInbox({ onNavigate }: { onNavigate: (screen: HRISS
   ];
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <h1 className="text-2xl font-semibold text-purple-900 mb-2">Profile Change Requests</h1>
       <p className="text-sm text-stone-600 mb-6">Review and approve profile changes (GDPR compliance)</p>
 
@@ -134,7 +134,7 @@ function ProfileChangeRequestReview({ onNavigate }: { onNavigate: (screen: HRISS
   const [activeTab, setActiveTab] = useState('changes');
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <button
         onClick={() => onNavigate('profile-requests')}
         className="flex items-center gap-2 text-sm text-stone-600 hover:text-purple-900 mb-6"
@@ -268,7 +268,7 @@ function DocumentRequestsInbox({ onNavigate }: { onNavigate: (screen: HRISScreen
   ];
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <h1 className="text-2xl font-semibold text-purple-900 mb-2">Document Requests</h1>
       <p className="text-sm text-stone-600 mb-6">Review and process employee document requests</p>
 

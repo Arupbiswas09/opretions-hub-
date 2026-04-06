@@ -9,7 +9,7 @@ interface TA01DashboardProps {
 
 export function TA01Dashboard({ onNavigateToJobs, onNavigateToCandidates }: TA01DashboardProps) {
   return (
-    <div className="p-8 max-w-[1120px] mx-auto">
+    <div className="w-full min-w-0 px-3 py-6 sm:p-8">
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-foreground">Talent Dashboard</h1>
         <p className="text-sm text-muted-foreground">Talent-on-Demand staffing overview</p>

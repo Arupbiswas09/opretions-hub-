@@ -5,7 +5,7 @@ import { FI01FinanceDashboard } from './finance/FI01FinanceDashboard';
 import { FI02InvoicesList } from './finance/FI02InvoicesList';
 import { FI04InvoiceDrawer } from './finance/FI04InvoiceDrawer';
 import { HubStatTile } from './ops/HubStatTile';
-import { moduleSubNavButtonClass, ModuleSubNavDivider } from './ui/ModuleSubNav';
+import { moduleSubNavButtonClass, ModuleSubNavDivider, ModuleSubNav } from './ui/ModuleSubNav';
 
 type Screen = 'dashboard' | 'invoices' | 'expenses';
 
@@ -17,19 +17,17 @@ export default function Finance({ initialScreen = 'dashboard', hideNav = false }
   return (
     <div className="min-h-full">
       {!hideNav && (
-        <div className="px-8 py-3" style={{ borderBottom: '1px solid var(--border)' }}>
-          <div className="flex items-center gap-1 flex-wrap">
-            {([{ id: 'dashboard', label: 'Overview' }, { id: 'invoices', label: 'Invoices' }, { id: 'expenses', label: 'Expenses' }] as const).map((s) => (
-              <button key={s.id} type="button" onClick={() => setCurrentScreen(s.id)}
-                className={moduleSubNavButtonClass(currentScreen === s.id)}>{s.label}</button>
-            ))}
-            <ModuleSubNavDivider />
-            <button type="button" onClick={() => setShowInvoiceDrawer(true)}
-              className={moduleSubNavButtonClass(false)}>+ Invoice</button>
-            <button type="button" onClick={() => setShowGenerateWizard(true)}
-              className={moduleSubNavButtonClass(false)}>From Timesheets</button>
-          </div>
-        </div>
+        <ModuleSubNav>
+          {([{ id: 'dashboard', label: 'Overview' }, { id: 'invoices', label: 'Invoices' }, { id: 'expenses', label: 'Expenses' }] as const).map((s) => (
+            <button key={s.id} type="button" onClick={() => setCurrentScreen(s.id)}
+              className={moduleSubNavButtonClass(currentScreen === s.id)}>{s.label}</button>
+          ))}
+          <ModuleSubNavDivider />
+          <button type="button" onClick={() => setShowInvoiceDrawer(true)}
+            className={moduleSubNavButtonClass(false)}>+ Invoice</button>
+          <button type="button" onClick={() => setShowGenerateWizard(true)}
+            className={moduleSubNavButtonClass(false)}>From Timesheets</button>
+        </ModuleSubNav>
       )}
 
       <AnimatePresence mode="wait">
@@ -55,7 +53,7 @@ function ExpensesDemo() {
     { label: 'Total MTD', val: '$26,580', sub: 'All claims', delay: 0.15 },
   ] as const;
   return (
-    <div className="p-8 max-w-4xl mx-auto">
+    <div className="mx-auto w-full max-w-4xl px-3 py-6 sm:p-8">
       <h2 className="text-xl font-medium text-foreground mb-6">Expense Claims</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 pb-8 border-b border-border">
         {stats.map((s) => (

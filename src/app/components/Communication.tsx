@@ -6,11 +6,12 @@ import {
   MoreHorizontal, Star, Archive, Trash2, Reply, Forward,
   Sparkles, ChevronDown, ChevronRight, Filter, RefreshCw,
   MessageSquare, Users, Briefcase, FolderKanban, FileText,
-  Clock, CheckCircle2, Circle, Bot, X, Loader2,
+  Clock, CheckCircle2, Circle, Bot, X, Loader2, ArrowLeft,
 } from 'lucide-react';
 import { BonsaiButton } from './bonsai/BonsaiButton';
 import { BonsaiStatusPill } from './bonsai/BonsaiStatusPill';
 import { cn } from './ui/utils';
+import { useMediaQuery } from '../lib/use-media-query';
 
 /* ─────────────────────────────────────────────────────────────
    Types
@@ -145,11 +146,8 @@ const ENTITY_ICONS: Record<EntityTag['kind'], React.ElementType> = {
 function EntityPill({ tag }: { tag: EntityTag }) {
   const Icon = ENTITY_ICONS[tag.kind];
   return (
-    <span
-      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium"
-      style={{ background: '#2563EB15', color: '#2563EB' }}
-    >
-      <Icon className="w-2.5 h-2.5" />
+    <span className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+      <Icon className="h-2.5 w-2.5 shrink-0 opacity-90" />
       {tag.label}
     </span>
   );
@@ -183,8 +181,8 @@ function AIDraftPanel({ messageId, onUse, onClose }: { messageId: string; onUse:
     >
       <div className="flex items-center justify-between px-3 py-2.5" style={{ borderBottom: '1px solid var(--border)' }}>
         <div className="flex items-center gap-2">
-          <div className="w-5 h-5 rounded flex items-center justify-center" style={{ background: '#2563EB20' }}>
-            <Sparkles className="w-3 h-3" style={{ color: '#2563EB' }} />
+          <div className="flex h-5 w-5 items-center justify-center rounded-md bg-primary/15">
+            <Sparkles className="h-3 w-3 text-primary" />
           </div>
           <span className="text-[12px] font-semibold" style={{ color: 'var(--foreground)' }}>AI Draft</span>
         </div>
@@ -192,17 +190,18 @@ function AIDraftPanel({ messageId, onUse, onClose }: { messageId: string; onUse:
           {(['professional', 'friendly', 'concise'] as const).map(t => (
             <button
               key={t}
+              type="button"
               onClick={() => setTone(t)}
-              className="px-2 py-0.5 rounded text-[10px] font-medium transition-colors capitalize"
+              className="rounded-md px-2 py-0.5 text-[10px] font-medium capitalize transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
               style={{
-                background: tone === t ? '#2563EB' : 'var(--secondary)',
-                color: tone === t ? 'white' : 'var(--muted-foreground)',
+                background: tone === t ? 'var(--primary)' : 'var(--secondary)',
+                color: tone === t ? 'var(--primary-foreground)' : 'var(--muted-foreground)',
               }}
             >
               {t}
             </button>
           ))}
-          <button onClick={onClose} className="p-0.5 rounded transition-colors hover:bg-black/5" style={{ color: 'var(--muted-foreground)' }}>
+          <button type="button" onClick={onClose} className="rounded-md p-0.5 transition-colors hover:bg-muted/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50" style={{ color: 'var(--muted-foreground)' }}>
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -210,7 +209,7 @@ function AIDraftPanel({ messageId, onUse, onClose }: { messageId: string; onUse:
       <div className="p-3">
         {loading ? (
           <div className="flex items-center gap-2 py-4 justify-center">
-            <Loader2 className="w-4 h-4 animate-spin" style={{ color: '#2563EB' }} />
+            <Loader2 className="h-4 w-4 animate-spin text-primary" />
             <span className="text-[12px]" style={{ color: 'var(--muted-foreground)' }}>Drafting reply…</span>
           </div>
         ) : (
@@ -256,7 +255,7 @@ function ComposePanel({
         <span className="text-[12px] font-semibold" style={{ color: 'var(--foreground)' }}>
           {replyTo ? `Reply to ${replyTo.from.name}` : 'New message'}
         </span>
-        <button onClick={onClose} className="p-0.5 rounded hover:bg-black/5" style={{ color: 'var(--muted-foreground)' }}>
+        <button type="button" onClick={onClose} className="rounded-md p-0.5 hover:bg-muted/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50" style={{ color: 'var(--muted-foreground)' }}>
           <X className="w-3.5 h-3.5" />
         </button>
       </div>
@@ -279,14 +278,17 @@ function ComposePanel({
       <div className="flex items-center justify-between px-3 pb-3">
         <div className="flex items-center gap-1">
           {[Paperclip, Smile, AtSign].map((Icon, i) => (
-            <button key={i} className="p-1.5 rounded-lg hover:bg-black/[0.04] transition-colors" style={{ color: 'var(--muted-foreground)' }}>
+            <button key={i} type="button" className="rounded-lg p-1.5 transition-colors hover:bg-muted/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50" style={{ color: 'var(--muted-foreground)' }}>
               <Icon className="w-3.5 h-3.5" />
             </button>
           ))}
           <button
+            type="button"
             onClick={() => setShowAI(s => !s)}
-            className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium transition-colors"
-            style={{ background: showAI ? '#2563EB20' : 'var(--secondary)', color: showAI ? '#2563EB' : 'var(--muted-foreground)' }}
+            className={cn(
+              'flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50',
+              showAI ? 'bg-primary/15 text-primary' : 'bg-secondary text-muted-foreground',
+            )}
           >
             <Sparkles className="w-3 h-3" />
             AI draft
@@ -314,28 +316,34 @@ function ComposePanel({
 function ThreadItem({ msg, active, onClick }: { msg: Message; active: boolean; onClick: () => void }) {
   return (
     <button
+      type="button"
       onClick={onClick}
-      className={cn('w-full text-left px-3 py-2.5 transition-colors border-l-[2px]', active ? 'bg-primary/[0.06]' : 'hover:bg-secondary/60')}
-      style={{ borderLeftColor: active ? 'var(--color-primary, #2563EB)' : 'transparent' }}
+      className={cn(
+        'w-full border-l-[3px] px-3 py-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/40',
+        active ? 'bg-primary/[0.07]' : 'hover:bg-secondary/60',
+      )}
+      style={{ borderLeftColor: active ? 'var(--primary)' : 'transparent' }}
     >
       <div className="flex items-start gap-2.5">
-        <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 text-[10px] font-bold text-white"
-          style={{ background: msg.unread ? '#2563EB' : 'var(--muted-foreground)' }}>
+        <div
+          className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-primary-foreground"
+          style={{ background: msg.unread ? 'var(--primary)' : 'var(--muted-foreground)' }}
+        >
           {msg.from.initials}
         </div>
-        <div className="flex-1 min-w-0">
+        <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
-            <span className={cn('text-[12px] truncate', msg.unread ? 'font-semibold' : 'font-medium')}
+            <span className={cn('truncate text-[12px]', msg.unread ? 'font-semibold' : 'font-medium')}
               style={{ color: 'var(--foreground)' }}>
               {msg.from.name}
             </span>
-            <span className="text-[10px] flex-shrink-0" style={{ color: 'var(--muted-foreground)' }}>{msg.time}</span>
+            <span className="shrink-0 text-[10px] tabular-nums" style={{ color: 'var(--muted-foreground)' }}>{msg.time}</span>
           </div>
-          <p className={cn('text-[11px] truncate mt-0.5', msg.unread ? 'font-medium' : '')}
-            style={{ color: msg.unread ? 'var(--foreground)' : 'var(--muted-foreground)' }}>
+          <p className={cn('mt-0.5 truncate text-[11px]', msg.unread ? 'font-medium' : '')}
+            style={{ color: msg.unread ? 'var(--foreground)' : 'var(--foreground-secondary)' }}>
             {msg.subject}
           </p>
-          <p className="text-[11px] truncate mt-0.5" style={{ color: 'var(--muted-foreground)' }}>{msg.preview}</p>
+          <p className="mt-0.5 line-clamp-2 text-[11px] leading-snug" style={{ color: 'var(--foreground-secondary)' }}>{msg.preview}</p>
           {msg.entities.length > 0 && (
             <div className="flex items-center gap-1 mt-1.5 flex-wrap">
               {msg.entities.map((e, i) => <EntityPill key={i} tag={e} />)}
@@ -351,7 +359,7 @@ function ThreadItem({ msg, active, onClick }: { msg: Message; active: boolean; o
 /* ─────────────────────────────────────────────────────────────
    Thread detail view
 ───────────────────────────────────────────────────────────── */
-function ThreadDetail({ msg, onClose }: { msg: Message; onClose: () => void }) {
+function ThreadDetail({ msg, onClose, onBack }: { msg: Message; onClose: () => void; onBack?: () => void }) {
   const [replying, setReplying] = useState(false);
   const [showAI, setShowAI] = useState(false);
   const [replyBody, setReplyBody] = useState('');
@@ -359,9 +367,20 @@ function ThreadDetail({ msg, onClose }: { msg: Message; onClose: () => void }) {
   return (
     <div className="flex flex-col h-full min-h-0">
       {/* Header */}
-      <div className="flex items-start justify-between px-5 py-3.5" style={{ borderBottom: '1px solid var(--border)' }}>
-        <div className="flex-1 min-w-0">
-          <h2 className="text-[14px] font-semibold truncate" style={{ color: 'var(--foreground)' }}>{msg.subject}</h2>
+      <div className="flex items-start justify-between gap-2 px-4 py-3 sm:px-5 sm:py-3.5" style={{ borderBottom: '1px solid var(--border)' }}>
+        <div className="flex min-w-0 flex-1 items-start gap-2">
+          {onBack && (
+            <button
+              type="button"
+              onClick={onBack}
+              className="hub-touch-target mt-0.5 shrink-0 rounded-lg text-muted-foreground hover:bg-secondary lg:hidden"
+              aria-label="Back to inbox"
+            >
+              <ArrowLeft className="h-5 w-5" strokeWidth={1.75} />
+            </button>
+          )}
+        <div className="min-w-0 flex-1">
+          <h2 className="text-[13px] font-semibold leading-snug sm:text-[14px] sm:truncate" style={{ color: 'var(--foreground)' }}>{msg.subject}</h2>
           <div className="flex items-center gap-2 mt-1 flex-wrap">
             <span className="text-[11px]" style={{ color: 'var(--muted-foreground)' }}>
               {msg.from.name}{msg.from.email ? ` <${msg.from.email}>` : ''}
@@ -374,40 +393,43 @@ function ThreadDetail({ msg, onClose }: { msg: Message; onClose: () => void }) {
             </div>
           )}
         </div>
-        <div className="flex items-center gap-1 ml-3">
-          <button className="p-1.5 rounded-lg hover:bg-secondary transition-colors" style={{ color: 'var(--muted-foreground)' }} title="Star">
-            <Star className={cn('w-4 h-4', msg.starred && 'fill-current text-yellow-500')} />
+        </div>
+        <div className="flex shrink-0 items-center gap-0.5 sm:ml-3">
+          <button type="button" className="rounded-lg p-1.5 transition-colors hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50" style={{ color: 'var(--muted-foreground)' }} title="Star">
+            <Star className={cn('h-4 w-4', msg.starred && 'fill-current text-amber-500')} />
           </button>
-          <button className="p-1.5 rounded-lg hover:bg-secondary transition-colors" style={{ color: 'var(--muted-foreground)' }} title="Archive">
-            <Archive className="w-4 h-4" />
+          <button type="button" className="rounded-lg p-1.5 transition-colors hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50" style={{ color: 'var(--muted-foreground)' }} title="Archive">
+            <Archive className="h-4 w-4" />
           </button>
-          <button className="p-1.5 rounded-lg hover:bg-secondary transition-colors" style={{ color: 'var(--muted-foreground)' }}>
-            <MoreHorizontal className="w-4 h-4" />
+          <button type="button" className="rounded-lg p-1.5 transition-colors hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50" style={{ color: 'var(--muted-foreground)' }} title="More">
+            <MoreHorizontal className="h-4 w-4" />
           </button>
         </div>
       </div>
 
-      {/* Body */}
-      <div className="flex-1 overflow-y-auto px-5 py-4">
-        <pre className="text-[13px] whitespace-pre-wrap font-sans leading-relaxed" style={{ color: 'var(--foreground)' }}>
-          {msg.body}
-        </pre>
-        {(msg.attachments ?? 0) > 0 && (
-          <div className="mt-4 pt-4" style={{ borderTop: '1px solid var(--border)' }}>
-            <p className="text-[11px] font-medium mb-2" style={{ color: 'var(--muted-foreground)' }}>
-              {msg.attachments} attachment{msg.attachments! > 1 ? 's' : ''}
-            </p>
-            <div className="flex items-center gap-2 flex-wrap">
-              {Array.from({ length: msg.attachments! }).map((_, i) => (
-                <div key={i} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px]"
-                  style={{ background: 'var(--secondary)', border: '1px solid var(--border)', color: 'var(--foreground)' }}>
-                  <FileText className="w-3.5 h-3.5" style={{ color: 'var(--muted-foreground)' }} />
-                  Attachment_{i + 1}.pdf
-                </div>
-              ))}
+      {/* Body — readable measure on wide screens */}
+      <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6">
+        <div className="mx-auto max-w-3xl space-y-4">
+          <pre className="whitespace-pre-wrap font-sans text-[13px] leading-relaxed sm:text-[14px]" style={{ color: 'var(--foreground)' }}>
+            {msg.body}
+          </pre>
+          {(msg.attachments ?? 0) > 0 && (
+            <div className="border-t pt-4" style={{ borderColor: 'var(--border)' }}>
+              <p className="mb-2 text-[11px] font-medium" style={{ color: 'var(--muted-foreground)' }}>
+                {msg.attachments} attachment{msg.attachments! > 1 ? 's' : ''}
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                {Array.from({ length: msg.attachments! }).map((_, i) => (
+                  <div key={i} className="flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[11px]"
+                    style={{ background: 'var(--secondary)', borderColor: 'var(--border)', color: 'var(--foreground)' }}>
+                    <FileText className="h-3.5 w-3.5" style={{ color: 'var(--muted-foreground)' }} />
+                    Attachment_{i + 1}.pdf
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Reply area */}
@@ -428,11 +450,14 @@ function ThreadDetail({ msg, onClose }: { msg: Message; onClose: () => void }) {
                 Forward
               </BonsaiButton>
               <button
+                type="button"
                 onClick={() => { setShowAI(s => !s); }}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12px] font-medium transition-colors"
-                style={{ background: showAI ? '#2563EB20' : 'var(--secondary)', color: showAI ? '#2563EB' : 'var(--muted-foreground)', border: '1px solid var(--border)' }}
+                className={cn(
+                  'flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[12px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50',
+                  showAI ? 'border-primary/30 bg-primary/10 text-primary' : 'border-border bg-secondary text-muted-foreground',
+                )}
               >
-                <Sparkles className="w-3.5 h-3.5" />
+                <Sparkles className="h-3.5 w-3.5" />
                 AI draft reply
               </button>
             </motion.div>
@@ -476,21 +501,24 @@ function ChannelView({ channel }: { channel: Channel }) {
           <span className="text-[14px] font-semibold" style={{ color: 'var(--foreground)' }}>{channel.name}</span>
           <span className="text-[11px]" style={{ color: 'var(--muted-foreground)' }}>· {channel.members} members</span>
         </div>
-        <div className="flex items-center gap-1">
-          <button className="p-1.5 rounded-lg hover:bg-secondary transition-colors" style={{ color: 'var(--muted-foreground)' }}>
-            <Search className="w-4 h-4" />
+        <div className="flex items-center gap-0.5">
+          <button type="button" className="rounded-lg p-1.5 transition-colors hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50" style={{ color: 'var(--muted-foreground)' }} title="Search channel">
+            <Search className="h-4 w-4" />
           </button>
-          <button className="p-1.5 rounded-lg hover:bg-secondary transition-colors" style={{ color: 'var(--muted-foreground)' }}>
-            <MoreHorizontal className="w-4 h-4" />
+          <button type="button" className="rounded-lg p-1.5 transition-colors hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50" style={{ color: 'var(--muted-foreground)' }} title="More">
+            <MoreHorizontal className="h-4 w-4" />
           </button>
         </div>
       </div>
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
         {MOCK_MSGS.map(m => (
           <div key={m.id} className="flex items-start gap-2.5">
-            <div className={cn('w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-bold text-white mt-0.5',
-              m.from === 'You' ? 'bg-primary' : 'bg-muted-foreground')}
-              style={{ background: m.from === 'You' ? '#2563EB' : 'var(--muted-foreground)' }}>
+            <div
+              className={cn(
+                'mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-primary-foreground',
+                m.from === 'You' ? 'bg-primary' : 'bg-muted-foreground',
+              )}
+            >
               {m.initials}
             </div>
             <div>
@@ -519,10 +547,13 @@ function ChannelView({ channel }: { channel: Channel }) {
               </button>
             ))}
             <button
-              className="p-1.5 rounded-lg transition-colors"
-              style={{ background: msg ? '#2563EB' : 'transparent', color: msg ? 'white' : 'var(--muted-foreground)' }}
+              type="button"
+              className={cn(
+                'rounded-lg p-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50',
+                msg ? 'bg-primary text-primary-foreground' : 'text-muted-foreground',
+              )}
             >
-              <Send className="w-3.5 h-3.5" />
+              <Send className="h-3.5 w-3.5" />
             </button>
           </div>
         </div>
@@ -538,13 +569,25 @@ type InboxFilter = 'all' | 'unread' | 'starred';
 type ViewMode = 'email' | 'channel';
 
 export default function Communication() {
+  const isLg = useMediaQuery('(min-width: 1024px)');
   const [viewMode, setViewMode] = useState<ViewMode>('email');
   const [activeThread, setActiveThread] = useState<Message | null>(MESSAGES[0]);
   const [activeChannel, setActiveChannel] = useState<Channel>(CHANNELS[0]);
   const [filter, setFilter] = useState<InboxFilter>('all');
   const [search, setSearch] = useState('');
   const [composing, setComposing] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  /** On narrow screens, whether the thread reader is full-screen (vs thread list). */
+  const [mobileEmailDetail, setMobileEmailDetail] = useState(false);
+
+  useEffect(() => {
+    if (isLg) setMobileEmailDetail(false);
+  }, [isLg]);
+
+  const openThread = (msg: Message) => {
+    setActiveThread(msg);
+    setComposing(false);
+    if (!isLg) setMobileEmailDetail(true);
+  };
 
   const filteredMessages = MESSAGES.filter(m => {
     if (filter === 'unread' && !m.unread) return false;
@@ -555,37 +598,109 @@ export default function Communication() {
 
   const unreadCount = MESSAGES.filter(m => m.unread).length;
 
+  const showEmailListCol =
+    viewMode === 'email' && (isLg || (!mobileEmailDetail && !composing));
+  const showMainColumn =
+    isLg ||
+    composing ||
+    viewMode === 'channel' ||
+    (viewMode === 'email' && mobileEmailDetail);
+
   return (
-    <div className="flex h-full min-h-0" style={{ background: 'var(--background)' }}>
+    <div className="flex h-full min-h-0 flex-col lg:flex-row" style={{ background: 'var(--background)' }}>
 
-      {/* ── Left sidebar: folders + channels ── */}
-      <aside className="w-52 flex-shrink-0 flex flex-col border-r overflow-y-auto" style={{ borderColor: 'var(--border)', background: 'var(--sidebar-glass)' }}>
-        <div className="px-3 py-3 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border)' }}>
-          <span className="text-[12px] font-semibold" style={{ color: 'var(--foreground)' }}>Communication</span>
-          <button
-            onClick={() => setComposing(true)}
-            className="w-6 h-6 rounded-md flex items-center justify-center transition-colors"
-            style={{ background: '#2563EB', color: 'white' }}
-          >
-            <Plus className="w-3.5 h-3.5" />
-          </button>
-        </div>
-
-        {/* Mode toggle */}
-        <div className="flex items-center gap-1 p-2" style={{ borderBottom: '1px solid var(--border)' }}>
+      {/* Mobile: mode + new mail */}
+      <div
+        className="flex items-center justify-between gap-2 border-b px-3 py-2 lg:hidden"
+        style={{ borderColor: 'var(--border)', background: 'var(--sidebar-glass)' }}
+      >
+        <div className="flex flex-1 gap-0.5 rounded-lg bg-secondary/80 p-0.5">
           {([['email', 'Inbox'], ['channel', 'Channels']] as const).map(([mode, label]) => (
             <button
               key={mode}
-              onClick={() => setViewMode(mode)}
-              className="flex-1 py-1 rounded-md text-[11px] font-medium transition-colors"
-              style={{
-                background: viewMode === mode ? '#2563EB' : 'transparent',
-                color: viewMode === mode ? 'white' : 'var(--muted-foreground)',
+              type="button"
+              onClick={() => {
+                setViewMode(mode);
+                setMobileEmailDetail(false);
               }}
+              className={cn(
+                'flex-1 rounded-md py-2 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40',
+                viewMode === mode ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground',
+              )}
             >
               {label}
             </button>
           ))}
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            setComposing(true);
+            setMobileEmailDetail(false);
+          }}
+          className="hub-touch-target shrink-0 rounded-lg bg-primary text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+          aria-label="New message"
+        >
+          <Plus className="h-5 w-5" />
+        </button>
+      </div>
+
+      {/* Mobile channel picker (sidebar hidden on small screens) */}
+      {!isLg && viewMode === 'channel' && (
+        <div
+          className="flex gap-1 overflow-x-auto border-b px-2 py-2 lg:hidden"
+          style={{ borderColor: 'var(--border)', background: 'var(--background)' }}
+        >
+          {CHANNELS.map(ch => (
+            <button
+              key={ch.id}
+              type="button"
+              onClick={() => setActiveChannel(ch)}
+              className={cn(
+                'shrink-0 rounded-full px-3 py-1.5 text-[11px] font-medium transition-colors',
+                activeChannel.id === ch.id ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground',
+              )}
+            >
+              #{ch.name}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* ── Left sidebar: folders + channels (desktop; mobile uses strip above + this hidden) */}
+      <aside
+        className="hidden w-56 shrink-0 flex-col overflow-y-auto border-r lg:flex"
+        style={{ borderColor: 'var(--border)', background: 'var(--sidebar-glass)' }}
+      >
+        <div className="flex items-center justify-between px-3 py-3" style={{ borderBottom: '1px solid var(--border)' }}>
+          <span className="text-[12px] font-semibold" style={{ color: 'var(--foreground)' }}>Communication</span>
+          <button
+            type="button"
+            onClick={() => setComposing(true)}
+            className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+            aria-label="New message"
+          >
+            <Plus className="h-3.5 w-3.5" />
+          </button>
+        </div>
+
+        {/* Mode toggle — segmented control; radius aligned with search fields (rounded-lg) */}
+        <div className="p-2" style={{ borderBottom: '1px solid var(--border)' }}>
+          <div className="flex gap-0.5 rounded-lg bg-secondary/80 p-0.5">
+            {([['email', 'Inbox'], ['channel', 'Channels']] as const).map(([mode, label]) => (
+              <button
+                key={mode}
+                type="button"
+                onClick={() => setViewMode(mode)}
+                className={cn(
+                  'flex-1 rounded-md py-1.5 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40',
+                  viewMode === mode ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
+                )}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {viewMode === 'email' ? (
@@ -597,20 +712,24 @@ export default function Communication() {
             ] as const).map(item => (
               <button
                 key={item.id}
+                type="button"
                 onClick={() => setFilter(item.id)}
-                className="w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-[12px] transition-colors text-left"
-                style={{
-                  background: filter === item.id ? '#2563EB15' : 'transparent',
-                  color: filter === item.id ? '#2563EB' : 'var(--foreground)',
-                }}
+                className={cn(
+                  'flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left text-[12px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40',
+                  filter === item.id ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-secondary/70',
+                )}
               >
                 <div className="flex items-center gap-2">
-                  <item.icon className="w-3.5 h-3.5" />
+                  <item.icon className="h-3.5 w-3.5 shrink-0 opacity-90" />
                   {item.label}
                 </div>
                 {item.count > 0 && (
-                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
-                    style={{ background: filter === item.id ? '#2563EB' : 'var(--secondary)', color: filter === item.id ? 'white' : 'var(--muted-foreground)' }}>
+                  <span
+                    className={cn(
+                      'rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums',
+                      filter === item.id ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground',
+                    )}
+                  >
                     {item.count}
                   </span>
                 )}
@@ -619,13 +738,17 @@ export default function Communication() {
             <div className="pt-3 pb-1 px-2.5">
               <span className="text-[10px] font-medium uppercase tracking-wider" style={{ color: 'var(--muted-foreground)' }}>Labels</span>
             </div>
-            {(['Clients', 'Internal', 'Finance', 'Projects'] as const).map(label => (
+            {(['Clients', 'Internal', 'Finance', 'Projects'] as const).map((label, idx) => (
               <button
                 key={label}
+                type="button"
                 className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[12px] transition-colors hover:bg-secondary/60 text-left"
                 style={{ color: 'var(--muted-foreground)' }}
               >
-                <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: label === 'Clients' ? '#2563EB' : label === 'Finance' ? '#10B981' : label === 'Projects' ? '#8B5CF6' : 'var(--muted-foreground)' }} />
+                <span
+                  className="h-2 w-2 shrink-0 rounded-full bg-primary"
+                  style={{ opacity: 1 - idx * 0.18 }}
+                />
                 {label}
               </button>
             ))}
@@ -641,19 +764,19 @@ export default function Communication() {
             {CHANNELS.map(ch => (
               <button
                 key={ch.id}
+                type="button"
                 onClick={() => setActiveChannel(ch)}
-                className="w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-[12px] transition-colors text-left"
-                style={{
-                  background: activeChannel.id === ch.id ? '#2563EB15' : 'transparent',
-                  color: activeChannel.id === ch.id ? '#2563EB' : 'var(--foreground)',
-                }}
+                className={cn(
+                  'flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left text-[12px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40',
+                  activeChannel.id === ch.id ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-secondary/70',
+                )}
               >
                 <div className="flex items-center gap-1.5">
                   <Hash className="w-3 h-3" />
                   {ch.name}
                 </div>
                 {ch.unread > 0 && (
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full text-white" style={{ background: '#2563EB' }}>
+                  <span className="rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-bold text-primary-foreground">
                     {ch.unread}
                   </span>
                 )}
@@ -666,7 +789,7 @@ export default function Communication() {
               <button key={dm.name} className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-[12px] transition-colors hover:bg-secondary/60 text-left"
                 style={{ color: 'var(--foreground)' }}>
                 <div className="relative">
-                  <div className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold text-white" style={{ background: '#2563EB80' }}>
+                  <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/50 text-[9px] font-bold text-primary-foreground">
                     {dm.initials}
                   </div>
                   <span className={cn('absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-background', dm.online ? 'bg-green-500' : 'bg-gray-400')} />
@@ -679,21 +802,25 @@ export default function Communication() {
       </aside>
 
       {/* ── Thread list ── */}
-      {viewMode === 'email' && (
-        <div className="w-72 flex-shrink-0 flex flex-col border-r overflow-hidden" style={{ borderColor: 'var(--border)' }}>
-          <div className="px-3 py-2.5 flex items-center gap-2" style={{ borderBottom: '1px solid var(--border)' }}>
-            <div className="flex-1 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg" style={{ background: 'var(--secondary)', border: '1px solid var(--border)' }}>
-              <Search className="w-3.5 h-3.5" style={{ color: 'var(--muted-foreground)' }} />
+      {showEmailListCol && (
+        <div
+          className="flex min-h-0 w-full min-w-0 shrink-0 flex-col overflow-hidden border-r lg:min-w-[300px] lg:max-w-md lg:flex-[1_1_36%]"
+          style={{ borderColor: 'var(--border)' }}
+        >
+          <div className="flex items-center gap-2 px-3 py-2.5" style={{ borderBottom: '1px solid var(--border)' }}>
+            <div className="flex flex-1 items-center gap-1.5 rounded-lg border px-2.5 py-1.5" style={{ background: 'var(--secondary)', borderColor: 'var(--border)' }}>
+              <Search className="h-3.5 w-3.5 shrink-0" style={{ color: 'var(--muted-foreground)' }} />
               <input
-                className="flex-1 bg-transparent text-[12px] outline-none"
+                className="min-w-0 flex-1 bg-transparent text-[12px] outline-none focus-visible:ring-0"
                 style={{ color: 'var(--foreground)' }}
                 placeholder="Search…"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
+                aria-label="Search messages"
               />
             </div>
-            <button className="p-1.5 rounded-lg hover:bg-secondary transition-colors" style={{ color: 'var(--muted-foreground)' }}>
-              <Filter className="w-3.5 h-3.5" />
+            <button type="button" className="rounded-lg p-1.5 transition-colors hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50" style={{ color: 'var(--muted-foreground)' }} title="Filters">
+              <Filter className="h-3.5 w-3.5" />
             </button>
           </div>
           <div className="flex-1 overflow-y-auto">
@@ -708,7 +835,7 @@ export default function Communication() {
                   key={msg.id}
                   msg={msg}
                   active={activeThread?.id === msg.id}
-                  onClick={() => { setActiveThread(msg); setComposing(false); }}
+                  onClick={() => openThread(msg)}
                 />
               ))
             )}
@@ -717,26 +844,35 @@ export default function Communication() {
       )}
 
       {/* ── Main panel ── */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div
+        className={cn(
+          'flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden',
+          !showMainColumn && 'hidden lg:flex',
+        )}
+      >
         <AnimatePresence mode="wait">
           {composing ? (
-            <motion.div key="compose" className="flex-1 p-5" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <motion.div key="compose" className="flex-1 p-4 sm:p-5" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <ComposePanel onClose={() => setComposing(false)} />
             </motion.div>
           ) : viewMode === 'channel' ? (
-            <motion.div key={`ch-${activeChannel.id}`} className="flex-1 flex flex-col min-h-0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <motion.div key={`ch-${activeChannel.id}`} className="flex min-h-0 flex-1 flex-col" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <ChannelView channel={activeChannel} />
             </motion.div>
           ) : activeThread ? (
-            <motion.div key={activeThread.id} className="flex-1 flex flex-col min-h-0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <ThreadDetail msg={activeThread} onClose={() => setActiveThread(null)} />
+            <motion.div key={activeThread.id} className="flex min-h-0 flex-1 flex-col" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <ThreadDetail
+                msg={activeThread}
+                onClose={() => setActiveThread(null)}
+                onBack={!isLg ? () => setMobileEmailDetail(false) : undefined}
+              />
             </motion.div>
           ) : (
-            <motion.div key="empty" className="flex-1 flex flex-col items-center justify-center gap-3" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-              <MessageSquare className="w-10 h-10" style={{ color: 'var(--muted-foreground)' }} />
-              <p className="text-[13px]" style={{ color: 'var(--muted-foreground)' }}>Select a conversation to read</p>
+            <motion.div key="empty" className="flex flex-1 flex-col items-center justify-center gap-3 px-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+              <MessageSquare className="h-10 w-10" style={{ color: 'var(--muted-foreground)' }} />
+              <p className="text-center text-[13px]" style={{ color: 'var(--muted-foreground)' }}>Select a conversation to read</p>
               <BonsaiButton size="sm" onClick={() => setComposing(true)}>
-                <Plus className="w-3.5 h-3.5 mr-1.5" />
+                <Plus className="mr-1.5 h-3.5 w-3.5" />
                 New message
               </BonsaiButton>
             </motion.div>

@@ -109,7 +109,7 @@ export function CL05RequestDetail({ request, onBack }: CL05RequestDetailProps) {
   };
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       {/* Back Button */}
       <button
         onClick={onBack}

@@ -37,7 +37,7 @@ function FreelancerOnboardingHome({ onNavigate }) {
   const progress = (completed / tasks.length) * 100;
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <h1 className="text-2xl font-semibold text-stone-800 mb-2">Onboarding Checklist</h1>
       <p className="text-sm text-stone-700 mb-6">Complete these tasks to start working</p>
 
@@ -89,7 +89,7 @@ function FreelancerOnboardingHome({ onNavigate }) {
 // FPO-02: Contract & Documents
 function FreelancerContractDocs({ onNavigate }) {
   return (
-    <div className="p-8 max-w-3xl mx-auto">
+    <div className="mx-auto w-full max-w-3xl px-3 py-6 sm:p-8">
       <button
         onClick={() => onNavigate('onboarding')}
         className="flex items-center gap-2 text-sm text-stone-700 hover:text-stone-800 mb-6"
@@ -133,7 +133,7 @@ function FreelancerProfile({ onNavigate }) {
   const [isEditing, setIsEditing] = useState(false);
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold text-stone-800">My Profile</h1>
         <BonsaiButton 
@@ -271,7 +271,7 @@ function FreelancerProfile({ onNavigate }) {
 // FPO-04: Profile Change Request Detail
 function FreelancerProfileChangeRequest({ onNavigate }) {
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <button
         onClick={() => onNavigate('profile')}
         className="flex items-center gap-2 text-sm text-stone-700 hover:text-stone-800 mb-6"
@@ -331,7 +331,7 @@ function FreelancerSelfBills({ onNavigate }) {
   ];
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <h1 className="text-2xl font-semibold text-stone-800 mb-2">Self-Bills</h1>
       <p className="text-sm text-stone-700 mb-6">Automatically generated from approved timesheets</p>
 
@@ -373,7 +373,7 @@ function FreelancerSelfBillDetail({ onNavigate }) {
   const [activeTab, setActiveTab] = useState('overview');
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <button
         onClick={() => onNavigate('self-bills')}
         className="flex items-center gap-2 text-sm text-stone-700 hover:text-stone-800 mb-6"
@@ -472,7 +472,7 @@ function FreelancerDocumentsEnhanced() {
   ];
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold text-stone-800">My Documents</h1>
         <BonsaiButton variant="primary">Upload Document</BonsaiButton>

@@ -40,7 +40,7 @@ function EmployeeOnboardingHome({ onNavigate }: { onNavigate: (screen: EmployeeS
   const progress = (completed / tasks.length) * 100;
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <h1 className="text-2xl font-semibold text-stone-800 mb-2">Onboarding Checklist</h1>
       <p className="text-sm text-stone-600 mb-6">Complete these tasks to finish your onboarding</p>
 
@@ -92,7 +92,7 @@ function EmployeeOnboardingHome({ onNavigate }: { onNavigate: (screen: EmployeeS
 // EPO-02: Onboarding Task Detail
 function EmployeeOnboardingTaskDetail({ onNavigate }: { onNavigate: (screen: EmployeeScreen) => void }) {
   return (
-    <div className="p-8 max-w-3xl mx-auto">
+    <div className="mx-auto w-full max-w-3xl px-3 py-6 sm:p-8">
       <button
         onClick={() => onNavigate('onboarding')}
         className="flex items-center gap-2 text-sm text-stone-600 hover:text-stone-800 mb-6"
@@ -136,7 +136,7 @@ function EmployeeProfile({ onNavigate }: { onNavigate: (screen: EmployeeScreen) 
   const [isEditing, setIsEditing] = useState(false);
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold text-stone-800">My Profile</h1>
         <BonsaiButton 
@@ -283,7 +283,7 @@ function EmployeeProfile({ onNavigate }: { onNavigate: (screen: EmployeeScreen) 
 // EPO-04: Profile Change Request Detail
 function EmployeeProfileChangeRequest({ onNavigate }: { onNavigate: (screen: EmployeeScreen) => void }) {
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <button
         onClick={() => onNavigate('profile')}
         className="flex items-center gap-2 text-sm text-stone-600 hover:text-stone-800 mb-6"
@@ -348,7 +348,7 @@ function EmployeeTraining({ onNavigate }: { onNavigate: (screen: EmployeeScreen)
   ];
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <h1 className="text-2xl font-semibold text-stone-800 mb-6">Training & Knowledge Hub</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
@@ -416,7 +416,7 @@ function EmployeeTrainingDetail({ onNavigate }: { onNavigate: (screen: EmployeeS
   const [activeTab, setActiveTab] = useState('content');
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <button
         onClick={() => onNavigate('training')}
         className="flex items-center gap-2 text-sm text-stone-600 hover:text-stone-800 mb-6"
@@ -481,7 +481,7 @@ function EmployeePerformanceReviews({ onNavigate }: { onNavigate: (screen: Emplo
   ];
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <h1 className="text-2xl font-semibold text-stone-800 mb-6">Performance Reviews</h1>
 
       <div className="bg-white rounded-lg border border-stone-200">
@@ -516,7 +516,7 @@ function EmployeePerformanceReviewDetail({ onNavigate }: { onNavigate: (screen: 
   const [activeTab, setActiveTab] = useState('overview');
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <button
         onClick={() => onNavigate('performance-reviews')}
         className="flex items-center gap-2 text-sm text-stone-600 hover:text-stone-800 mb-6"
@@ -606,7 +606,7 @@ function EmployeeMeetingsList({ onNavigate }: { onNavigate: (screen: EmployeeScr
   ];
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <h1 className="text-2xl font-semibold text-stone-800 mb-6">Meetings & 1:1s</h1>
 
       <div className="bg-white rounded-lg border border-stone-200">
@@ -629,7 +629,7 @@ function EmployeeMeetingsList({ onNavigate }: { onNavigate: (screen: EmployeeScr
 // EPO-10: Meeting Summary Detail
 function EmployeeMeetingDetail({ onNavigate }: { onNavigate: (screen: EmployeeScreen) => void }) {
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <button
         onClick={() => onNavigate('meetings')}
         className="flex items-center gap-2 text-sm text-stone-600 hover:text-stone-800 mb-6"
@@ -690,7 +690,7 @@ function EmployeeDocumentsEnhanced() {
   ];
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold text-stone-800">My Documents</h1>
         <BonsaiButton variant="primary" onClick={() => setShowRequestModal(true)}>

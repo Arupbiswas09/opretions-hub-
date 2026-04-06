@@ -17,7 +17,7 @@ export function TA03JobsPipeline() {
   ];
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-stone-800">Jobs Pipeline</h1>
         <p className="text-sm text-stone-500">Kanban view by job stage</p>

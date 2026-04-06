@@ -13,6 +13,7 @@ import { EnhancedTable } from './operations/EnhancedTable';
 import { useToast } from './bonsai/ToastSystem';
 import { HubStatTile } from './ops/HubStatTile';
 import { PortalSwitcher, PortalRail, PortalMain } from './portals/PortalChrome';
+import { PortalNavProvider } from './portals/PortalNavContext';
 import type { PortalType } from './portals/portal-types';
 
 export type { PortalType } from './portals/portal-types';
@@ -50,6 +51,7 @@ export default function Portals({ initialPortal = 'employee', urlSync = false }:
     : hrisScreen;
 
   return (
+    <PortalNavProvider>
     <div className="flex h-full min-h-0 flex-1 flex-col bg-background">
       <PortalSwitcher active={activePortal} urlSync={urlSync} onPortalChange={setPortalType} />
 
@@ -80,6 +82,7 @@ export default function Portals({ initialPortal = 'employee', urlSync = false }:
         </motion.div>
       </AnimatePresence>
     </div>
+    </PortalNavProvider>
   );
 }
 
@@ -286,7 +289,7 @@ function ClientHome({ onNavigate }: { onNavigate: (screen: ClientScreen) => void
 
 function ClientProjects() {
   return (
-    <div className="px-8 py-8 max-w-3xl">
+    <div className="px-3 py-6 sm:px-6 sm:py-8 lg:px-8 max-w-3xl">
       <h1 className="text-[24px] font-semibold text-foreground tracking-[-0.02em] mb-6">My Projects</h1>
       <div className="portal-panel overflow-hidden divide-y divide-border">
         {[
@@ -314,7 +317,7 @@ function ClientProjects() {
 
 function ClientRequests({ onNavigate }: { onNavigate: (screen: ClientScreen) => void }) {
   return (
-    <div className="px-8 py-8 max-w-3xl">
+    <div className="px-3 py-6 sm:px-6 sm:py-8 lg:px-8 max-w-3xl">
       <h1 className="text-[24px] font-semibold text-foreground tracking-[-0.02em] mb-6">Pending Requests</h1>
       <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-[0.08em] mb-3">Timesheet Approvals</p>
       <div className="portal-panel overflow-hidden divide-y divide-border">
@@ -342,7 +345,7 @@ function ClientFormsInbox() {
     { id: '3', name: 'Project closeout — Website', due: 'Completed', status: 'Done' },
   ];
   return (
-    <div className="px-8 py-8 max-w-3xl">
+    <div className="px-3 py-6 sm:px-6 sm:py-8 lg:px-8 max-w-3xl">
       <h1 className="text-[24px] font-semibold text-foreground tracking-[-0.02em] mb-2">Forms inbox</h1>
       <p className="text-[13px] text-muted-foreground mb-6">Assigned intakes and signatures — same pipeline as the internal Forms module.</p>
       <div className="portal-panel">
@@ -380,7 +383,7 @@ function ClientDocuments() {
   ];
 
   return (
-    <div className="px-8 py-8 max-w-3xl">
+    <div className="px-3 py-6 sm:px-6 sm:py-8 lg:px-8 max-w-3xl">
       <h1 className="text-[24px] font-semibold text-foreground tracking-[-0.02em] mb-6">Documents</h1>
       <div className="flex gap-2 mb-4">
         {['All Types', 'PDF', 'Archives'].map(f => (
@@ -406,7 +409,7 @@ function ClientInvoices({ onNavigate }: { onNavigate: (screen: ClientScreen) => 
   ];
 
   return (
-    <div className="px-8 py-8 max-w-3xl">
+    <div className="px-3 py-6 sm:px-6 sm:py-8 lg:px-8 max-w-3xl">
       <h1 className="text-[24px] font-semibold text-foreground tracking-[-0.02em] mb-6">Invoices</h1>
 
       <div className="portal-panel">
@@ -442,7 +445,7 @@ function ClientInvoiceDetail({ onNavigate }: { onNavigate: (screen: ClientScreen
   const [activeTab, setActiveTab] = useState('overview');
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <button
         onClick={() => onNavigate('invoices')}
         className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6"
@@ -530,7 +533,7 @@ function ClientInvoiceDetail({ onNavigate }: { onNavigate: (screen: ClientScreen
 // CP-05: Client Portal Support
 function ClientSupport({ onNavigate }: { onNavigate: (screen: ClientScreen) => void }) {
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold text-foreground">Support Tickets</h1>
         <BonsaiButton variant="primary">New Ticket</BonsaiButton>
@@ -576,7 +579,7 @@ function ClientTicketDetail({ onNavigate }: { onNavigate: (screen: ClientScreen)
   const [activeTab, setActiveTab] = useState('conversation');
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <button
         onClick={() => onNavigate('support')}
         className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6"
@@ -644,7 +647,7 @@ function ClientTicketDetail({ onNavigate }: { onNavigate: (screen: ClientScreen)
 function ClientTalent() {
   const { addToast } = useToast();
   return (
-    <div className="p-8 max-w-3xl">
+    <div className="mx-auto w-full max-w-3xl px-3 py-6 sm:p-8">
       <h1 className="text-2xl font-semibold text-foreground mb-2">Talent shortlists</h1>
       <p className="text-sm text-muted-foreground mb-6">Review profiles shared from Talent — feedback syncs to your account team.</p>
 
@@ -692,7 +695,7 @@ function ClientProposalsList({ onNavigate }: { onNavigate: (screen: ClientScreen
   ];
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <h1 className="text-2xl font-semibold text-foreground mb-6">Proposals</h1>
 
       <div className="portal-panel rounded-lg">
@@ -726,7 +729,7 @@ function ClientProposalDetail({ onNavigate, onShowApproval }: { onNavigate: (scr
   const [activeTab, setActiveTab] = useState('overview');
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <button
         onClick={() => onNavigate('proposals')}
         className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6"
@@ -812,7 +815,7 @@ function ClientApprovalsInbox({ onNavigate }: { onNavigate: (screen: ClientScree
   ];
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <h1 className="text-2xl font-semibold text-foreground mb-6">Approvals</h1>
 
       <div className="portal-panel rounded-lg">
@@ -847,7 +850,7 @@ function ClientApprovalDetailRequest({ onNavigate, onShowApproval }: { onNavigat
   const [activeTab, setActiveTab] = useState('overview');
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <button
         onClick={() => onNavigate('approvals')}
         className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6"
@@ -930,7 +933,7 @@ function ClientApprovalDetailInvoice({ onNavigate, onShowApproval }: { onNavigat
   const [activeTab, setActiveTab] = useState('overview');
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <button
         onClick={() => onNavigate('approvals')}
         className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6"
@@ -1013,7 +1016,7 @@ function ClientApprovalDetailTimesheet({ onNavigate, onShowApproval }: { onNavig
   const [activeTab, setActiveTab] = useState('overview');
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <button
         onClick={() => onNavigate('approvals')}
         className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6"
@@ -1099,7 +1102,7 @@ function ClientMeetingsList({ onNavigate }: { onNavigate: (screen: ClientScreen)
   ];
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <h1 className="text-2xl font-semibold text-foreground mb-6">Meetings</h1>
 
       <div className="portal-panel rounded-lg">
@@ -1133,7 +1136,7 @@ function ClientMeetingDetail({ onNavigate }: { onNavigate: (screen: ClientScreen
   const [activeTab, setActiveTab] = useState('overview');
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <button
         onClick={() => onNavigate('meetings')}
         className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6"
@@ -1497,7 +1500,7 @@ function EmployeeOnboarding({ onNavigate }: { onNavigate: (s: EmployeeScreen) =>
     { id: 't6', label: 'Benefits enrollment', done: true },
   ];
   return (
-    <div className="px-8 py-8 max-w-2xl">
+    <div className="px-3 py-6 sm:px-6 sm:py-8 lg:px-8 max-w-2xl">
       <h1 className="text-[24px] font-semibold text-foreground mb-2">Onboarding</h1>
       <p className="text-[13px] text-muted-foreground mb-6">Complete all tasks — HR is notified as you progress.</p>
       <div className="portal-list divide-y divide-border">
@@ -1536,7 +1539,7 @@ function EmployeeOnboarding({ onNavigate }: { onNavigate: (s: EmployeeScreen) =>
 function EmployeeOnboardingTask({ onNavigate }: { onNavigate: (s: EmployeeScreen) => void }) {
   const { addToast } = useToast();
   return (
-    <div className="px-8 py-8 max-w-xl">
+    <div className="px-3 py-6 sm:px-6 sm:py-8 lg:px-8 max-w-xl">
       <button type="button" onClick={() => onNavigate('onboarding')} className="text-[13px] text-muted-foreground hover:text-foreground mb-6">
         ← Back to checklist
       </button>
@@ -1561,7 +1564,7 @@ function EmployeeTraining({ onNavigate }: { onNavigate: (s: EmployeeScreen) => v
     { id: 'c3', name: 'Role: Design workflows', due: 'Optional', pct: 100, req: false },
   ];
   return (
-    <div className="px-8 py-8 max-w-3xl">
+    <div className="px-3 py-6 sm:px-6 sm:py-8 lg:px-8 max-w-3xl">
       <h1 className="text-[24px] font-semibold text-foreground mb-6">Training</h1>
       <div className="space-y-3">
         {courses.map(c => (
@@ -1589,7 +1592,7 @@ function EmployeeTraining({ onNavigate }: { onNavigate: (s: EmployeeScreen) => v
 function EmployeeTrainingDetail({ onNavigate }: { onNavigate: (s: EmployeeScreen) => void }) {
   const { addToast } = useToast();
   return (
-    <div className="px-8 py-8 max-w-2xl">
+    <div className="px-3 py-6 sm:px-6 sm:py-8 lg:px-8 max-w-2xl">
       <button type="button" onClick={() => onNavigate('training')} className="text-[13px] text-muted-foreground hover:text-foreground mb-6">
         ← All courses
       </button>
@@ -1610,7 +1613,7 @@ function EmployeeTrainingDetail({ onNavigate }: { onNavigate: (s: EmployeeScreen
 
 function EmployeePerformanceReviews({ onNavigate }: { onNavigate: (s: EmployeeScreen) => void }) {
   return (
-    <div className="px-8 py-8 max-w-3xl">
+    <div className="px-3 py-6 sm:px-6 sm:py-8 lg:px-8 max-w-3xl">
       <h1 className="text-[24px] font-semibold text-foreground mb-6">Performance reviews</h1>
       <div className="portal-panel divide-y divide-border">
         {[
@@ -1638,7 +1641,7 @@ function EmployeePerformanceReviews({ onNavigate }: { onNavigate: (s: EmployeeSc
 function EmployeePerformanceReviewDetail({ onNavigate }: { onNavigate: (s: EmployeeScreen) => void }) {
   const { addToast } = useToast();
   return (
-    <div className="px-8 py-8 max-w-2xl">
+    <div className="px-3 py-6 sm:px-6 sm:py-8 lg:px-8 max-w-2xl">
       <button type="button" onClick={() => onNavigate('performance-reviews')} className="text-[13px] text-muted-foreground hover:text-foreground mb-6">
         ← Reviews
       </button>
@@ -1653,7 +1656,7 @@ function EmployeePerformanceReviewDetail({ onNavigate }: { onNavigate: (s: Emplo
 
 function EmployeeMeetingsList({ onNavigate }: { onNavigate: (s: EmployeeScreen) => void }) {
   return (
-    <div className="px-8 py-8 max-w-3xl">
+    <div className="px-3 py-6 sm:px-6 sm:py-8 lg:px-8 max-w-3xl">
       <h1 className="text-[24px] font-semibold text-foreground mb-6">Meetings</h1>
       <div className="space-y-2">
         {[
@@ -1680,7 +1683,7 @@ function EmployeeMeetingsList({ onNavigate }: { onNavigate: (s: EmployeeScreen) 
 
 function EmployeeMeetingDetail({ onNavigate }: { onNavigate: (s: EmployeeScreen) => void }) {
   return (
-    <div className="px-8 py-8 max-w-2xl">
+    <div className="px-3 py-6 sm:px-6 sm:py-8 lg:px-8 max-w-2xl">
       <button type="button" onClick={() => onNavigate('meetings')} className="text-[13px] text-muted-foreground hover:text-foreground mb-6">
         ← Meetings
       </button>
@@ -1702,7 +1705,7 @@ function EmployeeMeetingDetail({ onNavigate }: { onNavigate: (s: EmployeeScreen)
 
 function EmployeeProfile({ onNavigate }: { onNavigate: (s: EmployeeScreen) => void }) {
   return (
-    <div className="px-8 py-8 max-w-xl">
+    <div className="px-3 py-6 sm:px-6 sm:py-8 lg:px-8 max-w-xl">
       <h1 className="text-[24px] font-semibold text-foreground mb-6">My profile</h1>
       <div className="space-y-4 portal-panel rounded-xl p-6">
         <div>
@@ -1728,7 +1731,7 @@ function EmployeeProfile({ onNavigate }: { onNavigate: (s: EmployeeScreen) => vo
 function EmployeeProfileChangeRequest({ onNavigate }: { onNavigate: (s: EmployeeScreen) => void }) {
   const { addToast } = useToast();
   return (
-    <div className="px-8 py-8 max-w-xl">
+    <div className="px-3 py-6 sm:px-6 sm:py-8 lg:px-8 max-w-xl">
       <button type="button" onClick={() => onNavigate('profile')} className="text-[13px] text-muted-foreground hover:text-foreground mb-6">
         ← Profile
       </button>
@@ -1751,7 +1754,7 @@ function EmployeeProfileChangeRequest({ onNavigate }: { onNavigate: (s: Employee
 
 function EmployeeProjects() {
   return (
-    <div className="px-8 py-8 max-w-3xl">
+    <div className="px-3 py-6 sm:px-6 sm:py-8 lg:px-8 max-w-3xl">
       <h1 className="text-[24px] font-semibold text-foreground tracking-[-0.02em] mb-6">My Projects</h1>
       <div className="portal-panel divide-y divide-border">
         {[
@@ -1771,7 +1774,7 @@ function EmployeeProjects() {
 
 function EmployeeTasks() {
   return (
-    <div className="px-8 py-8 max-w-3xl">
+    <div className="px-3 py-6 sm:px-6 sm:py-8 lg:px-8 max-w-3xl">
       <h1 className="text-[24px] font-semibold text-foreground tracking-[-0.02em] mb-6">My Tasks</h1>
       <div className="space-y-2">
         {[
@@ -1797,7 +1800,7 @@ function EmployeeTimesheets({ onNavigate }: { onNavigate: (s: EmployeeScreen) =>
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const row = [8, 8, 7.5, 8, 6, 0, 0];
   return (
-    <div className="p-8 max-w-4xl">
+    <div className="mx-auto w-full max-w-4xl px-3 py-6 sm:p-8">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-semibold text-foreground">My Timesheets</h1>
@@ -1837,7 +1840,7 @@ function EmployeeTimesheets({ onNavigate }: { onNavigate: (s: EmployeeScreen) =>
 // EP-02: My Expenses
 function EmployeeExpenses() {
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold text-foreground">My Expenses</h1>
         <BonsaiButton variant="primary">Submit Expense</BonsaiButton>
@@ -1869,7 +1872,7 @@ function EmployeeExpenses() {
 // EP-03: My Leave
 function EmployeeLeave() {
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold text-foreground">My Leave</h1>
         <BonsaiButton variant="primary">Request Leave</BonsaiButton>
@@ -1922,7 +1925,7 @@ function EmployeeDocuments() {
   ];
 
   return (
-    <div className="p-8">
+    <div className="px-3 py-6 sm:p-8">
       <h1 className="text-2xl font-semibold text-foreground mb-6">My Documents</h1>
 
       <div className="portal-panel rounded-lg p-6">
@@ -2078,7 +2081,7 @@ function FreelancerHome({ onNavigate }: { onNavigate: (screen: FreelancerScreen)
 function FreelancerOnboarding({ onNavigate }: { onNavigate: (s: FreelancerScreen) => void }) {
   const { addToast } = useToast();
   return (
-    <div className="px-8 py-8 max-w-xl">
+    <div className="px-3 py-6 sm:px-6 sm:py-8 lg:px-8 max-w-xl">
       <h1 className="text-[24px] font-semibold text-foreground mb-6">Freelancer onboarding</h1>
       <div className="space-y-3">
         {[
@@ -2105,7 +2108,7 @@ function FreelancerOnboarding({ onNavigate }: { onNavigate: (s: FreelancerScreen
 
 function FreelancerAssignments() {
   return (
-    <div className="px-8 py-8 max-w-3xl">
+    <div className="px-3 py-6 sm:px-6 sm:py-8 lg:px-8 max-w-3xl">
       <h1 className="text-[24px] font-semibold text-foreground tracking-[-0.02em] mb-6">My Assignments</h1>
       <div className="space-y-3">
         {[
@@ -2125,7 +2128,7 @@ function FreelancerAssignments() {
 
 function FreelancerTasks() {
   return (
-    <div className="px-8 py-8 max-w-3xl">
+    <div className="px-3 py-6 sm:px-6 sm:py-8 lg:px-8 max-w-3xl">
       <h1 className="text-[24px] font-semibold text-foreground tracking-[-0.02em] mb-6">My Tasks</h1>
       <div className="space-y-2">
         {['Design system tokens', 'Homepage mobile QA', 'Handoff documentation'].map(t => (
@@ -2142,7 +2145,7 @@ function FreelancerTasks() {
 function FreelancerTimesheets({ onNavigate }: { onNavigate: (s: FreelancerScreen) => void }) {
   const { addToast } = useToast();
   return (
-    <div className="px-8 py-8 max-w-3xl">
+    <div className="px-3 py-6 sm:px-6 sm:py-8 lg:px-8 max-w-3xl">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-[24px] font-semibold text-foreground">My Timesheets</h1>
         <BonsaiButton
@@ -2168,7 +2171,7 @@ function FreelancerTimesheets({ onNavigate }: { onNavigate: (s: FreelancerScreen
 
 function FreelancerExpenses() {
   return (
-    <div className="px-8 py-8 max-w-3xl">
+    <div className="px-3 py-6 sm:px-6 sm:py-8 lg:px-8 max-w-3xl">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-[24px] font-semibold text-foreground tracking-[-0.02em]">My Expenses</h1>
         <BonsaiButton variant="primary">Submit Expense</BonsaiButton>
@@ -2203,7 +2206,7 @@ function FreelancerDocuments() {
   ];
 
   return (
-    <div className="px-8 py-8 max-w-3xl">
+    <div className="px-3 py-6 sm:px-6 sm:py-8 lg:px-8 max-w-3xl">
       <h1 className="text-[24px] font-semibold text-foreground tracking-[-0.02em] mb-6">My Documents</h1>
       <div className="portal-panel p-5">
         <BonsaiDocumentList
@@ -2218,7 +2221,7 @@ function FreelancerDocuments() {
 
 function FreelancerSelfBillsList({ onNavigate }: { onNavigate: (s: FreelancerScreen) => void }) {
   return (
-    <div className="px-8 py-8 max-w-3xl">
+    <div className="px-3 py-6 sm:px-6 sm:py-8 lg:px-8 max-w-3xl">
       <h1 className="text-[24px] font-semibold text-foreground mb-2">Self-bills</h1>
       <p className="text-[13px] text-muted-foreground mb-6">Generated from approved timesheets — download for taxes and records.</p>
       <div className="portal-panel divide-y divide-border">
@@ -2250,7 +2253,7 @@ function FreelancerSelfBillsList({ onNavigate }: { onNavigate: (s: FreelancerScr
 function FreelancerSelfBillDetail({ onNavigate }: { onNavigate: (s: FreelancerScreen) => void }) {
   const { addToast } = useToast();
   return (
-    <div className="px-8 py-8 max-w-2xl">
+    <div className="px-3 py-6 sm:px-6 sm:py-8 lg:px-8 max-w-2xl">
       <button type="button" onClick={() => onNavigate('self-bills')} className="text-[13px] text-muted-foreground hover:text-foreground mb-6">
         ← Self-bills
       </button>
@@ -2280,7 +2283,7 @@ function FreelancerSelfBillDetail({ onNavigate }: { onNavigate: (s: FreelancerSc
 function FreelancerContractDocs() {
   const { addToast } = useToast();
   return (
-    <div className="px-8 py-8 max-w-3xl">
+    <div className="px-3 py-6 sm:px-6 sm:py-8 lg:px-8 max-w-3xl">
       <h1 className="text-[24px] font-semibold text-foreground mb-6">Contract documents</h1>
       <div className="portal-panel p-6 space-y-4">
         {[
@@ -2305,7 +2308,7 @@ function FreelancerContractDocs() {
 
 function FreelancerProfile({ onNavigate }: { onNavigate: (s: FreelancerScreen) => void }) {
   return (
-    <div className="px-8 py-8 max-w-xl">
+    <div className="px-3 py-6 sm:px-6 sm:py-8 lg:px-8 max-w-xl">
       <h1 className="text-[24px] font-semibold text-foreground mb-6">Profile</h1>
       <div className="portal-panel rounded-xl p-6 space-y-4">
         <div>
@@ -2331,7 +2334,7 @@ function FreelancerProfile({ onNavigate }: { onNavigate: (s: FreelancerScreen) =
 function FreelancerProfileChangeRequest({ onNavigate }: { onNavigate: (s: FreelancerScreen) => void }) {
   const { addToast } = useToast();
   return (
-    <div className="px-8 py-8 max-w-xl">
+    <div className="px-3 py-6 sm:px-6 sm:py-8 lg:px-8 max-w-xl">
       <button type="button" onClick={() => onNavigate('profile')} className="text-[13px] text-muted-foreground hover:text-foreground mb-6">
         ← Profile
       </button>

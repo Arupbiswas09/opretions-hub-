@@ -9,6 +9,7 @@ import { SA05DealDrawer } from './sales/SA05DealDrawer';
 import { SA07ProposalDrawer } from './sales/SA07ProposalDrawer';
 import { SA08ProposalDetail } from './sales/SA08ProposalDetail';
 import { SA09WonLostModal } from './sales/SA09WonLostModal';
+import { ModuleSubNav, moduleSubNavButtonClass, ModuleSubNavDivider } from './ui/ModuleSubNav';
 
 type Screen = 'dashboard' | 'deals-list' | 'pipeline' | 'deal-detail' | 'proposal-detail';
 
@@ -55,62 +56,52 @@ export default function Sales({ initialScreen = 'dashboard', hideNav = false }: 
 
   return (
     <div className="min-h-full">
-      {/* Screen nav — minimal pill bar */}
+      {/* Screen nav — unified with ModuleSubNav system */}
       {!hideNav && (
-        <div className="px-8 py-3" style={{ borderBottom: '1px solid var(--border)' }}>
-          <div className="flex items-center gap-1">
-            {SCREENS.map((s) => (
-              <button
-                key={s.id}
-                onClick={() => {
-                  if (s.id === 'deal-detail' && !selectedDeal) {
-                    setSelectedDeal({
-                      id: '1', name: 'Website Redesign Project', client: 'Acme Corp',
-                      type: 'Project', value: '$45,000', stage: 'Proposal Sent', owner: 'John Doe',
-                    });
-                  }
-                  setCurrentScreen(s.id);
-                }}
-                className={`px-3 py-1.5 text-[12px] rounded-md transition-all duration-200 ${
-                  currentScreen === s.id
-                    ? 'bg-stone-800 dark:bg-white/10 text-white dark:text-stone-100 font-medium'
-                    : 'text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-200 hover:bg-stone-100/60 dark:hover:bg-white/[0.06]'
-                }`}
-              >
-                {s.label}
-              </button>
-            ))}
-            <div className="w-px h-3.5 bg-stone-200/60 dark:bg-white/10 mx-1.5" />
+        <ModuleSubNav>
+          {SCREENS.map((s) => (
             <button
-              onClick={() => setShowDealDrawer(true)}
-              className="px-3 py-1.5 text-[12px] rounded-md transition-colors
-                         text-stone-400 dark:text-stone-500
-                         hover:text-stone-600 dark:hover:text-stone-200
-                         hover:bg-stone-100/60 dark:hover:bg-white/[0.06]"
+              key={s.id}
+              type="button"
+              onClick={() => {
+                if (s.id === 'deal-detail' && !selectedDeal) {
+                  setSelectedDeal({
+                    id: '1', name: 'Website Redesign Project', client: 'Acme Corp',
+                    type: 'Project', value: '$45,000', stage: 'Proposal Sent', owner: 'John Doe',
+                  });
+                }
+                setCurrentScreen(s.id);
+              }}
+              className={moduleSubNavButtonClass(currentScreen === s.id)}
             >
-              + Deal
+              {s.label}
             </button>
-            <button
-              onClick={() => setShowProposalDrawer(true)}
-              className="px-3 py-1.5 text-[12px] rounded-md transition-colors
-                         text-stone-400 dark:text-stone-500
-                         hover:text-stone-600 dark:hover:text-stone-200
-                         hover:bg-stone-100/60 dark:hover:bg-white/[0.06]"
-            >
-              + Proposal
-            </button>
-            <button
-              onClick={() => setShowWonLostModal(true)}
-              className="px-3 py-1.5 text-[12px] rounded-md transition-colors
-                         text-stone-400 dark:text-stone-500
-                         hover:text-stone-600 dark:hover:text-stone-200
-                         hover:bg-stone-100/60 dark:hover:bg-white/[0.06]"
-            >
-              Won/Lost
-            </button>
-          </div>
-        </div>
+          ))}
+          <ModuleSubNavDivider />
+          <button
+            type="button"
+            onClick={() => setShowDealDrawer(true)}
+            className={moduleSubNavButtonClass(false)}
+          >
+            + Deal
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowProposalDrawer(true)}
+            className={moduleSubNavButtonClass(false)}
+          >
+            + Proposal
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowWonLostModal(true)}
+            className={moduleSubNavButtonClass(false)}
+          >
+            Won/Lost
+          </button>
+        </ModuleSubNav>
       )}
+
 
       {/* Content with page transitions */}
       <AnimatePresence mode="wait">
