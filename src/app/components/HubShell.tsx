@@ -29,6 +29,7 @@ import {
   CreateTaskDrawer, CreateFormDrawer,
 } from './ui/QuickCreateDrawers';
 import { SettingsDrawer } from './ui/DetailPanels';
+import { cn } from './ui/utils';
 
 export { HUB_MODULES, type HubModule };
 
@@ -224,13 +225,15 @@ export default function HubShell({ children }: { children: React.ReactNode }) {
   }, []);
 
   const isPortalView = pathname.startsWith('/hub/portals');
+  /** Deep portal routes (/hub/portals/client, …) need a fixed-height shell so the portal rail stays put while only the main column scrolls. */
+  const isPortalWorkspace = pathname.startsWith('/hub/portals/');
   const mod = moduleFromPath(pathname);
   const sw = collapsed ? 56 : 220;
   const homeHref = '/hub/dashboard';
 
   return (
     <MotionConfig reducedMotion="user">
-      <div className="min-h-screen flex">
+      <div className="flex h-[100dvh] min-h-0 overflow-hidden">
 
         {/* ── Sidebar ── */}
         {!isPortalView && (
@@ -335,8 +338,10 @@ export default function HubShell({ children }: { children: React.ReactNode }) {
         )}
 
         {/* ── Main ── */}
-        <div className="flex-1 flex flex-col"
-          style={{ marginLeft: !isPortalView ? sw : 0, transition: 'margin-left 0.2s ease' }}>
+        <div
+          className="flex min-h-0 flex-1 flex-col overflow-hidden"
+          style={{ marginLeft: !isPortalView ? sw : 0, transition: 'margin-left 0.2s ease' }}
+        >
 
           {/* ── Topbar — Bonsai style: breadcrumb left, actions right ── */}
           <header
@@ -586,10 +591,19 @@ export default function HubShell({ children }: { children: React.ReactNode }) {
             </div>
           </header>
 
-          {/* Content */}
-          <main className="flex-1">
+          {/* Content — portal workspace fills viewport below header; inner column scrolls only */}
+          <main
+            className={cn(
+              'min-h-0 flex-1',
+              isPortalWorkspace ? 'flex flex-col overflow-hidden' : 'overflow-y-auto',
+            )}
+          >
             <AnimatePresence mode="wait">
-              <motion.div key={pathname} {...pageTransition}>
+              <motion.div
+                key={pathname}
+                className={cn(isPortalWorkspace && 'flex h-full min-h-0 flex-1 flex-col')}
+                {...pageTransition}
+              >
                 {children}
               </motion.div>
             </AnimatePresence>

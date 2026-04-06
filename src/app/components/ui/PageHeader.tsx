@@ -41,14 +41,14 @@ export function PageHeader({
   const inner = (
     <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8">
       <div>
-        <p className="text-[10px] font-semibold uppercase tracking-[0.1em] mb-1 text-stone-400 dark:text-stone-500">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.1em] mb-1 text-muted-foreground">
           {eyebrow}
         </p>
-        <h1 className="text-[28px] font-semibold tracking-[-0.025em] text-stone-900 dark:text-stone-50 leading-tight">
+        <h1 className="text-[28px] font-semibold tracking-[-0.025em] text-foreground leading-tight">
           {title}
         </h1>
         {description ? (
-          <p className="text-[13px] mt-1.5 text-stone-500 dark:text-stone-400 max-w-xl leading-relaxed">
+          <p className="text-[13px] mt-1.5 text-muted-foreground max-w-xl leading-relaxed">
             {description}
           </p>
         ) : null}

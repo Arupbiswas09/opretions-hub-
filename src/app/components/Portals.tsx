@@ -11,8 +11,11 @@ import { BonsaiTimeline } from './bonsai/BonsaiTimeline';
 import { BonsaiDocumentList } from './bonsai/BonsaiFileUpload';
 import { EnhancedTable } from './operations/EnhancedTable';
 import { useToast } from './bonsai/ToastSystem';
+import { HubStatTile } from './ops/HubStatTile';
+import { PortalSwitcher, PortalRail, PortalMain } from './portals/PortalChrome';
+import type { PortalType } from './portals/portal-types';
 
-export type PortalType = 'client' | 'employee' | 'freelancer' | 'hris';
+export type { PortalType } from './portals/portal-types';
 type ClientScreen = 'home' | 'projects' | 'requests' | 'documents' | 'invoices' | 'invoice-detail' | 'support' | 'ticket-detail' | 'talent' | 'proposals' | 'proposal-detail' | 'approvals' | 'approval-detail-request' | 'approval-detail-invoice' | 'approval-detail-timesheet' | 'meetings' | 'meeting-detail' | 'forms';
 type EmployeeScreen = 'home' | 'projects' | 'tasks' | 'timesheets' | 'expenses' | 'leave' | 'documents' | 'onboarding' | 'onboarding-task' | 'profile' | 'profile-change-request' | 'training' | 'training-detail' | 'performance-reviews' | 'performance-review-detail' | 'meetings' | 'meeting-detail';
 type FreelancerScreen = 'home' | 'assignments' | 'tasks' | 'timesheets' | 'expenses' | 'documents' | 'onboarding' | 'contract-docs' | 'profile' | 'profile-change-request' | 'self-bills' | 'self-bill-detail';
@@ -38,80 +41,24 @@ export default function Portals({ initialPortal = 'employee', urlSync = false }:
   const [freelancerScreen, setFreelancerScreen] = useState<FreelancerScreen>('home');
   const [hrisScreen, setHRISScreen] = useState<HRISScreen>('profile-requests');
 
-  const portalBtn = (id: PortalType, label: string) => (
-    <button
-      key={id}
-      onClick={() => setPortalType(id)}
-      className={`px-3 py-1.5 text-[12px] rounded-md transition-all duration-200 ${
-        portalType === id
-          ? 'bg-stone-800 text-white font-medium shadow-sm'
-          : 'text-stone-400 hover:text-stone-600 hover:bg-stone-50'
-      }`}
-    >{label}</button>
-  );
-
   const screenKey = activePortal === 'client' ? clientScreen
     : activePortal === 'employee' ? employeeScreen
     : activePortal === 'freelancer' ? freelancerScreen
     : hrisScreen;
 
   return (
-    <div className="min-h-full">
-      {/* Glass tab switcher */}
-      <div
-        className="px-6 py-2 sticky top-0 z-10"
-        style={{
-          background: 'rgba(245,245,243,0.88)',
-          backdropFilter: 'blur(44px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(44px) saturate(180%)',
-          borderBottom: '1px solid rgba(0,0,0,0.06)',
-        }}
-      >
-        <div className="flex items-center gap-1">
-          {(['client','employee','freelancer','hris'] as const).map((id) => {
-            const label = id === 'hris' ? 'HRIS Admin' : id.charAt(0).toUpperCase() + id.slice(1);
-            const dot: Record<string, string> = { client: '#6366F1', employee: '#059669', freelancer: '#D97706', hris: '#78716c' };
-            const href = `/hub/portals/${id}`;
-            const className =
-              'flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] text-[12px] font-medium transition-all duration-200';
-            const style = {
-              background: activePortal === id ? '#1c1917' : 'transparent',
-              color: activePortal === id ? '#ffffff' : '#78716c',
-            } as const;
-            if (urlSync) {
-              return (
-                <Link
-                  key={id}
-                  href={href}
-                  className={className}
-                  style={style}
-                  scroll={false}
-                >
-                  {activePortal === id && <div className="w-[5px] h-[5px] rounded-full" style={{ background: dot[id] }} />}
-                  {label}
-                </Link>
-              );
-            }
-            return (
-              <button
-                key={id}
-                type="button"
-                onClick={() => setPortalType(id)}
-                className={className}
-                style={style}
-                onMouseEnter={(e) => { if (activePortal !== id) e.currentTarget.style.background = 'rgba(28,25,23,0.06)'; }}
-                onMouseLeave={(e) => { if (activePortal !== id) e.currentTarget.style.background = 'transparent'; }}
-              >
-                {activePortal === id && <div className="w-[5px] h-[5px] rounded-full" style={{ background: dot[id] }} />}
-                {label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+    <div className="flex h-full min-h-0 flex-1 flex-col bg-background">
+      <PortalSwitcher active={activePortal} urlSync={urlSync} onPortalChange={setPortalType} />
 
       <AnimatePresence mode="wait">
-        <motion.div key={`${activePortal}-${screenKey}`} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.25, ease: 'easeOut' }}>
+        <motion.div
+          key={`${activePortal}-${screenKey}`}
+          className="flex min-h-0 flex-1 flex-col overflow-hidden"
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -4 }}
+          transition={{ duration: 0.25, ease: 'easeOut' }}
+        >
           {activePortal === 'client' && (
             <ClientPortal currentScreen={clientScreen} onNavigate={setClientScreen} />
           )}
@@ -130,7 +77,7 @@ export default function Portals({ initialPortal = 'employee', urlSync = false }:
   );
 }
 
-// CP-00: Client Portal Shell + Screens
+// CP-00: Client Portal — vendor / buyer workspace (approvals, invoices, delivery)
 function ClientPortal({ currentScreen, onNavigate }: { currentScreen: ClientScreen; onNavigate: (screen: ClientScreen) => void }) {
   const { addToast } = useToast();
   const [showApprovalModal, setShowApprovalModal] = useState(false);
@@ -151,73 +98,32 @@ function ClientPortal({ currentScreen, onNavigate }: { currentScreen: ClientScre
     { id: 'forms', label: 'Forms', icon: ClipboardList },
   ];
 
+  const clientNavActive = (itemId: string) => {
+    const id = itemId as ClientScreen;
+    return (
+      currentScreen === id ||
+      (currentScreen === 'proposal-detail' && id === 'proposals') ||
+      (currentScreen.startsWith('approval-detail') && id === 'approvals') ||
+      (currentScreen === 'meeting-detail' && id === 'meetings') ||
+      (currentScreen === 'invoice-detail' && id === 'invoices') ||
+      (currentScreen === 'ticket-detail' && id === 'support')
+    );
+  };
+
   return (
-    <div className="flex h-screen">
-      {/* Client Portal Sidebar — Apple glass */}
-      <div
-        className="w-60 flex flex-col flex-shrink-0"
-        style={{
-          background: 'rgba(255,255,255,0.76)',
-          backdropFilter: 'blur(44px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(44px) saturate(180%)',
-          borderRight: '1px solid rgba(0,0,0,0.06)',
-          boxShadow: '4px 0 24px rgba(0,0,0,0.03)',
-        }}
-      >
-        <div className="px-5 py-5" style={{ borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
-          <div className="flex items-center gap-2.5">
-            <div
-              className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
-              style={{ background: 'linear-gradient(145deg, #4f46e5, #6366f1)', boxShadow: '0 2px 6px rgba(99,102,241,0.3)' }}
-            >
-              <span className="text-white text-[9px] font-semibold">C</span>
-            </div>
-            <div>
-              <p className="text-[13px] font-semibold text-stone-800 leading-tight tracking-[-0.01em]">Client Portal</p>
-              <p className="text-[11px] text-stone-400 leading-tight">Acme Corporation</p>
-            </div>
-          </div>
-        </div>
+    <div className="flex min-h-0 flex-1 overflow-hidden">
+      <PortalRail
+        brandLetter="C"
+        title="Client portal"
+        subtitle="Acme Corporation"
+        layoutId="portal-client-rail"
+        items={menuItems}
+        isItemActive={clientNavActive}
+        onSelect={(id) => onNavigate(id as ClientScreen)}
+        user={{ initials: 'AC', name: 'Alex Chen', email: 'alex.chen@acme.com' }}
+      />
 
-        <nav className="flex-1 px-2.5 py-3 space-y-[2px] overflow-y-auto">
-          {menuItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = currentScreen === item.id ||
-              (currentScreen === 'proposal-detail' && item.id === 'proposals') ||
-              (currentScreen.startsWith('approval-detail') && item.id === 'approvals') ||
-              (currentScreen === 'meeting-detail' && item.id === 'meetings') ||
-              (currentScreen === 'invoice-detail' && item.id === 'invoices') ||
-              (currentScreen === 'ticket-detail' && item.id === 'support');
-            return (
-              <button
-                key={item.id}
-                onClick={() => onNavigate(item.id as ClientScreen)}
-                className="relative w-full flex items-center gap-2.5 px-3 py-[7px] rounded-[10px] text-left transition-all"
-                style={{ background: isActive ? 'rgba(28,25,23,0.07)' : 'transparent', color: isActive ? '#1c1917' : '#78716c' }}
-                onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = 'rgba(28,25,23,0.04)'; }}
-                onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
-              >
-                {isActive && <motion.div layoutId="client-nav" className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-[16px] rounded-full bg-stone-800" transition={{ type:'spring', stiffness:450, damping:32 }} />}
-                <Icon className="w-4 h-4 flex-shrink-0" style={{ strokeWidth: isActive ? 2.1 : 1.7 }} />
-                <span className={`text-[13px] ${isActive ? 'font-semibold text-stone-800' : 'text-stone-500'}`}>{item.label}</span>
-              </button>
-            );
-          })}
-        </nav>
-
-        <div className="px-3 py-3" style={{ borderTop: '1px solid rgba(0,0,0,0.05)' }}>
-          <div className="flex items-center gap-2.5 px-3 py-2">
-            <div className="w-7 h-7 rounded-full bg-stone-200 flex items-center justify-center text-[11px] font-semibold text-stone-600 flex-shrink-0">AC</div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[12px] font-medium text-stone-700 truncate">Admin User</p>
-              <p className="text-[11px] text-stone-400 truncate">admin@acme.com</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto bg-stone-50">
+      <PortalMain>
         {currentScreen === 'home' && <ClientHome onNavigate={onNavigate} />}
         {currentScreen === 'projects' && <ClientProjects />}
         {currentScreen === 'proposals' && <ClientProposalsList onNavigate={onNavigate} />}
@@ -236,7 +142,7 @@ function ClientPortal({ currentScreen, onNavigate }: { currentScreen: ClientScre
         {currentScreen === 'ticket-detail' && <ClientTicketDetail onNavigate={onNavigate} />}
         {currentScreen === 'talent' && <ClientTalent />}
         {currentScreen === 'forms' && <ClientFormsInbox />}
-      </div>
+      </PortalMain>
 
       {/* Approval Modal */}
       {showApprovalModal && (
@@ -267,63 +173,56 @@ function ClientPortal({ currentScreen, onNavigate }: { currentScreen: ClientScre
 
 // CP-01: Client Portal Home — Editorial
 function ClientHome({ onNavigate }: { onNavigate: (screen: ClientScreen) => void }) {
+  const kpis = [
+    { label: 'Active projects', value: '3', sub: '1 on track' },
+    { label: 'Timesheets to review', value: '5', sub: 'awaiting approval' },
+    { label: 'Open tickets', value: '2', sub: 'needs response' },
+    { label: 'Invoices', value: '4', sub: '1 unpaid' },
+  ];
+
   return (
-    <div className="px-8 py-8 max-w-4xl">
+    <div className="max-w-4xl px-6 py-8 md:px-8">
       <motion.div
         className="mb-8"
-        initial={{ opacity:0, y:8 }}
-        animate={{ opacity:1, y:0 }}
-        transition={{ duration:0.3 }}
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
       >
-        <p className="text-[11px] font-semibold text-stone-400 uppercase tracking-[0.1em] mb-1">Client Portal</p>
-        <h1 className="text-[30px] font-semibold text-stone-800 tracking-[-0.03em]">Welcome back, Acme.</h1>
+        <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">Client workspace</p>
+        <h1 className="text-[30px] font-semibold tracking-[-0.03em] text-foreground">Welcome back, Acme</h1>
+        <p className="mt-2 max-w-xl text-[14px] text-muted-foreground">
+          Approvals, delivery, and billing in one place — tuned for sponsor and procurement stakeholders.
+        </p>
       </motion.div>
 
-      <motion.div
-        className="grid grid-cols-4 gap-3 mb-6"
-        initial="hidden"
-        animate="show"
-        variants={{ hidden: {}, show: { transition: { staggerChildren: 0.07 } } }}
-      >
-        {[
-          { label: 'Active Projects', value: '3', sub: '1 on track' },
-          { label: 'Pending Timesheets', value: '5', sub: 'awaiting review', urgent: true },
-          { label: 'Open Tickets', value: '2', sub: 'unresolved' },
-          { label: 'Invoices', value: '4', sub: '1 pending payment' },
-        ].map((kpi) => (
-          <motion.div
-            key={kpi.label}
-            className="glass-stat p-4"
-            variants={{ hidden: { opacity:0, y:12 }, show: { opacity:1, y:0, transition:{ type:'spring', stiffness:320, damping:28 } } }}
-          >
-            <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-[0.08em] mb-2">{kpi.label}</p>
-            <p className={`text-[32px] font-bold tracking-[-0.03em] leading-none shimmer-text ${kpi.urgent ? 'text-stone-600' : 'text-stone-800'}`}>{kpi.value}</p>
-            <p className="text-[11px] text-stone-400 mt-1.5">{kpi.sub}</p>
-          </motion.div>
+      <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {kpis.map((kpi, i) => (
+          <HubStatTile key={kpi.label} label={kpi.label} value={kpi.value} sub={kpi.sub} delay={i * 0.05} />
         ))}
-      </motion.div>
+      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <button
+          type="button"
           onClick={() => onNavigate('projects')}
-          className="bg-white/60 backdrop-blur-sm rounded-xl border border-stone-200/40 p-5 hover:bg-white/80 hover:shadow-sm transition-all text-left group"
+          className="portal-panel group p-5 text-left shadow-sm transition-shadow hover:shadow-md"
         >
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-[13px] font-semibold text-stone-700">Active Projects</h3>
-            <span className="text-stone-300 group-hover:text-stone-500 transition-colors text-[14px]">→</span>
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="text-[13px] font-semibold text-foreground">Active projects</h3>
+            <span className="text-[14px] text-muted-foreground transition-colors group-hover:text-foreground">→</span>
           </div>
           <div className="space-y-2">
             {[
-              { name: 'Website Redesign', pct: 65, status: 'On Track' },
-              { name: 'Mobile App Development', pct: 30, status: 'In Progress' },
+              { name: 'Website redesign', pct: 65 },
+              { name: 'Mobile app', pct: 30 },
             ].map(p => (
               <div key={p.name} className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <p className="text-[12px] font-medium text-stone-700">{p.name}</p>
-                  <p className="text-[11px] text-stone-400">{p.pct}%</p>
+                  <p className="text-[12px] font-medium text-foreground">{p.name}</p>
+                  <p className="text-[11px] text-muted-foreground">{p.pct}%</p>
                 </div>
-                <div className="h-1 bg-stone-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-stone-400 rounded-full transition-all" style={{ width: `${p.pct}%` }} />
+                <div className="h-1 overflow-hidden rounded-full bg-secondary">
+                  <div className="h-full rounded-full bg-primary/70 transition-all" style={{ width: `${p.pct}%` }} />
                 </div>
               </div>
             ))}
@@ -331,46 +230,47 @@ function ClientHome({ onNavigate }: { onNavigate: (screen: ClientScreen) => void
         </button>
 
         <button
+          type="button"
           onClick={() => onNavigate('support')}
-          className="bg-white/60 backdrop-blur-sm rounded-xl border border-stone-200/40 p-5 hover:bg-white/80 hover:shadow-sm transition-all text-left group"
+          className="portal-panel group p-5 text-left shadow-sm transition-shadow hover:shadow-md"
         >
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-[13px] font-semibold text-stone-700">Support Tickets</h3>
-            <span className="text-stone-300 group-hover:text-stone-500 transition-colors text-[14px]">→</span>
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="text-[13px] font-semibold text-foreground">Support</h3>
+            <span className="text-[14px] text-muted-foreground transition-colors group-hover:text-foreground">→</span>
           </div>
-          <div className="space-y-2">
-            <div className="p-3 bg-stone-100/60 rounded-lg border border-stone-200/50">
-              <p className="text-[12px] font-medium text-stone-700">Access issue with project files</p>
-              <p className="text-[11px] text-stone-600 mt-0.5">Open • 2 hours ago</p>
-            </div>
+          <div className="rounded-lg border border-border bg-secondary/40 p-3">
+            <p className="text-[12px] font-medium text-foreground">Access issue with project files</p>
+            <p className="mt-0.5 text-[11px] text-muted-foreground">Open · 2 hours ago</p>
           </div>
         </button>
 
         <button
+          type="button"
           onClick={() => onNavigate('invoices')}
-          className="bg-white/60 backdrop-blur-sm rounded-xl border border-stone-200/40 p-5 hover:bg-white/80 hover:shadow-sm transition-all text-left group"
+          className="portal-panel group p-5 text-left shadow-sm transition-shadow hover:shadow-md"
         >
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-[13px] font-semibold text-stone-700">Recent Invoices</h3>
-            <span className="text-stone-300 group-hover:text-stone-500 transition-colors text-[14px]">→</span>
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="text-[13px] font-semibold text-foreground">Recent invoices</h3>
+            <span className="text-[14px] text-muted-foreground transition-colors group-hover:text-foreground">→</span>
           </div>
-          <div className="p-3 bg-stone-50 rounded-lg border border-stone-100">
-            <p className="text-[12px] font-medium text-stone-700">INV-2026-001 • $28,500</p>
-            <p className="text-[11px] text-stone-400 mt-0.5">Due Feb 14, 2026 • Pending</p>
+          <div className="rounded-lg border border-border bg-secondary/30 p-3">
+            <p className="text-[12px] font-medium text-foreground">INV-2026-001 · $28,500</p>
+            <p className="mt-0.5 text-[11px] text-muted-foreground">Due Feb 14, 2026 · Pending</p>
           </div>
         </button>
 
         <button
+          type="button"
           onClick={() => onNavigate('talent')}
-          className="bg-white/60 backdrop-blur-sm rounded-xl border border-stone-200/40 p-5 hover:bg-white/80 hover:shadow-sm transition-all text-left group"
+          className="portal-panel group p-5 text-left shadow-sm transition-shadow hover:shadow-md"
         >
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-[13px] font-semibold text-stone-700">Talent Shortlists</h3>
-            <span className="text-stone-300 group-hover:text-stone-500 transition-colors text-[14px]">→</span>
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="text-[13px] font-semibold text-foreground">Talent shortlists</h3>
+            <span className="text-[14px] text-muted-foreground transition-colors group-hover:text-foreground">→</span>
           </div>
-          <div className="p-3 bg-stone-50 rounded-lg border border-stone-100">
-            <p className="text-[12px] font-medium text-stone-700">Senior React Developer</p>
-            <p className="text-[11px] text-stone-400 mt-0.5">3 shortlisted candidates</p>
+          <div className="rounded-lg border border-border bg-secondary/30 p-3">
+            <p className="text-[12px] font-medium text-foreground">Senior React developer</p>
+            <p className="mt-0.5 text-[11px] text-muted-foreground">3 candidates · your review</p>
           </div>
         </button>
       </div>
@@ -381,23 +281,23 @@ function ClientHome({ onNavigate }: { onNavigate: (screen: ClientScreen) => void
 function ClientProjects() {
   return (
     <div className="px-8 py-8 max-w-3xl">
-      <h1 className="text-[24px] font-semibold text-stone-800 tracking-[-0.02em] mb-6">My Projects</h1>
-      <div className="bg-white/60 backdrop-blur-sm rounded-xl border border-stone-200/40 overflow-hidden divide-y divide-stone-100/60">
+      <h1 className="text-[24px] font-semibold text-foreground tracking-[-0.02em] mb-6">My Projects</h1>
+      <div className="portal-panel overflow-hidden divide-y divide-border">
         {[
           { name: 'Website Redesign', status: 'On Track', statusKey: 'active' as const, progress: 65 },
           { name: 'Mobile App Development', status: 'In Progress', statusKey: 'inProgress' as const, progress: 30 },
           { name: 'Brand Identity', status: 'Completed', statusKey: 'completed' as const, progress: 100 },
         ].map((project, i) => (
-          <div key={i} className="px-5 py-4 hover:bg-stone-50/50 transition-colors cursor-pointer">
+          <div key={i} className="px-5 py-4 hover:bg-secondary/50 transition-colors cursor-pointer">
             <div className="flex items-center justify-between mb-2.5">
-              <h3 className="text-[14px] font-medium text-stone-800">{project.name}</h3>
+              <h3 className="text-[14px] font-medium text-foreground">{project.name}</h3>
               <BonsaiStatusPill status={project.statusKey} label={project.status} />
             </div>
             <div className="flex items-center gap-3">
-              <div className="flex-1 h-1 bg-stone-100 rounded-full overflow-hidden">
-                <div className="h-full bg-stone-400 rounded-full" style={{ width: `${project.progress}%` }} />
+              <div className="flex-1 h-1 bg-secondary rounded-full overflow-hidden">
+                <div className="h-full bg-muted-foreground/50 rounded-full" style={{ width: `${project.progress}%` }} />
               </div>
-              <span className="text-[12px] text-stone-400">{project.progress}%</span>
+              <span className="text-[12px] text-muted-foreground">{project.progress}%</span>
             </div>
           </div>
         ))}
@@ -409,14 +309,14 @@ function ClientProjects() {
 function ClientRequests({ onNavigate }: { onNavigate: (screen: ClientScreen) => void }) {
   return (
     <div className="px-8 py-8 max-w-3xl">
-      <h1 className="text-[24px] font-semibold text-stone-800 tracking-[-0.02em] mb-6">Pending Requests</h1>
-      <p className="text-[11px] font-medium text-stone-400 uppercase tracking-[0.08em] mb-3">Timesheet Approvals</p>
-      <div className="bg-white/60 backdrop-blur-sm rounded-xl border border-stone-200/40 overflow-hidden divide-y divide-stone-100/60">
+      <h1 className="text-[24px] font-semibold text-foreground tracking-[-0.02em] mb-6">Pending Requests</h1>
+      <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-[0.08em] mb-3">Timesheet Approvals</p>
+      <div className="portal-panel overflow-hidden divide-y divide-border">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="px-5 py-4 flex items-center justify-between hover:bg-stone-50/50 transition-colors">
+          <div key={i} className="px-5 py-4 flex items-center justify-between hover:bg-secondary/50 transition-colors">
             <div>
-              <p className="text-[14px] font-medium text-stone-800">Week of Jan {i * 7}, 2026</p>
-              <p className="text-[12px] text-stone-400 mt-0.5">Sarah Johnson · 42 hours</p>
+              <p className="text-[14px] font-medium text-foreground">Week of Jan {i * 7}, 2026</p>
+              <p className="text-[12px] text-muted-foreground mt-0.5">Sarah Johnson · 42 hours</p>
             </div>
             <BonsaiButton size="sm" variant="ghost" onClick={() => onNavigate('approval-detail-timesheet')}>
               Review
@@ -437,9 +337,9 @@ function ClientFormsInbox() {
   ];
   return (
     <div className="px-8 py-8 max-w-3xl">
-      <h1 className="text-[24px] font-semibold text-stone-800 tracking-[-0.02em] mb-2">Forms inbox</h1>
-      <p className="text-[13px] text-stone-500 mb-6">Assigned intakes and signatures — same pipeline as the internal Forms module.</p>
-      <div className="bg-white/60 backdrop-blur-sm rounded-xl border border-stone-200/40">
+      <h1 className="text-[24px] font-semibold text-foreground tracking-[-0.02em] mb-2">Forms inbox</h1>
+      <p className="text-[13px] text-muted-foreground mb-6">Assigned intakes and signatures — same pipeline as the internal Forms module.</p>
+      <div className="portal-panel">
         <EnhancedTable
           columns={[
             { key: 'name', label: 'Form', sortable: true },
@@ -475,13 +375,13 @@ function ClientDocuments() {
 
   return (
     <div className="px-8 py-8 max-w-3xl">
-      <h1 className="text-[24px] font-semibold text-stone-800 tracking-[-0.02em] mb-6">Documents</h1>
+      <h1 className="text-[24px] font-semibold text-foreground tracking-[-0.02em] mb-6">Documents</h1>
       <div className="flex gap-2 mb-4">
         {['All Types', 'PDF', 'Archives'].map(f => (
-          <button key={f} className="px-3 py-1.5 text-[12px] rounded-md text-stone-400 hover:text-stone-600 hover:bg-stone-100 transition-colors first:bg-stone-100 first:text-stone-800">{f}</button>
+          <button key={f} className="px-3 py-1.5 text-[12px] rounded-md text-muted-foreground hover:text-muted-foreground hover:bg-secondary transition-colors first:bg-secondary first:text-foreground">{f}</button>
         ))}
       </div>
-      <div className="bg-white/60 backdrop-blur-sm rounded-xl border border-stone-200/40 p-5">
+      <div className="portal-panel p-5">
         <BonsaiDocumentList
           documents={documents}
           onDownload={doc => addToast(`Downloading ${doc.name}`, 'info')}
@@ -501,9 +401,9 @@ function ClientInvoices({ onNavigate }: { onNavigate: (screen: ClientScreen) => 
 
   return (
     <div className="px-8 py-8 max-w-3xl">
-      <h1 className="text-[24px] font-semibold text-stone-800 tracking-[-0.02em] mb-6">Invoices</h1>
+      <h1 className="text-[24px] font-semibold text-foreground tracking-[-0.02em] mb-6">Invoices</h1>
 
-      <div className="bg-white/60 backdrop-blur-sm rounded-xl border border-stone-200/40">
+      <div className="portal-panel">
         <EnhancedTable
           columns={[
             { key: 'number', label: 'Invoice #', sortable: true },
@@ -514,7 +414,7 @@ function ClientInvoices({ onNavigate }: { onNavigate: (screen: ClientScreen) => 
           ]}
           data={invoices.map(inv => ({
             ...inv,
-            amount: <span className="font-semibold text-stone-800">${inv.amount.toLocaleString()}</span>,
+            amount: <span className="font-semibold text-foreground">${inv.amount.toLocaleString()}</span>,
             status: (
               <BonsaiStatusPill
                 status={inv.status === 'Paid' ? 'active' : 'pending'}
@@ -539,15 +439,15 @@ function ClientInvoiceDetail({ onNavigate }: { onNavigate: (screen: ClientScreen
     <div className="p-8">
       <button
         onClick={() => onNavigate('invoices')}
-        className="flex items-center gap-2 text-sm text-stone-500 hover:text-stone-800 mb-6"
+        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6"
       >
         ← Back to Invoices
       </button>
 
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-stone-800">INV-2026-001</h1>
-          <p className="text-sm text-stone-500">Due Feb 14, 2026</p>
+          <h1 className="text-2xl font-semibold text-foreground">INV-2026-001</h1>
+          <p className="text-sm text-muted-foreground">Due Feb 14, 2026</p>
         </div>
         <div className="flex items-center gap-3">
           <BonsaiStatusPill status="pending" label="Sent" />
@@ -567,47 +467,47 @@ function ClientInvoiceDetail({ onNavigate }: { onNavigate: (screen: ClientScreen
 
       <div className="mt-6">
         {activeTab === 'overview' && (
-          <div className="bg-white rounded-lg border border-stone-200/40 p-6">
+          <div className="portal-panel rounded-lg p-6">
             <div className="grid grid-cols-2 gap-6 mb-6">
               <div>
-                <p className="text-xs text-stone-500 mb-1">Invoice Date</p>
-                <p className="text-sm font-medium text-stone-800">Jan 15, 2026</p>
+                <p className="text-xs text-muted-foreground mb-1">Invoice Date</p>
+                <p className="text-sm font-medium text-foreground">Jan 15, 2026</p>
               </div>
               <div>
-                <p className="text-xs text-stone-500 mb-1">Due Date</p>
-                <p className="text-sm font-medium text-stone-800">Feb 14, 2026</p>
+                <p className="text-xs text-muted-foreground mb-1">Due Date</p>
+                <p className="text-sm font-medium text-foreground">Feb 14, 2026</p>
               </div>
               <div>
-                <p className="text-xs text-stone-500 mb-1">Amount</p>
-                <p className="text-2xl font-semibold text-stone-800">$28,500.00</p>
+                <p className="text-xs text-muted-foreground mb-1">Amount</p>
+                <p className="text-2xl font-semibold text-foreground">$28,500.00</p>
               </div>
               <div>
-                <p className="text-xs text-stone-500 mb-1">Payment Terms</p>
-                <p className="text-sm font-medium text-stone-800">Net 30</p>
+                <p className="text-xs text-muted-foreground mb-1">Payment Terms</p>
+                <p className="text-sm font-medium text-foreground">Net 30</p>
               </div>
             </div>
           </div>
         )}
         {activeTab === 'items' && (
-          <div className="bg-white rounded-lg border border-stone-200/40 p-6">
+          <div className="portal-panel rounded-lg p-6">
             <div className="space-y-3">
               {[
                 { desc: 'Website Design - Week 1-2', qty: 80, rate: 150 },
                 { desc: 'Development - Week 1-2', qty: 100, rate: 125 },
               ].map((item, i) => (
-                <div key={i} className="p-4 bg-stone-50 rounded-lg flex justify-between">
+                <div key={i} className="p-4 bg-secondary/40 rounded-lg flex justify-between">
                   <div>
-                    <p className="font-medium text-stone-800">{item.desc}</p>
-                    <p className="text-sm text-stone-500">{item.qty} hours × ${item.rate}/hr</p>
+                    <p className="font-medium text-foreground">{item.desc}</p>
+                    <p className="text-sm text-muted-foreground">{item.qty} hours × ${item.rate}/hr</p>
                   </div>
-                  <p className="font-semibold text-stone-800">${(item.qty * item.rate).toLocaleString()}</p>
+                  <p className="font-semibold text-foreground">${(item.qty * item.rate).toLocaleString()}</p>
                 </div>
               ))}
             </div>
           </div>
         )}
         {activeTab === 'activity' && (
-          <div className="bg-white rounded-lg border border-stone-200/40 p-6">
+          <div className="portal-panel rounded-lg p-6">
             <BonsaiTimeline
               items={[
                 { id: '1', title: 'Invoice sent', description: 'Sent to client email', timestamp: 'Jan 15, 2026', user: { name: 'System' } },
@@ -626,12 +526,12 @@ function ClientSupport({ onNavigate }: { onNavigate: (screen: ClientScreen) => v
   return (
     <div className="p-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold text-stone-800">Support Tickets</h1>
+        <h1 className="text-2xl font-semibold text-foreground">Support Tickets</h1>
         <BonsaiButton variant="primary">New Ticket</BonsaiButton>
       </div>
 
-      <div className="bg-white rounded-lg border border-stone-200/40">
-        <div className="divide-y divide-stone-100/60">
+      <div className="portal-panel rounded-lg">
+        <div className="divide-y divide-border">
           {[
             { id: '1', subject: 'Access issue with project files', status: 'Open', priority: 'High', created: '2 hours ago' },
             { id: '2', subject: 'Question about invoice', status: 'Resolved', priority: 'Low', created: '3 days ago' },
@@ -639,18 +539,18 @@ function ClientSupport({ onNavigate }: { onNavigate: (screen: ClientScreen) => v
             <button
               key={ticket.id}
               onClick={() => onNavigate('ticket-detail')}
-              className="w-full p-6 hover:bg-stone-50 transition-colors text-left"
+              className="w-full p-6 hover:bg-secondary/50 transition-colors text-left"
             >
               <div className="flex items-start justify-between mb-2">
-                <h3 className="font-semibold text-stone-800">{ticket.subject}</h3>
+                <h3 className="font-semibold text-foreground">{ticket.subject}</h3>
                 <BonsaiStatusPill
                   status={ticket.status === 'Open' ? 'pending' : 'active'}
                   label={ticket.status}
                 />
               </div>
-              <div className="flex items-center gap-3 text-sm text-stone-500">
+              <div className="flex items-center gap-3 text-sm text-muted-foreground">
                 <span className={`px-2 py-1 rounded-full text-xs ${
-                  ticket.priority === 'High' ? 'bg-stone-100 text-stone-700' : 'bg-stone-100 text-stone-500'
+                  ticket.priority === 'High' ? 'bg-secondary text-foreground' : 'bg-secondary text-muted-foreground'
                 }`}>
                   {ticket.priority}
                 </span>
@@ -673,15 +573,15 @@ function ClientTicketDetail({ onNavigate }: { onNavigate: (screen: ClientScreen)
     <div className="p-8">
       <button
         onClick={() => onNavigate('support')}
-        className="flex items-center gap-2 text-sm text-stone-500 hover:text-stone-800 mb-6"
+        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6"
       >
         ← Back to Support
       </button>
 
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-stone-800 mb-2">Access issue with project files</h1>
-          <p className="text-sm text-stone-500">Ticket #TKT-1234 • Created 2 hours ago</p>
+          <h1 className="text-2xl font-semibold text-foreground mb-2">Access issue with project files</h1>
+          <p className="text-sm text-muted-foreground">Ticket #TKT-1234 • Created 2 hours ago</p>
         </div>
         <BonsaiStatusPill status="pending" label="Open" />
       </div>
@@ -698,35 +598,35 @@ function ClientTicketDetail({ onNavigate }: { onNavigate: (screen: ClientScreen)
       <div className="mt-6">
         {activeTab === 'conversation' && (
           <div className="space-y-4">
-            <div className="bg-white rounded-lg border border-stone-200/40 p-6">
+            <div className="portal-panel rounded-lg p-6">
               <div className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-full bg-stone-600 flex items-center justify-center text-white font-semibold">
+                <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-semibold">
                   AC
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="font-medium text-stone-800">You</span>
-                    <span className="text-xs text-stone-500">2 hours ago</span>
+                    <span className="font-medium text-foreground">You</span>
+                    <span className="text-xs text-muted-foreground">2 hours ago</span>
                   </div>
-                  <p className="text-sm text-stone-800">
+                  <p className="text-sm text-foreground">
                     I'm unable to access the shared project files folder. Getting an "Access Denied" error.
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-lg border border-stone-200/40 p-4">
+            <div className="portal-panel rounded-lg p-4">
               <textarea
                 rows={3}
                 placeholder="Type your reply..."
-                className="w-full px-3 py-2 bg-stone-50 border border-stone-200/40 rounded-lg text-sm resize-none mb-2"
+                className="w-full px-3 py-2 bg-secondary/40 border border-border rounded-lg text-sm resize-none mb-2"
               />
               <BonsaiButton size="sm">Send Reply</BonsaiButton>
             </div>
           </div>
         )}
         {activeTab === 'attachments' && (
-          <div className="bg-white rounded-lg border border-stone-200/40 p-6 text-center text-stone-500">
+          <div className="portal-panel rounded-lg p-6 text-center text-muted-foreground">
             No attachments
           </div>
         )}
@@ -739,27 +639,27 @@ function ClientTalent() {
   const { addToast } = useToast();
   return (
     <div className="p-8 max-w-3xl">
-      <h1 className="text-2xl font-semibold text-stone-800 mb-2">Talent shortlists</h1>
-      <p className="text-sm text-stone-500 mb-6">Review profiles shared from Talent — feedback syncs to your account team.</p>
+      <h1 className="text-2xl font-semibold text-foreground mb-2">Talent shortlists</h1>
+      <p className="text-sm text-muted-foreground mb-6">Review profiles shared from Talent — feedback syncs to your account team.</p>
 
       <div className="space-y-6">
-        <div className="bg-white rounded-xl border border-stone-200/40 p-6">
+        <div className="portal-panel rounded-xl p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-stone-800">Senior React Developer</h3>
+            <h3 className="font-semibold text-foreground">Senior React Developer</h3>
             <BonsaiStatusPill status="pending" label="Awaiting feedback" />
           </div>
-          <p className="text-sm text-stone-500 mb-4">3 shortlisted candidates</p>
+          <p className="text-sm text-muted-foreground mb-4">3 shortlisted candidates</p>
           <div className="space-y-3">
             {[
               { name: 'Alex Rivera', exp: '8 yrs · Fintech', rate: '$95–110/hr' },
               { name: 'Jordan Lee', exp: '6 yrs · Product SaaS', rate: '$90–105/hr' },
               { name: 'Sam Okonkwo', exp: '10 yrs · Agency', rate: '$100–125/hr' },
             ].map(c => (
-              <div key={c.name} className="flex items-center justify-between p-4 bg-stone-50 rounded-lg border border-stone-100">
+              <div key={c.name} className="flex items-center justify-between p-4 bg-secondary/40 rounded-lg border border-border/60">
                 <div>
-                  <p className="font-medium text-stone-800">{c.name}</p>
-                  <p className="text-xs text-stone-500 mt-0.5">{c.exp}</p>
-                  <p className="text-xs text-stone-400 mt-1">{c.rate}</p>
+                  <p className="font-medium text-foreground">{c.name}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{c.exp}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{c.rate}</p>
                 </div>
                 <div className="flex gap-2">
                   <BonsaiButton size="sm" variant="ghost" onClick={() => addToast('Decline recorded — recruiter notified.', 'info')}>
@@ -787,9 +687,9 @@ function ClientProposalsList({ onNavigate }: { onNavigate: (screen: ClientScreen
 
   return (
     <div className="p-8">
-      <h1 className="text-2xl font-semibold text-stone-800 mb-6">Proposals</h1>
+      <h1 className="text-2xl font-semibold text-foreground mb-6">Proposals</h1>
 
-      <div className="bg-white rounded-lg border border-stone-200/40">
+      <div className="portal-panel rounded-lg">
         <EnhancedTable
           columns={[
             { key: 'title', label: 'Proposal Title', sortable: true },
@@ -798,7 +698,7 @@ function ClientProposalsList({ onNavigate }: { onNavigate: (screen: ClientScreen
           ]}
           data={proposals.map(prop => ({
             ...prop,
-            amount: <span className="font-semibold text-stone-800">${prop.amount.toLocaleString()}</span>,
+            amount: <span className="font-semibold text-foreground">${prop.amount.toLocaleString()}</span>,
             status: (
               <BonsaiStatusPill
                 status={prop.status === 'Approved' ? 'active' : 'pending'}
@@ -823,15 +723,15 @@ function ClientProposalDetail({ onNavigate, onShowApproval }: { onNavigate: (scr
     <div className="p-8">
       <button
         onClick={() => onNavigate('proposals')}
-        className="flex items-center gap-2 text-sm text-stone-500 hover:text-stone-800 mb-6"
+        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6"
       >
         ← Back to Proposals
       </button>
 
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-stone-800">Website Redesign Proposal</h1>
-          <p className="text-sm text-stone-500">Proposal #PRP-1234 • Created 2 hours ago</p>
+          <h1 className="text-2xl font-semibold text-foreground">Website Redesign Proposal</h1>
+          <p className="text-sm text-muted-foreground">Proposal #PRP-1234 • Created 2 hours ago</p>
         </div>
         <div className="flex items-center gap-3">
           <BonsaiStatusPill status="pending" label="Pending" />
@@ -852,39 +752,39 @@ function ClientProposalDetail({ onNavigate, onShowApproval }: { onNavigate: (scr
 
       <div className="mt-6">
         {activeTab === 'overview' && (
-          <div className="bg-white rounded-lg border border-stone-200/40 p-6">
+          <div className="portal-panel rounded-lg p-6">
             <div className="grid grid-cols-2 gap-6 mb-6">
               <div>
-                <p className="text-xs text-stone-500 mb-1">Proposal Date</p>
-                <p className="text-sm font-medium text-stone-800">Jan 15, 2026</p>
+                <p className="text-xs text-muted-foreground mb-1">Proposal Date</p>
+                <p className="text-sm font-medium text-foreground">Jan 15, 2026</p>
               </div>
               <div>
-                <p className="text-xs text-stone-500 mb-1">Amount</p>
-                <p className="text-2xl font-semibold text-stone-800">$28,500.00</p>
+                <p className="text-xs text-muted-foreground mb-1">Amount</p>
+                <p className="text-2xl font-semibold text-foreground">$28,500.00</p>
               </div>
             </div>
           </div>
         )}
         {activeTab === 'items' && (
-          <div className="bg-white rounded-lg border border-stone-200/40 p-6">
+          <div className="portal-panel rounded-lg p-6">
             <div className="space-y-3">
               {[
                 { desc: 'Website Design - Week 1-2', qty: 80, rate: 150 },
                 { desc: 'Development - Week 1-2', qty: 100, rate: 125 },
               ].map((item, i) => (
-                <div key={i} className="p-4 bg-stone-50 rounded-lg flex justify-between">
+                <div key={i} className="p-4 bg-secondary/40 rounded-lg flex justify-between">
                   <div>
-                    <p className="font-medium text-stone-800">{item.desc}</p>
-                    <p className="text-sm text-stone-500">{item.qty} hours × ${item.rate}/hr</p>
+                    <p className="font-medium text-foreground">{item.desc}</p>
+                    <p className="text-sm text-muted-foreground">{item.qty} hours × ${item.rate}/hr</p>
                   </div>
-                  <p className="font-semibold text-stone-800">${(item.qty * item.rate).toLocaleString()}</p>
+                  <p className="font-semibold text-foreground">${(item.qty * item.rate).toLocaleString()}</p>
                 </div>
               ))}
             </div>
           </div>
         )}
         {activeTab === 'activity' && (
-          <div className="bg-white rounded-lg border border-stone-200/40 p-6">
+          <div className="portal-panel rounded-lg p-6">
             <BonsaiTimeline
               items={[
                 { id: '1', title: 'Proposal submitted', description: 'Submitted by sales team', timestamp: 'Jan 15, 2026', user: { name: 'Sales' } },
@@ -907,9 +807,9 @@ function ClientApprovalsInbox({ onNavigate }: { onNavigate: (screen: ClientScree
 
   return (
     <div className="p-8">
-      <h1 className="text-2xl font-semibold text-stone-800 mb-6">Approvals</h1>
+      <h1 className="text-2xl font-semibold text-foreground mb-6">Approvals</h1>
 
-      <div className="bg-white rounded-lg border border-stone-200/40">
+      <div className="portal-panel rounded-lg">
         <EnhancedTable
           columns={[
             { key: 'type', label: 'Type', sortable: true },
@@ -919,7 +819,7 @@ function ClientApprovalsInbox({ onNavigate }: { onNavigate: (screen: ClientScree
           ]}
           data={approvals.map(approval => ({
             ...approval,
-            amount: <span className="font-semibold text-stone-800">${approval.amount.toLocaleString()}</span>,
+            amount: <span className="font-semibold text-foreground">${approval.amount.toLocaleString()}</span>,
             status: (
               <BonsaiStatusPill
                 status={approval.status === 'Approved' ? 'active' : 'pending'}
@@ -944,15 +844,15 @@ function ClientApprovalDetailRequest({ onNavigate, onShowApproval }: { onNavigat
     <div className="p-8">
       <button
         onClick={() => onNavigate('approvals')}
-        className="flex items-center gap-2 text-sm text-stone-500 hover:text-stone-800 mb-6"
+        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6"
       >
         ← Back to Approvals
       </button>
 
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-stone-800">Timesheet Approval Request</h1>
-          <p className="text-sm text-stone-500">Request #REQ-1234 • Created 2 hours ago</p>
+          <h1 className="text-2xl font-semibold text-foreground">Timesheet Approval Request</h1>
+          <p className="text-sm text-muted-foreground">Request #REQ-1234 • Created 2 hours ago</p>
         </div>
         <div className="flex items-center gap-3">
           <BonsaiStatusPill status="pending" label="Pending" />
@@ -973,39 +873,39 @@ function ClientApprovalDetailRequest({ onNavigate, onShowApproval }: { onNavigat
 
       <div className="mt-6">
         {activeTab === 'overview' && (
-          <div className="bg-white rounded-lg border border-stone-200/40 p-6">
+          <div className="portal-panel rounded-lg p-6">
             <div className="grid grid-cols-2 gap-6 mb-6">
               <div>
-                <p className="text-xs text-stone-500 mb-1">Request Date</p>
-                <p className="text-sm font-medium text-stone-800">Jan 15, 2026</p>
+                <p className="text-xs text-muted-foreground mb-1">Request Date</p>
+                <p className="text-sm font-medium text-foreground">Jan 15, 2026</p>
               </div>
               <div>
-                <p className="text-xs text-stone-500 mb-1">Amount</p>
-                <p className="text-2xl font-semibold text-stone-800">$28,500.00</p>
+                <p className="text-xs text-muted-foreground mb-1">Amount</p>
+                <p className="text-2xl font-semibold text-foreground">$28,500.00</p>
               </div>
             </div>
           </div>
         )}
         {activeTab === 'items' && (
-          <div className="bg-white rounded-lg border border-stone-200/40 p-6">
+          <div className="portal-panel rounded-lg p-6">
             <div className="space-y-3">
               {[
                 { desc: 'Website Design - Week 1-2', qty: 80, rate: 150 },
                 { desc: 'Development - Week 1-2', qty: 100, rate: 125 },
               ].map((item, i) => (
-                <div key={i} className="p-4 bg-stone-50 rounded-lg flex justify-between">
+                <div key={i} className="p-4 bg-secondary/40 rounded-lg flex justify-between">
                   <div>
-                    <p className="font-medium text-stone-800">{item.desc}</p>
-                    <p className="text-sm text-stone-500">{item.qty} hours × ${item.rate}/hr</p>
+                    <p className="font-medium text-foreground">{item.desc}</p>
+                    <p className="text-sm text-muted-foreground">{item.qty} hours × ${item.rate}/hr</p>
                   </div>
-                  <p className="font-semibold text-stone-800">${(item.qty * item.rate).toLocaleString()}</p>
+                  <p className="font-semibold text-foreground">${(item.qty * item.rate).toLocaleString()}</p>
                 </div>
               ))}
             </div>
           </div>
         )}
         {activeTab === 'activity' && (
-          <div className="bg-white rounded-lg border border-stone-200/40 p-6">
+          <div className="portal-panel rounded-lg p-6">
             <BonsaiTimeline
               items={[
                 { id: '1', title: 'Request submitted', description: 'Submitted by employee', timestamp: 'Jan 15, 2026', user: { name: 'Employee' } },
@@ -1027,15 +927,15 @@ function ClientApprovalDetailInvoice({ onNavigate, onShowApproval }: { onNavigat
     <div className="p-8">
       <button
         onClick={() => onNavigate('approvals')}
-        className="flex items-center gap-2 text-sm text-stone-500 hover:text-stone-800 mb-6"
+        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6"
       >
         ← Back to Approvals
       </button>
 
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-stone-800">Invoice Approval Request</h1>
-          <p className="text-sm text-stone-500">Request #REQ-1234 • Created 2 hours ago</p>
+          <h1 className="text-2xl font-semibold text-foreground">Invoice Approval Request</h1>
+          <p className="text-sm text-muted-foreground">Request #REQ-1234 • Created 2 hours ago</p>
         </div>
         <div className="flex items-center gap-3">
           <BonsaiStatusPill status="pending" label="Pending" />
@@ -1056,39 +956,39 @@ function ClientApprovalDetailInvoice({ onNavigate, onShowApproval }: { onNavigat
 
       <div className="mt-6">
         {activeTab === 'overview' && (
-          <div className="bg-white rounded-lg border border-stone-200/40 p-6">
+          <div className="portal-panel rounded-lg p-6">
             <div className="grid grid-cols-2 gap-6 mb-6">
               <div>
-                <p className="text-xs text-stone-500 mb-1">Request Date</p>
-                <p className="text-sm font-medium text-stone-800">Jan 15, 2026</p>
+                <p className="text-xs text-muted-foreground mb-1">Request Date</p>
+                <p className="text-sm font-medium text-foreground">Jan 15, 2026</p>
               </div>
               <div>
-                <p className="text-xs text-stone-500 mb-1">Amount</p>
-                <p className="text-2xl font-semibold text-stone-800">$28,500.00</p>
+                <p className="text-xs text-muted-foreground mb-1">Amount</p>
+                <p className="text-2xl font-semibold text-foreground">$28,500.00</p>
               </div>
             </div>
           </div>
         )}
         {activeTab === 'items' && (
-          <div className="bg-white rounded-lg border border-stone-200/40 p-6">
+          <div className="portal-panel rounded-lg p-6">
             <div className="space-y-3">
               {[
                 { desc: 'Website Design - Week 1-2', qty: 80, rate: 150 },
                 { desc: 'Development - Week 1-2', qty: 100, rate: 125 },
               ].map((item, i) => (
-                <div key={i} className="p-4 bg-stone-50 rounded-lg flex justify-between">
+                <div key={i} className="p-4 bg-secondary/40 rounded-lg flex justify-between">
                   <div>
-                    <p className="font-medium text-stone-800">{item.desc}</p>
-                    <p className="text-sm text-stone-500">{item.qty} hours × ${item.rate}/hr</p>
+                    <p className="font-medium text-foreground">{item.desc}</p>
+                    <p className="text-sm text-muted-foreground">{item.qty} hours × ${item.rate}/hr</p>
                   </div>
-                  <p className="font-semibold text-stone-800">${(item.qty * item.rate).toLocaleString()}</p>
+                  <p className="font-semibold text-foreground">${(item.qty * item.rate).toLocaleString()}</p>
                 </div>
               ))}
             </div>
           </div>
         )}
         {activeTab === 'activity' && (
-          <div className="bg-white rounded-lg border border-stone-200/40 p-6">
+          <div className="portal-panel rounded-lg p-6">
             <BonsaiTimeline
               items={[
                 { id: '1', title: 'Request submitted', description: 'Submitted by finance', timestamp: 'Jan 15, 2026', user: { name: 'Finance' } },
@@ -1110,15 +1010,15 @@ function ClientApprovalDetailTimesheet({ onNavigate, onShowApproval }: { onNavig
     <div className="p-8">
       <button
         onClick={() => onNavigate('approvals')}
-        className="flex items-center gap-2 text-sm text-stone-500 hover:text-stone-800 mb-6"
+        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6"
       >
         ← Back to Approvals
       </button>
 
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-stone-800">Timesheet Approval Request</h1>
-          <p className="text-sm text-stone-500">Request #REQ-1234 • Created 2 hours ago</p>
+          <h1 className="text-2xl font-semibold text-foreground">Timesheet Approval Request</h1>
+          <p className="text-sm text-muted-foreground">Request #REQ-1234 • Created 2 hours ago</p>
         </div>
         <div className="flex items-center gap-3">
           <BonsaiStatusPill status="pending" label="Pending" />
@@ -1139,39 +1039,39 @@ function ClientApprovalDetailTimesheet({ onNavigate, onShowApproval }: { onNavig
 
       <div className="mt-6">
         {activeTab === 'overview' && (
-          <div className="bg-white rounded-lg border border-stone-200/40 p-6">
+          <div className="portal-panel rounded-lg p-6">
             <div className="grid grid-cols-2 gap-6 mb-6">
               <div>
-                <p className="text-xs text-stone-500 mb-1">Request Date</p>
-                <p className="text-sm font-medium text-stone-800">Jan 15, 2026</p>
+                <p className="text-xs text-muted-foreground mb-1">Request Date</p>
+                <p className="text-sm font-medium text-foreground">Jan 15, 2026</p>
               </div>
               <div>
-                <p className="text-xs text-stone-500 mb-1">Amount</p>
-                <p className="text-2xl font-semibold text-stone-800">$28,500.00</p>
+                <p className="text-xs text-muted-foreground mb-1">Amount</p>
+                <p className="text-2xl font-semibold text-foreground">$28,500.00</p>
               </div>
             </div>
           </div>
         )}
         {activeTab === 'items' && (
-          <div className="bg-white rounded-lg border border-stone-200/40 p-6">
+          <div className="portal-panel rounded-lg p-6">
             <div className="space-y-3">
               {[
                 { desc: 'Website Design - Week 1-2', qty: 80, rate: 150 },
                 { desc: 'Development - Week 1-2', qty: 100, rate: 125 },
               ].map((item, i) => (
-                <div key={i} className="p-4 bg-stone-50 rounded-lg flex justify-between">
+                <div key={i} className="p-4 bg-secondary/40 rounded-lg flex justify-between">
                   <div>
-                    <p className="font-medium text-stone-800">{item.desc}</p>
-                    <p className="text-sm text-stone-500">{item.qty} hours × ${item.rate}/hr</p>
+                    <p className="font-medium text-foreground">{item.desc}</p>
+                    <p className="text-sm text-muted-foreground">{item.qty} hours × ${item.rate}/hr</p>
                   </div>
-                  <p className="font-semibold text-stone-800">${(item.qty * item.rate).toLocaleString()}</p>
+                  <p className="font-semibold text-foreground">${(item.qty * item.rate).toLocaleString()}</p>
                 </div>
               ))}
             </div>
           </div>
         )}
         {activeTab === 'activity' && (
-          <div className="bg-white rounded-lg border border-stone-200/40 p-6">
+          <div className="portal-panel rounded-lg p-6">
             <BonsaiTimeline
               items={[
                 { id: '1', title: 'Request submitted', description: 'Submitted by employee', timestamp: 'Jan 15, 2026', user: { name: 'Employee' } },
@@ -1194,9 +1094,9 @@ function ClientMeetingsList({ onNavigate }: { onNavigate: (screen: ClientScreen)
 
   return (
     <div className="p-8">
-      <h1 className="text-2xl font-semibold text-stone-800 mb-6">Meetings</h1>
+      <h1 className="text-2xl font-semibold text-foreground mb-6">Meetings</h1>
 
-      <div className="bg-white rounded-lg border border-stone-200/40">
+      <div className="portal-panel rounded-lg">
         <EnhancedTable
           columns={[
             { key: 'title', label: 'Meeting Title', sortable: true },
@@ -1230,15 +1130,15 @@ function ClientMeetingDetail({ onNavigate }: { onNavigate: (screen: ClientScreen
     <div className="p-8">
       <button
         onClick={() => onNavigate('meetings')}
-        className="flex items-center gap-2 text-sm text-stone-500 hover:text-stone-800 mb-6"
+        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6"
       >
         ← Back to Meetings
       </button>
 
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-stone-800">Project Kickoff Meeting</h1>
-          <p className="text-sm text-stone-500">Meeting #MTG-1234 • Scheduled Jan 15, 2026 at 10:00 AM</p>
+          <h1 className="text-2xl font-semibold text-foreground">Project Kickoff Meeting</h1>
+          <p className="text-sm text-muted-foreground">Meeting #MTG-1234 • Scheduled Jan 15, 2026 at 10:00 AM</p>
         </div>
         <BonsaiStatusPill status="pending" label="Scheduled" />
       </div>
@@ -1255,29 +1155,29 @@ function ClientMeetingDetail({ onNavigate }: { onNavigate: (screen: ClientScreen
 
       <div className="mt-6">
         {activeTab === 'overview' && (
-          <div className="bg-white rounded-lg border border-stone-200/40 p-6">
+          <div className="portal-panel rounded-lg p-6">
             <div className="grid grid-cols-2 gap-6 mb-6">
               <div>
-                <p className="text-xs text-stone-500 mb-1">Meeting Date</p>
-                <p className="text-sm font-medium text-stone-800">Jan 15, 2026</p>
+                <p className="text-xs text-muted-foreground mb-1">Meeting Date</p>
+                <p className="text-sm font-medium text-foreground">Jan 15, 2026</p>
               </div>
               <div>
-                <p className="text-xs text-stone-500 mb-1">Meeting Time</p>
-                <p className="text-sm font-medium text-stone-800">10:00 AM</p>
+                <p className="text-xs text-muted-foreground mb-1">Meeting Time</p>
+                <p className="text-sm font-medium text-foreground">10:00 AM</p>
               </div>
             </div>
           </div>
         )}
         {activeTab === 'agenda' && (
-          <div className="bg-white rounded-lg border border-stone-200/40 p-6">
+          <div className="portal-panel rounded-lg p-6">
             <div className="space-y-3">
               {[
                 { desc: 'Project Overview' },
                 { desc: 'Design Review' },
               ].map((item, i) => (
-                <div key={i} className="p-4 bg-stone-50 rounded-lg flex justify-between">
+                <div key={i} className="p-4 bg-secondary/40 rounded-lg flex justify-between">
                   <div>
-                    <p className="font-medium text-stone-800">{item.desc}</p>
+                    <p className="font-medium text-foreground">{item.desc}</p>
                   </div>
                 </div>
               ))}
@@ -1285,16 +1185,16 @@ function ClientMeetingDetail({ onNavigate }: { onNavigate: (screen: ClientScreen
           </div>
         )}
         {activeTab === 'participants' && (
-          <div className="bg-white rounded-lg border border-stone-200/40 p-6">
+          <div className="portal-panel rounded-lg p-6">
             <div className="space-y-3">
               {[
                 { name: 'John Doe', role: 'Project Manager' },
                 { name: 'Sarah Johnson', role: 'Designer' },
               ].map((item, i) => (
-                <div key={i} className="p-4 bg-stone-50 rounded-lg flex justify-between">
+                <div key={i} className="p-4 bg-secondary/40 rounded-lg flex justify-between">
                   <div>
-                    <p className="font-medium text-stone-800">{item.name}</p>
-                    <p className="text-sm text-stone-500">{item.role}</p>
+                    <p className="font-medium text-foreground">{item.name}</p>
+                    <p className="text-sm text-muted-foreground">{item.role}</p>
                   </div>
                 </div>
               ))}
@@ -1323,74 +1223,32 @@ function EmployeePortal({ currentScreen, onNavigate }: { currentScreen: Employee
     { id: 'profile', label: 'My Profile', icon: User },
   ];
 
+  const empNavActive = (itemId: string) => {
+    const id = itemId as EmployeeScreen;
+    return (
+      currentScreen === id ||
+      (currentScreen === 'onboarding-task' && id === 'onboarding') ||
+      (currentScreen === 'training-detail' && id === 'training') ||
+      (currentScreen === 'performance-review-detail' && id === 'performance-reviews') ||
+      (currentScreen === 'meeting-detail' && id === 'meetings') ||
+      (currentScreen === 'profile-change-request' && id === 'profile')
+    );
+  };
+
   return (
-    <div className="flex h-screen">
-      {/* Employee Portal Sidebar — Apple glass */}
-      <div
-        className="w-60 flex flex-col flex-shrink-0"
-        style={{
-          background: 'rgba(255,255,255,0.76)',
-          backdropFilter: 'blur(44px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(44px) saturate(180%)',
-          borderRight: '1px solid rgba(0,0,0,0.06)',
-          boxShadow: '4px 0 24px rgba(0,0,0,0.03)',
-        }}
-      >
-        <div className="px-5 py-5" style={{ borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
-          <div className="flex items-center gap-2.5">
-            <div
-              className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
-              style={{ background: 'linear-gradient(145deg, #047857, #059669)', boxShadow: '0 2px 6px rgba(5,150,105,0.3)' }}
-            >
-              <span className="text-white text-[9px] font-semibold">E</span>
-            </div>
-            <div>
-              <p className="text-[13px] font-semibold text-stone-800 leading-tight tracking-[-0.01em]">Employee Portal</p>
-              <p className="text-[11px] text-stone-400 leading-tight">John Doe</p>
-            </div>
-          </div>
-        </div>
+    <div className="flex min-h-0 flex-1 overflow-hidden">
+      <PortalRail
+        brandLetter="E"
+        title="Employee portal"
+        subtitle="John Doe"
+        layoutId="portal-employee-rail"
+        items={menuItems}
+        isItemActive={empNavActive}
+        onSelect={(id) => onNavigate(id as EmployeeScreen)}
+        user={{ initials: 'JD', name: 'John Doe', email: 'john.doe@company.com' }}
+      />
 
-        <nav className="flex-1 px-2.5 py-3 space-y-[2px] overflow-y-auto">
-          {menuItems.map((item) => {
-            const Icon = item.icon;
-            const isActive =
-              currentScreen === item.id ||
-              (currentScreen === 'onboarding-task' && item.id === 'onboarding') ||
-              (currentScreen === 'training-detail' && item.id === 'training') ||
-              (currentScreen === 'performance-review-detail' && item.id === 'performance-reviews') ||
-              (currentScreen === 'meeting-detail' && item.id === 'meetings') ||
-              (currentScreen === 'profile-change-request' && item.id === 'profile');
-            return (
-              <button
-                key={item.id}
-                onClick={() => onNavigate(item.id as EmployeeScreen)}
-                className="relative w-full flex items-center gap-2.5 px-3 py-[7px] rounded-[10px] text-left transition-all"
-                style={{ background: isActive ? 'rgba(28,25,23,0.07)' : 'transparent', color: isActive ? '#1c1917' : '#78716c' }}
-                onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = 'rgba(28,25,23,0.04)'; }}
-                onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
-              >
-                {isActive && <motion.div layoutId="emp-nav" className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-[16px] rounded-full bg-stone-800" transition={{ type:'spring', stiffness:450, damping:32 }} />}
-                <Icon className="w-4 h-4 flex-shrink-0" style={{ strokeWidth: isActive ? 2.1 : 1.7 }} />
-                <span className={`text-[13px] ${isActive ? 'font-semibold text-stone-800' : 'text-stone-500'}`}>{item.label}</span>
-              </button>
-            );
-          })}
-        </nav>
-
-        <div className="px-3 py-3" style={{ borderTop: '1px solid rgba(0,0,0,0.05)' }}>
-          <div className="flex items-center gap-2.5 px-3 py-2">
-            <div className="w-7 h-7 rounded-full bg-stone-200 flex items-center justify-center text-[11px] font-semibold text-stone-600 flex-shrink-0">JD</div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[12px] font-medium text-stone-700 truncate">John Doe</p>
-              <p className="text-[11px] text-stone-400 truncate">john.doe@company.com</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto" style={{ background: '#F5F5F3' }}>
+      <PortalMain>
         {currentScreen === 'home' && <EmployeeHome onNavigate={onNavigate} />}
         {currentScreen === 'onboarding' && <EmployeeOnboarding onNavigate={onNavigate} />}
         {currentScreen === 'onboarding-task' && <EmployeeOnboardingTask onNavigate={onNavigate} />}
@@ -1408,74 +1266,67 @@ function EmployeePortal({ currentScreen, onNavigate }: { currentScreen: Employee
         {currentScreen === 'documents' && <EmployeeDocuments />}
         {currentScreen === 'profile' && <EmployeeProfile onNavigate={onNavigate} />}
         {currentScreen === 'profile-change-request' && <EmployeeProfileChangeRequest onNavigate={onNavigate} />}
-      </div>
+      </PortalMain>
     </div>
   );
 }
 
 // EP-01: Employee Portal Home
 function EmployeeHome({ onNavigate }: { onNavigate: (screen: EmployeeScreen) => void }) {
+  const kpis = [
+    { label: 'Tasks due', value: '5', sub: 'this week' },
+    { label: 'Timesheet', value: '1', sub: 'not submitted' },
+    { label: 'In your queue', value: '3', sub: 'approvals' },
+  ];
+
   return (
-    <div className="px-8 py-8 max-w-4xl">
+    <div className="max-w-4xl px-6 py-8 md:px-8">
       <motion.div
         className="mb-8"
-        initial={{ opacity:0, y:8 }}
-        animate={{ opacity:1, y:0 }}
-        transition={{ duration:0.3 }}
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
       >
-        <p className="text-[11px] font-semibold text-stone-400 uppercase tracking-[0.1em] mb-1">Employee Portal</p>
-        <h1 className="text-[30px] font-semibold text-stone-800 tracking-[-0.03em]">Welcome back, John.</h1>
+        <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">Employee workspace</p>
+        <h1 className="text-[30px] font-semibold tracking-[-0.03em] text-foreground">Welcome back, John</h1>
+        <p className="mt-2 max-w-xl text-[14px] text-muted-foreground">
+          Time, tasks, and people workflows — everything that touches payroll and compliance stays here.
+        </p>
       </motion.div>
 
-      <motion.div
-        className="grid grid-cols-3 gap-3 mb-6"
-        initial="hidden"
-        animate="show"
-        variants={{ hidden: {}, show: { transition: { staggerChildren: 0.07 } } }}
-      >
-        {[
-          { label: 'Tasks Due', value: '5', sub: 'this week' },
-          { label: 'Timesheets', value: '1', sub: 'to submit', urgent: true },
-          { label: 'Approvals', value: '3', sub: 'pending' },
-        ].map((kpi) => (
-          <motion.div
-            key={kpi.label}
-            className="glass-stat p-4"
-            variants={{ hidden: { opacity:0, y:12 }, show: { opacity:1, y:0, transition:{ type:'spring', stiffness:320, damping:28 } } }}
-          >
-            <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-[0.08em] mb-2">{kpi.label}</p>
-            <p className={`text-[32px] font-bold tracking-[-0.03em] leading-none shimmer-text ${kpi.urgent ? 'text-stone-600' : 'text-stone-800'}`}>{kpi.value}</p>
-            <p className="text-[11px] text-stone-400 mt-1.5">{kpi.sub}</p>
-          </motion.div>
+      <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        {kpis.map((kpi, i) => (
+          <HubStatTile key={kpi.label} label={kpi.label} value={kpi.value} sub={kpi.sub} delay={i * 0.05} />
         ))}
-      </motion.div>
+      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <button
+          type="button"
           onClick={() => onNavigate('tasks')}
-          className="bg-white/60 backdrop-blur-sm rounded-xl border border-stone-200/40 p-5 hover:bg-white/80 hover:shadow-sm transition-all text-left group"
+          className="portal-panel group p-5 text-left shadow-sm transition-shadow hover:shadow-md"
         >
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-[13px] font-semibold text-stone-700">Tasks Due This Week</h3>
-            <span className="text-stone-300 group-hover:text-stone-500 transition-colors text-[14px]">→</span>
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="text-[13px] font-semibold text-foreground">Tasks this week</h3>
+            <span className="text-[14px] text-muted-foreground transition-colors group-hover:text-foreground">→</span>
           </div>
           <div className="space-y-2">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="px-3 py-2.5 bg-stone-50 rounded-lg border border-stone-100">
-                <p className="text-[12px] font-medium text-stone-700">Task {i}</p>
-                <p className="text-[11px] text-stone-400 mt-0.5">Website Redesign · Due Jan {15 + i}</p>
+            {[1, 2, 3].map(i => (
+              <div key={i} className="rounded-lg border border-border bg-secondary/30 px-3 py-2.5">
+                <p className="text-[12px] font-medium text-foreground">Design review · Task {i}</p>
+                <p className="mt-0.5 text-[11px] text-muted-foreground">Website redesign · Due Jan {15 + i}</p>
               </div>
             ))}
           </div>
         </button>
 
-        <div className="bg-white/60 backdrop-blur-sm rounded-xl border border-stone-200/40 p-5">
-          <h3 className="text-[13px] font-semibold text-stone-700 mb-4">Timesheet Status</h3>
-          <div className="p-4 bg-stone-100/60 rounded-lg border border-stone-200/50">
-            <p className="text-[13px] font-medium text-stone-700">Week of Jan 13, 2026</p>
-            <p className="text-[12px] text-stone-600 mt-0.5">Not submitted · 42 hours logged</p>
+        <div className="portal-panel p-5 shadow-sm">
+          <h3 className="mb-4 text-[13px] font-semibold text-foreground">Timesheet</h3>
+          <div className="rounded-lg border border-border bg-secondary/40 p-4">
+            <p className="text-[13px] font-medium text-foreground">Week of Jan 13, 2026</p>
+            <p className="mt-0.5 text-[12px] text-muted-foreground">Not submitted · 42 hours logged</p>
             <BonsaiButton size="sm" variant="primary" className="mt-3" onClick={() => onNavigate('timesheets')}>
-              Submit Timesheet
+              Submit timesheet
             </BonsaiButton>
           </div>
         </div>
@@ -1483,19 +1334,19 @@ function EmployeeHome({ onNavigate }: { onNavigate: (screen: EmployeeScreen) => 
         <button
           type="button"
           onClick={() => onNavigate('onboarding')}
-          className="bg-white/60 backdrop-blur-sm rounded-xl border border-stone-200/40 p-5 hover:bg-white/80 transition-all text-left lg:col-span-2"
+          className="portal-panel p-5 shadow-sm text-left transition-shadow hover:shadow-md lg:col-span-2"
         >
-          <h3 className="text-[13px] font-semibold text-stone-700 mb-2">Onboarding</h3>
-          <p className="text-[12px] text-stone-500">4 of 6 tasks complete — ID upload & tax forms pending.</p>
+          <h3 className="mb-2 text-[13px] font-semibold text-foreground">Onboarding</h3>
+          <p className="text-[12px] text-muted-foreground">4 of 6 tasks complete — ID upload and tax forms pending.</p>
         </button>
 
         <button
           type="button"
           onClick={() => onNavigate('training')}
-          className="bg-white/60 backdrop-blur-sm rounded-xl border border-stone-200/40 p-5 hover:bg-white/80 transition-all text-left"
+          className="portal-panel p-5 shadow-sm text-left transition-shadow hover:shadow-md"
         >
-          <h3 className="text-[13px] font-semibold text-stone-700 mb-2">Training</h3>
-          <p className="text-[12px] text-stone-500">2 required courses · Code of conduct due Apr 12</p>
+          <h3 className="mb-2 text-[13px] font-semibold text-foreground">Training</h3>
+          <p className="text-[12px] text-muted-foreground">2 required courses · Code of conduct due Apr 12</p>
         </button>
       </div>
     </div>
@@ -1514,21 +1365,31 @@ function EmployeeOnboarding({ onNavigate }: { onNavigate: (s: EmployeeScreen) =>
   ];
   return (
     <div className="px-8 py-8 max-w-2xl">
-      <h1 className="text-[24px] font-semibold text-stone-800 mb-2">Onboarding</h1>
-      <p className="text-[13px] text-stone-500 mb-6">Complete all tasks — HR is notified as you progress.</p>
-      <div className="rounded-xl border border-stone-200/40 bg-white/70 divide-y divide-stone-100">
+      <h1 className="text-[24px] font-semibold text-foreground mb-2">Onboarding</h1>
+      <p className="text-[13px] text-muted-foreground mb-6">Complete all tasks — HR is notified as you progress.</p>
+      <div className="portal-list divide-y divide-border">
         {tasks.map(t => (
           <button
             key={t.id}
             type="button"
             onClick={() => onNavigate('onboarding-task')}
-            className="w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-stone-50/80 transition-colors"
+            className="portal-row-hover flex w-full items-center gap-3 px-5 py-4 text-left transition-colors"
           >
-            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold ${t.done ? 'bg-emerald-500 text-white' : 'border-2 border-stone-300 text-stone-400'}`}>
+            <span
+              className={`flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold ${
+                t.done ? 'bg-primary text-primary-foreground' : 'border-2 border-border text-muted-foreground'
+              }`}
+            >
               {t.done ? '✓' : ''}
             </span>
-            <span className={`flex-1 text-[14px] ${t.done ? 'text-stone-500 line-through' : 'font-medium text-stone-800'}`}>{t.label}</span>
-            <span className="text-[12px] text-stone-400">Open</span>
+            <span
+              className={`flex-1 text-[14px] ${
+                t.done ? 'text-foreground/50 line-through' : 'font-medium text-foreground'
+              }`}
+            >
+              {t.label}
+            </span>
+            <span className="text-[12px] font-medium text-primary">Open</span>
           </button>
         ))}
       </div>
@@ -1543,15 +1404,15 @@ function EmployeeOnboardingTask({ onNavigate }: { onNavigate: (s: EmployeeScreen
   const { addToast } = useToast();
   return (
     <div className="px-8 py-8 max-w-xl">
-      <button type="button" onClick={() => onNavigate('onboarding')} className="text-[13px] text-stone-500 hover:text-stone-800 mb-6">
+      <button type="button" onClick={() => onNavigate('onboarding')} className="text-[13px] text-muted-foreground hover:text-foreground mb-6">
         ← Back to checklist
       </button>
-      <h1 className="text-[22px] font-semibold text-stone-800 mb-2">Bank details for payroll</h1>
-      <p className="text-[13px] text-stone-500 mb-6">Encrypted — only payroll can view full account numbers.</p>
-      <div className="space-y-4 bg-white rounded-xl border border-stone-200/40 p-6">
-        <input className="w-full px-3 py-2 rounded-lg border border-stone-200 text-[13px]" placeholder="Account holder name" />
-        <input className="w-full px-3 py-2 rounded-lg border border-stone-200 text-[13px]" placeholder="Routing number" />
-        <input className="w-full px-3 py-2 rounded-lg border border-stone-200 text-[13px]" placeholder="Account number" />
+      <h1 className="text-[22px] font-semibold text-foreground mb-2">Bank details for payroll</h1>
+      <p className="text-[13px] text-muted-foreground mb-6">Encrypted — only payroll can view full account numbers.</p>
+      <div className="portal-panel space-y-4 p-6">
+        <input className="hub-field px-3 py-2 text-[13px]" placeholder="Account holder name" />
+        <input className="hub-field px-3 py-2 text-[13px]" placeholder="Routing number" />
+        <input className="hub-field px-3 py-2 text-[13px]" placeholder="Account number" />
         <BonsaiButton variant="primary" onClick={() => { addToast('Saved — pending HR verification.', 'success'); onNavigate('onboarding'); }}>
           Save & mark complete
         </BonsaiButton>
@@ -1568,20 +1429,20 @@ function EmployeeTraining({ onNavigate }: { onNavigate: (s: EmployeeScreen) => v
   ];
   return (
     <div className="px-8 py-8 max-w-3xl">
-      <h1 className="text-[24px] font-semibold text-stone-800 mb-6">Training</h1>
+      <h1 className="text-[24px] font-semibold text-foreground mb-6">Training</h1>
       <div className="space-y-3">
         {courses.map(c => (
           <button
             key={c.id}
             type="button"
             onClick={() => onNavigate('training-detail')}
-            className="w-full flex items-center justify-between p-5 bg-white/70 rounded-xl border border-stone-200/40 text-left hover:bg-white transition-colors"
+            className="w-full flex items-center justify-between p-5 portal-panel text-left hover:bg-secondary/40 transition-colors"
           >
             <div>
-              <p className="font-semibold text-stone-800">{c.name}</p>
-              <p className="text-[12px] text-stone-500 mt-1">{c.req ? 'Required' : 'Optional'} · Due {c.due}</p>
-              <div className="h-1.5 bg-stone-100 rounded-full mt-3 max-w-[200px]">
-                <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${c.pct}%` }} />
+              <p className="font-semibold text-foreground">{c.name}</p>
+              <p className="text-[12px] text-muted-foreground mt-1">{c.req ? 'Required' : 'Optional'} · Due {c.due}</p>
+              <div className="h-1.5 bg-secondary rounded-full mt-3 max-w-[200px]">
+                <div className="h-full bg-primary rounded-full" style={{ width: `${c.pct}%` }} />
               </div>
             </div>
             <BonsaiStatusPill status={c.pct === 100 ? 'active' : 'pending'} label={c.pct === 100 ? 'Done' : 'In progress'} />
@@ -1596,15 +1457,15 @@ function EmployeeTrainingDetail({ onNavigate }: { onNavigate: (s: EmployeeScreen
   const { addToast } = useToast();
   return (
     <div className="px-8 py-8 max-w-2xl">
-      <button type="button" onClick={() => onNavigate('training')} className="text-[13px] text-stone-500 hover:text-stone-800 mb-6">
+      <button type="button" onClick={() => onNavigate('training')} className="text-[13px] text-muted-foreground hover:text-foreground mb-6">
         ← All courses
       </button>
-      <h1 className="text-[22px] font-semibold text-stone-800 mb-4">Code of Conduct</h1>
-      <div className="prose prose-sm text-stone-600 mb-6">
+      <h1 className="text-[22px] font-semibold text-foreground mb-4">Code of Conduct</h1>
+      <div className="prose prose-sm text-muted-foreground mb-6">
         <p>Review our workplace expectations, anti-harassment policy, and reporting channels. You must acknowledge each section.</p>
       </div>
-      <label className="flex items-center gap-2 text-[13px] text-stone-700 mb-4">
-        <input type="checkbox" className="rounded border-stone-300" />
+      <label className="flex items-center gap-2 text-[13px] text-foreground mb-4">
+        <input type="checkbox" className="rounded border-border" />
         I have read and agree to the Code of Conduct
       </label>
       <BonsaiButton variant="primary" onClick={() => { addToast('Course completed — certificate on file.', 'success'); onNavigate('training'); }}>
@@ -1617,8 +1478,8 @@ function EmployeeTrainingDetail({ onNavigate }: { onNavigate: (s: EmployeeScreen
 function EmployeePerformanceReviews({ onNavigate }: { onNavigate: (s: EmployeeScreen) => void }) {
   return (
     <div className="px-8 py-8 max-w-3xl">
-      <h1 className="text-[24px] font-semibold text-stone-800 mb-6">Performance reviews</h1>
-      <div className="bg-white/70 rounded-xl border border-stone-200/40 divide-y divide-stone-100">
+      <h1 className="text-[24px] font-semibold text-foreground mb-6">Performance reviews</h1>
+      <div className="portal-panel divide-y divide-border">
         {[
           { period: 'Q1 2026', status: 'Self-assessment due', due: 'Apr 15' },
           { period: 'Annual 2025', status: 'Completed', due: 'Jan 10' },
@@ -1627,13 +1488,13 @@ function EmployeePerformanceReviews({ onNavigate }: { onNavigate: (s: EmployeeSc
             key={r.period}
             type="button"
             onClick={() => onNavigate('performance-review-detail')}
-            className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-stone-50/80"
+            className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-secondary/50"
           >
             <div>
-              <p className="font-medium text-stone-800">{r.period}</p>
-              <p className="text-[12px] text-stone-500 mt-0.5">{r.status} · {r.due}</p>
+              <p className="font-medium text-foreground">{r.period}</p>
+              <p className="text-[12px] text-muted-foreground mt-0.5">{r.status} · {r.due}</p>
             </div>
-            <ChevronRight className="w-4 h-4 text-stone-400" />
+            <ChevronRight className="w-4 h-4 text-muted-foreground" />
           </button>
         ))}
       </div>
@@ -1645,11 +1506,11 @@ function EmployeePerformanceReviewDetail({ onNavigate }: { onNavigate: (s: Emplo
   const { addToast } = useToast();
   return (
     <div className="px-8 py-8 max-w-2xl">
-      <button type="button" onClick={() => onNavigate('performance-reviews')} className="text-[13px] text-stone-500 hover:text-stone-800 mb-6">
+      <button type="button" onClick={() => onNavigate('performance-reviews')} className="text-[13px] text-muted-foreground hover:text-foreground mb-6">
         ← Reviews
       </button>
-      <h1 className="text-[22px] font-semibold text-stone-800 mb-2">Q1 2026 · Self-assessment</h1>
-      <textarea className="w-full min-h-[160px] px-3 py-2 rounded-lg border border-stone-200 text-[13px] mb-4" placeholder="Summarize wins, blockers, and goals for next quarter…" />
+      <h1 className="text-[22px] font-semibold text-foreground mb-2">Q1 2026 · Self-assessment</h1>
+      <textarea className="w-full min-h-[160px] px-3 py-2 rounded-lg border border-border text-[13px] mb-4" placeholder="Summarize wins, blockers, and goals for next quarter…" />
       <BonsaiButton variant="primary" onClick={() => { addToast('Self-assessment submitted to your manager.', 'success'); onNavigate('performance-reviews'); }}>
         Submit
       </BonsaiButton>
@@ -1660,7 +1521,7 @@ function EmployeePerformanceReviewDetail({ onNavigate }: { onNavigate: (s: Emplo
 function EmployeeMeetingsList({ onNavigate }: { onNavigate: (s: EmployeeScreen) => void }) {
   return (
     <div className="px-8 py-8 max-w-3xl">
-      <h1 className="text-[24px] font-semibold text-stone-800 mb-6">Meetings</h1>
+      <h1 className="text-[24px] font-semibold text-foreground mb-6">Meetings</h1>
       <div className="space-y-2">
         {[
           { title: '1:1 with Sarah Chen', when: 'Thu, Apr 10 · 2:00 PM', link: true },
@@ -1670,13 +1531,13 @@ function EmployeeMeetingsList({ onNavigate }: { onNavigate: (s: EmployeeScreen) 
             key={m.title}
             type="button"
             onClick={() => onNavigate('meeting-detail')}
-            className="w-full flex items-center justify-between p-4 bg-white/70 rounded-xl border border-stone-200/40 text-left hover:bg-white"
+            className="w-full flex items-center justify-between p-4 portal-panel text-left hover:bg-secondary/40"
           >
             <div>
-              <p className="font-medium text-stone-800">{m.title}</p>
-              <p className="text-[12px] text-stone-500 mt-0.5">{m.when}</p>
+              <p className="font-medium text-foreground">{m.title}</p>
+              <p className="text-[12px] text-muted-foreground mt-0.5">{m.when}</p>
             </div>
-            {m.link ? <span className="text-[12px] text-indigo-600 font-medium">Join</span> : null}
+            {m.link ? <span className="text-[12px] text-primary font-medium">Join</span> : null}
           </button>
         ))}
       </div>
@@ -1687,17 +1548,17 @@ function EmployeeMeetingsList({ onNavigate }: { onNavigate: (s: EmployeeScreen) 
 function EmployeeMeetingDetail({ onNavigate }: { onNavigate: (s: EmployeeScreen) => void }) {
   return (
     <div className="px-8 py-8 max-w-2xl">
-      <button type="button" onClick={() => onNavigate('meetings')} className="text-[13px] text-stone-500 hover:text-stone-800 mb-6">
+      <button type="button" onClick={() => onNavigate('meetings')} className="text-[13px] text-muted-foreground hover:text-foreground mb-6">
         ← Meetings
       </button>
-      <h1 className="text-[22px] font-semibold text-stone-800 mb-2">1:1 with Sarah Chen</h1>
-      <p className="text-[13px] text-stone-500 mb-6">Thu, Apr 10, 2026 · 2:00 PM · Google Meet</p>
+      <h1 className="text-[22px] font-semibold text-foreground mb-2">1:1 with Sarah Chen</h1>
+      <p className="text-[13px] text-muted-foreground mb-6">Thu, Apr 10, 2026 · 2:00 PM · Google Meet</p>
       <BonsaiButton variant="primary" onClick={() => window.open('https://meet.google.com', '_blank')}>
         Open video link
       </BonsaiButton>
-      <div className="mt-8 p-5 bg-white rounded-xl border border-stone-200/40">
-        <p className="text-[12px] font-semibold text-stone-400 uppercase tracking-wider mb-2">Agenda</p>
-        <ul className="text-[13px] text-stone-600 space-y-2 list-disc list-inside">
+      <div className="mt-8 p-5 portal-panel rounded-xl">
+        <p className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Agenda</p>
+        <ul className="text-[13px] text-muted-foreground space-y-2 list-disc list-inside">
           <li>Project priorities</li>
           <li>Career growth</li>
         </ul>
@@ -1709,19 +1570,19 @@ function EmployeeMeetingDetail({ onNavigate }: { onNavigate: (s: EmployeeScreen)
 function EmployeeProfile({ onNavigate }: { onNavigate: (s: EmployeeScreen) => void }) {
   return (
     <div className="px-8 py-8 max-w-xl">
-      <h1 className="text-[24px] font-semibold text-stone-800 mb-6">My profile</h1>
-      <div className="space-y-4 bg-white rounded-xl border border-stone-200/40 p-6">
+      <h1 className="text-[24px] font-semibold text-foreground mb-6">My profile</h1>
+      <div className="space-y-4 portal-panel rounded-xl p-6">
         <div>
-          <p className="text-[11px] text-stone-400 uppercase tracking-wider mb-1">Legal name</p>
-          <p className="text-[14px] font-medium text-stone-800">John Doe</p>
+          <p className="text-[11px] text-muted-foreground uppercase tracking-wider mb-1">Legal name</p>
+          <p className="text-[14px] font-medium text-foreground">John Doe</p>
         </div>
         <div>
-          <p className="text-[11px] text-stone-400 uppercase tracking-wider mb-1">Work email</p>
-          <p className="text-[14px] font-medium text-stone-800">john.doe@company.com</p>
+          <p className="text-[11px] text-muted-foreground uppercase tracking-wider mb-1">Work email</p>
+          <p className="text-[14px] font-medium text-foreground">john.doe@company.com</p>
         </div>
         <div>
-          <p className="text-[11px] text-stone-400 uppercase tracking-wider mb-1">Home address</p>
-          <p className="text-[14px] text-stone-600">123 Market St, San Francisco, CA</p>
+          <p className="text-[11px] text-muted-foreground uppercase tracking-wider mb-1">Home address</p>
+          <p className="text-[14px] text-muted-foreground">123 Market St, San Francisco, CA</p>
         </div>
         <BonsaiButton variant="outline" onClick={() => onNavigate('profile-change-request')}>
           Request profile change (GDPR)
@@ -1735,18 +1596,18 @@ function EmployeeProfileChangeRequest({ onNavigate }: { onNavigate: (s: Employee
   const { addToast } = useToast();
   return (
     <div className="px-8 py-8 max-w-xl">
-      <button type="button" onClick={() => onNavigate('profile')} className="text-[13px] text-stone-500 hover:text-stone-800 mb-6">
+      <button type="button" onClick={() => onNavigate('profile')} className="text-[13px] text-muted-foreground hover:text-foreground mb-6">
         ← Profile
       </button>
-      <h1 className="text-[22px] font-semibold text-stone-800 mb-2">Request profile change</h1>
-      <p className="text-[13px] text-stone-500 mb-6">HR will review before updates apply. You will be notified.</p>
-      <div className="space-y-4 bg-white rounded-xl border border-stone-200/40 p-6">
-        <select className="w-full px-3 py-2 rounded-lg border border-stone-200 text-[13px]">
+      <h1 className="text-[22px] font-semibold text-foreground mb-2">Request profile change</h1>
+      <p className="text-[13px] text-muted-foreground mb-6">HR will review before updates apply. You will be notified.</p>
+      <div className="space-y-4 portal-panel rounded-xl p-6">
+        <select className="w-full px-3 py-2 rounded-lg border border-border text-[13px]">
           <option>Home address</option>
           <option>Legal name</option>
           <option>Emergency contact</option>
         </select>
-        <textarea className="w-full px-3 py-2 rounded-lg border border-stone-200 text-[13px] min-h-[100px]" placeholder="New value or details…" />
+        <textarea className="w-full px-3 py-2 rounded-lg border border-border text-[13px] min-h-[100px]" placeholder="New value or details…" />
         <BonsaiButton variant="primary" onClick={() => { addToast('Request sent to HRIS queue.', 'success'); onNavigate('profile'); }}>
           Submit request
         </BonsaiButton>
@@ -1758,16 +1619,16 @@ function EmployeeProfileChangeRequest({ onNavigate }: { onNavigate: (s: Employee
 function EmployeeProjects() {
   return (
     <div className="px-8 py-8 max-w-3xl">
-      <h1 className="text-[24px] font-semibold text-stone-800 tracking-[-0.02em] mb-6">My Projects</h1>
-      <div className="bg-white/60 backdrop-blur-sm rounded-xl border border-stone-200/40 divide-y divide-stone-100/60">
+      <h1 className="text-[24px] font-semibold text-foreground tracking-[-0.02em] mb-6">My Projects</h1>
+      <div className="portal-panel divide-y divide-border">
         {[
           { name: 'Website Redesign', role: 'Design lead', pm: 'Sarah Chen', hrs: '32h / week cap' },
           { name: 'Mobile App', role: 'IC contributor', pm: 'Alex Kim', hrs: '24h / week cap' },
         ].map(p => (
           <div key={p.name} className="px-5 py-4">
-            <p className="text-[14px] font-semibold text-stone-800">{p.name}</p>
-            <p className="text-[12px] text-stone-500 mt-1">{p.role} · PM: {p.pm}</p>
-            <p className="text-[11px] text-stone-400 mt-2">{p.hrs}</p>
+            <p className="text-[14px] font-semibold text-foreground">{p.name}</p>
+            <p className="text-[12px] text-muted-foreground mt-1">{p.role} · PM: {p.pm}</p>
+            <p className="text-[11px] text-muted-foreground mt-2">{p.hrs}</p>
           </div>
         ))}
       </div>
@@ -1778,17 +1639,17 @@ function EmployeeProjects() {
 function EmployeeTasks() {
   return (
     <div className="px-8 py-8 max-w-3xl">
-      <h1 className="text-[24px] font-semibold text-stone-800 tracking-[-0.02em] mb-6">My Tasks</h1>
+      <h1 className="text-[24px] font-semibold text-foreground tracking-[-0.02em] mb-6">My Tasks</h1>
       <div className="space-y-2">
         {[
           { t: 'Hero concepts v2', proj: 'Website Redesign', due: 'Apr 6' },
           { t: 'Design QA — checkout', proj: 'Website Redesign', due: 'Apr 8' },
           { t: 'Icon set export', proj: 'Mobile App', due: 'Apr 9' },
         ].map(x => (
-          <div key={x.t} className="bg-white/60 backdrop-blur-sm rounded-xl border border-stone-200/40 px-5 py-3 flex items-center justify-between">
+          <div key={x.t} className="portal-panel px-5 py-3 flex items-center justify-between">
             <div>
-              <p className="text-[13px] font-medium text-stone-800">{x.t}</p>
-              <p className="text-[11px] text-stone-400 mt-0.5">{x.proj} · Due {x.due}</p>
+              <p className="text-[13px] font-medium text-foreground">{x.t}</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">{x.proj} · Due {x.due}</p>
             </div>
             <BonsaiStatusPill status="pending" label="Open" />
           </div>
@@ -1806,8 +1667,8 @@ function EmployeeTimesheets({ onNavigate }: { onNavigate: (s: EmployeeScreen) =>
     <div className="p-8 max-w-4xl">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-stone-800">My Timesheets</h1>
-          <p className="text-sm text-stone-500 mt-1">Week of Mar 31 — Apr 6, 2026</p>
+          <h1 className="text-2xl font-semibold text-foreground">My Timesheets</h1>
+          <p className="text-sm text-muted-foreground mt-1">Week of Mar 31 — Apr 6, 2026</p>
         </div>
         <BonsaiButton
           variant="primary"
@@ -1819,23 +1680,23 @@ function EmployeeTimesheets({ onNavigate }: { onNavigate: (s: EmployeeScreen) =>
           Submit week
         </BonsaiButton>
       </div>
-      <div className="bg-white rounded-xl border border-stone-200/40 overflow-hidden">
-        <div className="grid grid-cols-[1fr_repeat(7,52px)_56px] gap-px bg-stone-200/60 text-[10px] font-semibold uppercase tracking-wider text-stone-500">
-          <div className="bg-stone-50 px-3 py-2">Project</div>
+      <div className="portal-panel rounded-xl overflow-hidden">
+        <div className="grid grid-cols-[1fr_repeat(7,52px)_56px] gap-px bg-secondary/60 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <div className="bg-secondary/40 px-3 py-2">Project</div>
           {days.map(d => (
-            <div key={d} className="bg-stone-50 py-2 text-center">{d}</div>
+            <div key={d} className="bg-secondary/40 py-2 text-center">{d}</div>
           ))}
-          <div className="bg-stone-50 py-2 text-center">Σ</div>
+          <div className="bg-secondary/40 py-2 text-center">Σ</div>
         </div>
-        <div className="grid grid-cols-[1fr_repeat(7,52px)_56px] gap-px bg-stone-200/40 items-center">
-          <div className="bg-white px-3 py-3 text-[13px] font-medium text-stone-800">Website Redesign</div>
+        <div className="grid grid-cols-[1fr_repeat(7,52px)_56px] gap-px bg-secondary/40 items-center">
+          <div className="bg-background-2 px-3 py-3 text-[13px] font-medium text-foreground">Website Redesign</div>
           {row.map((h, i) => (
-            <div key={i} className="bg-white py-3 text-center text-[12px] tabular-nums text-stone-700">{h || '—'}</div>
+            <div key={i} className="bg-background-2 py-3 text-center text-[12px] tabular-nums text-foreground">{h || '—'}</div>
           ))}
-          <div className="bg-white py-3 text-center text-[12px] font-semibold tabular-nums">{row.reduce((a, b) => a + b, 0)}</div>
+          <div className="bg-background-2 py-3 text-center text-[12px] font-semibold tabular-nums">{row.reduce((a, b) => a + b, 0)}</div>
         </div>
       </div>
-      <p className="text-[12px] text-stone-400 mt-4">Approvals route to your manager and client portal when required.</p>
+      <p className="text-[12px] text-muted-foreground mt-4">Approvals route to your manager and client portal when required.</p>
     </div>
   );
 }
@@ -1845,11 +1706,11 @@ function EmployeeExpenses() {
   return (
     <div className="p-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold text-stone-800">My Expenses</h1>
+        <h1 className="text-2xl font-semibold text-foreground">My Expenses</h1>
         <BonsaiButton variant="primary">Submit Expense</BonsaiButton>
       </div>
 
-      <div className="bg-white rounded-lg border border-stone-200/40">
+      <div className="portal-panel rounded-lg">
         <div className="divide-y divide-blue-100">
           {[
             { date: 'Jan 15, 2026', amount: 125.50, category: 'Travel', status: 'Pending' },
@@ -1857,8 +1718,8 @@ function EmployeeExpenses() {
           ].map((expense, i) => (
             <div key={i} className="p-6 flex items-center justify-between">
               <div>
-                <p className="font-medium text-stone-800">{expense.category} - ${expense.amount}</p>
-                <p className="text-sm text-stone-500">{expense.date}</p>
+                <p className="font-medium text-foreground">{expense.category} - ${expense.amount}</p>
+                <p className="text-sm text-muted-foreground">{expense.date}</p>
               </div>
               <BonsaiStatusPill
                 status={expense.status === 'Approved' ? 'active' : 'pending'}
@@ -1877,26 +1738,26 @@ function EmployeeLeave() {
   return (
     <div className="p-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold text-stone-800">My Leave</h1>
+        <h1 className="text-2xl font-semibold text-foreground">My Leave</h1>
         <BonsaiButton variant="primary">Request Leave</BonsaiButton>
       </div>
 
       <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="bg-white rounded-lg border border-stone-200/40 p-4">
-          <p className="text-sm text-stone-500 mb-1">Available Days</p>
-          <p className="text-2xl font-semibold text-stone-800">15</p>
+        <div className="portal-panel rounded-lg p-4">
+          <p className="text-sm text-muted-foreground mb-1">Available Days</p>
+          <p className="text-2xl font-semibold text-foreground">15</p>
         </div>
-        <div className="bg-white rounded-lg border border-stone-200/40 p-4">
-          <p className="text-sm text-stone-500 mb-1">Used This Year</p>
-          <p className="text-2xl font-semibold text-stone-800">10</p>
+        <div className="portal-panel rounded-lg p-4">
+          <p className="text-sm text-muted-foreground mb-1">Used This Year</p>
+          <p className="text-2xl font-semibold text-foreground">10</p>
         </div>
-        <div className="bg-white rounded-lg border border-stone-200/40 p-4">
-          <p className="text-sm text-stone-500 mb-1">Pending Requests</p>
-          <p className="text-2xl font-semibold text-stone-600">1</p>
+        <div className="portal-panel rounded-lg p-4">
+          <p className="text-sm text-muted-foreground mb-1">Pending Requests</p>
+          <p className="text-2xl font-semibold text-muted-foreground">1</p>
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-stone-200/40">
+      <div className="portal-panel rounded-lg">
         <div className="divide-y divide-blue-100">
           {[
             { dates: 'Feb 10-14, 2026', days: 5, type: 'Vacation', status: 'Pending' },
@@ -1904,8 +1765,8 @@ function EmployeeLeave() {
           ].map((leave, i) => (
             <div key={i} className="p-6 flex items-center justify-between">
               <div>
-                <p className="font-medium text-stone-800">{leave.type} - {leave.days} days</p>
-                <p className="text-sm text-stone-500">{leave.dates}</p>
+                <p className="font-medium text-foreground">{leave.type} - {leave.days} days</p>
+                <p className="text-sm text-muted-foreground">{leave.dates}</p>
               </div>
               <BonsaiStatusPill
                 status={leave.status === 'Approved' ? 'active' : 'pending'}
@@ -1929,9 +1790,9 @@ function EmployeeDocuments() {
 
   return (
     <div className="p-8">
-      <h1 className="text-2xl font-semibold text-stone-800 mb-6">My Documents</h1>
+      <h1 className="text-2xl font-semibold text-foreground mb-6">My Documents</h1>
 
-      <div className="bg-white rounded-lg border border-stone-200/40 p-6">
+      <div className="portal-panel rounded-lg p-6">
         <BonsaiDocumentList
           documents={documents}
           onDownload={doc => addToast(`Downloading ${doc.name}`, 'info')}
@@ -1957,71 +1818,29 @@ function FreelancerPortal({ currentScreen, onNavigate }: { currentScreen: Freela
     { id: 'profile', label: 'Profile', icon: User },
   ];
 
+  const flNavActive = (itemId: string) => {
+    const id = itemId as FreelancerScreen;
+    return (
+      currentScreen === id ||
+      (currentScreen === 'self-bill-detail' && id === 'self-bills') ||
+      (currentScreen === 'profile-change-request' && id === 'profile')
+    );
+  };
+
   return (
-    <div className="flex h-screen">
-      {/* Freelancer Portal Sidebar — Apple glass */}
-      <div
-        className="w-60 flex flex-col flex-shrink-0"
-        style={{
-          background: 'rgba(255,255,255,0.76)',
-          backdropFilter: 'blur(44px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(44px) saturate(180%)',
-          borderRight: '1px solid rgba(0,0,0,0.06)',
-          boxShadow: '4px 0 24px rgba(0,0,0,0.03)',
-        }}
-      >
-        <div className="px-5 py-5" style={{ borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
-          <div className="flex items-center gap-2.5">
-            <div
-              className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
-              style={{ background: 'linear-gradient(145deg, #b45309, #d97706)', boxShadow: '0 2px 6px rgba(217,119,6,0.3)' }}
-            >
-              <span className="text-white text-[9px] font-semibold">F</span>
-            </div>
-            <div>
-              <p className="text-[13px] font-semibold text-stone-800 leading-tight tracking-[-0.01em]">Freelancer Portal</p>
-              <p className="text-[11px] text-stone-400 leading-tight">Sarah Johnson</p>
-            </div>
-          </div>
-        </div>
+    <div className="flex min-h-0 flex-1 overflow-hidden">
+      <PortalRail
+        brandLetter="F"
+        title="Freelancer portal"
+        subtitle="Sarah Johnson"
+        layoutId="portal-freelancer-rail"
+        items={menuItems}
+        isItemActive={flNavActive}
+        onSelect={(id) => onNavigate(id as FreelancerScreen)}
+        user={{ initials: 'SJ', name: 'Sarah Johnson', email: 'sarah.j@freelance.com' }}
+      />
 
-        <nav className="flex-1 px-2.5 py-3 space-y-[2px] overflow-y-auto">
-          {menuItems.map((item) => {
-            const Icon = item.icon;
-            const isActive =
-              currentScreen === item.id ||
-              (currentScreen === 'self-bill-detail' && item.id === 'self-bills') ||
-              (currentScreen === 'profile-change-request' && item.id === 'profile');
-            return (
-              <button
-                key={item.id}
-                onClick={() => onNavigate(item.id as FreelancerScreen)}
-                className="relative w-full flex items-center gap-2.5 px-3 py-[7px] rounded-[10px] text-left transition-all"
-                style={{ background: isActive ? 'rgba(28,25,23,0.07)' : 'transparent', color: isActive ? '#1c1917' : '#78716c' }}
-                onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = 'rgba(28,25,23,0.04)'; }}
-                onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
-              >
-                {isActive && <motion.div layoutId="fl-nav" className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-[16px] rounded-full bg-stone-800" transition={{ type:'spring', stiffness:450, damping:32 }} />}
-                <Icon className="w-4 h-4 flex-shrink-0" style={{ strokeWidth: isActive ? 2.1 : 1.7 }} />
-                <span className={`text-[13px] ${isActive ? 'font-semibold text-stone-800' : 'text-stone-500'}`}>{item.label}</span>
-              </button>
-            );
-          })}
-        </nav>
-
-        <div className="px-3 py-3" style={{ borderTop: '1px solid rgba(0,0,0,0.05)' }}>
-          <div className="flex items-center gap-2.5 px-3 py-2">
-            <div className="w-7 h-7 rounded-full bg-stone-200 flex items-center justify-center text-[11px] font-semibold text-stone-600 flex-shrink-0">SJ</div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[12px] font-medium text-stone-700 truncate">Sarah Johnson</p>
-              <p className="text-[11px] text-stone-400 truncate">sarah.j@freelance.com</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto" style={{ background: '#F5F5F3' }}>
+      <PortalMain>
         {currentScreen === 'home' && <FreelancerHome onNavigate={onNavigate} />}
         {currentScreen === 'onboarding' && <FreelancerOnboarding onNavigate={onNavigate} />}
         {currentScreen === 'assignments' && <FreelancerAssignments />}
@@ -2034,87 +1853,89 @@ function FreelancerPortal({ currentScreen, onNavigate }: { currentScreen: Freela
         {currentScreen === 'documents' && <FreelancerDocuments />}
         {currentScreen === 'profile' && <FreelancerProfile onNavigate={onNavigate} />}
         {currentScreen === 'profile-change-request' && <FreelancerProfileChangeRequest onNavigate={onNavigate} />}
-      </div>
+      </PortalMain>
     </div>
   );
 }
 
 function FreelancerHome({ onNavigate }: { onNavigate: (screen: FreelancerScreen) => void }) {
+  const kpis = [
+    { label: 'Active assignments', value: '2', sub: 'in progress' },
+    { label: 'Tasks this week', value: '8', sub: 'assigned to you' },
+    { label: 'Hours this month', value: '84', sub: 'logged' },
+  ];
+
   return (
-    <div className="px-8 py-8 max-w-4xl">
+    <div className="max-w-4xl px-6 py-8 md:px-8">
       <motion.div
         className="mb-8"
-        initial={{ opacity:0, y:8 }}
-        animate={{ opacity:1, y:0 }}
-        transition={{ duration:0.3 }}
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
       >
-        <p className="text-[11px] font-semibold text-stone-400 uppercase tracking-[0.1em] mb-1">Freelancer Portal</p>
-        <h1 className="text-[30px] font-semibold text-stone-800 tracking-[-0.03em]">Welcome back, Sarah.</h1>
+        <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">Contractor workspace</p>
+        <h1 className="text-[30px] font-semibold tracking-[-0.03em] text-foreground">Welcome back, Sarah</h1>
+        <p className="mt-2 max-w-xl text-[14px] text-muted-foreground">
+          Assignments, utilization, and payouts — built for 1099 and corp-to-corp contributors.
+        </p>
       </motion.div>
 
-      <motion.div
-        className="grid grid-cols-3 gap-3 mb-6"
-        initial="hidden"
-        animate="show"
-        variants={{ hidden: {}, show: { transition: { staggerChildren: 0.07 } } }}
-      >
-        {[
-          { label: 'Active Assignments', value: '2', sub: 'in progress' },
-          { label: 'Tasks This Week',    value: '8', sub: 'assigned' },
-          { label: 'Hours This Month',   value: '84', sub: 'logged' },
-        ].map((kpi) => (
-          <motion.div
-            key={kpi.label}
-            className="glass-stat p-4"
-            variants={{ hidden: { opacity:0, y:12 }, show: { opacity:1, y:0, transition:{ type:'spring', stiffness:320, damping:28 } } }}
-          >
-            <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-[0.08em] mb-2">{kpi.label}</p>
-            <p className="text-[32px] font-bold tracking-[-0.03em] leading-none shimmer-text text-stone-800">{kpi.value}</p>
-            <p className="text-[11px] text-stone-400 mt-1.5">{kpi.sub}</p>
-          </motion.div>
+      <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        {kpis.map((kpi, i) => (
+          <HubStatTile key={kpi.label} label={kpi.label} value={kpi.value} sub={kpi.sub} delay={i * 0.05} />
         ))}
-      </motion.div>
+      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <button
+          type="button"
           onClick={() => onNavigate('assignments')}
-          className="glass-card p-5 text-left group hover-lift"
+          className="portal-panel group p-5 text-left shadow-sm transition-shadow hover:shadow-md"
         >
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-[13px] font-semibold text-stone-700">Current Assignments</h3>
-            <span className="text-stone-300 group-hover:text-stone-500 transition-colors text-[14px]">→</span>
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="text-[13px] font-semibold text-foreground">Current assignments</h3>
+            <span className="text-[14px] text-muted-foreground transition-colors group-hover:text-foreground">→</span>
           </div>
           <div className="space-y-2">
-            <div className="px-3 py-2.5 bg-stone-50/60 rounded-lg border border-stone-100/60">
-              <p className="text-[12px] font-medium text-stone-700">Website Redesign</p>
-              <p className="text-[11px] text-stone-400 mt-0.5">UI/UX Designer · Active</p>
+            <div className="rounded-lg border border-border bg-secondary/30 px-3 py-2.5">
+              <p className="text-[12px] font-medium text-foreground">Website redesign</p>
+              <p className="mt-0.5 text-[11px] text-muted-foreground">UI/UX designer · Active</p>
             </div>
-            <div className="px-3 py-2.5 bg-stone-50/60 rounded-lg border border-stone-100/60">
-              <p className="text-[12px] font-medium text-stone-700">Mobile App Development</p>
-              <p className="text-[11px] text-stone-400 mt-0.5">Senior Designer · Active</p>
+            <div className="rounded-lg border border-border bg-secondary/30 px-3 py-2.5">
+              <p className="text-[12px] font-medium text-foreground">Mobile app</p>
+              <p className="mt-0.5 text-[11px] text-muted-foreground">Senior designer · Active</p>
             </div>
           </div>
         </button>
 
         <button
+          type="button"
           onClick={() => onNavigate('timesheets')}
-          className="glass-card p-5 text-left hover-lift"
+          className="portal-panel p-5 shadow-sm text-left transition-shadow hover:shadow-md"
         >
-          <h3 className="text-[13px] font-semibold text-stone-700 mb-4">Timesheet Status</h3>
-          <div className="p-4 bg-stone-100/70 rounded-xl border border-stone-200/50">
-            <p className="text-[13px] font-semibold text-stone-700">Week of Jan 13, 2026</p>
-            <p className="text-[12px] text-stone-600 mt-0.5">Not submitted · 42 hours logged</p>
+          <h3 className="mb-4 text-[13px] font-semibold text-foreground">Timesheet</h3>
+          <div className="rounded-xl border border-border bg-secondary/40 p-4">
+            <p className="text-[13px] font-semibold text-foreground">Week of Jan 13, 2026</p>
+            <p className="mt-0.5 text-[12px] text-muted-foreground">Not submitted · 42 hours logged</p>
           </div>
         </button>
 
-        <button type="button" onClick={() => onNavigate('self-bills')} className="glass-card p-5 text-left hover-lift">
-          <h3 className="text-[13px] font-semibold text-stone-700 mb-2">Self-bills</h3>
-          <p className="text-[12px] text-stone-500">March 2026 ready · $8,400</p>
+        <button
+          type="button"
+          onClick={() => onNavigate('self-bills')}
+          className="portal-panel p-5 shadow-sm text-left transition-shadow hover:shadow-md"
+        >
+          <h3 className="mb-2 text-[13px] font-semibold text-foreground">Self-bills</h3>
+          <p className="text-[12px] text-muted-foreground">March 2026 ready · $8,400</p>
         </button>
 
-        <button type="button" onClick={() => onNavigate('onboarding')} className="glass-card p-5 text-left hover-lift">
-          <h3 className="text-[13px] font-semibold text-stone-700 mb-2">Onboarding</h3>
-          <p className="text-[12px] text-stone-500">W-9 & payment profile complete</p>
+        <button
+          type="button"
+          onClick={() => onNavigate('onboarding')}
+          className="portal-panel p-5 shadow-sm text-left transition-shadow hover:shadow-md"
+        >
+          <h3 className="mb-2 text-[13px] font-semibold text-foreground">Onboarding</h3>
+          <p className="text-[12px] text-muted-foreground">W-9 and payment profile complete</p>
         </button>
       </div>
     </div>
@@ -2125,7 +1946,7 @@ function FreelancerOnboarding({ onNavigate }: { onNavigate: (s: FreelancerScreen
   const { addToast } = useToast();
   return (
     <div className="px-8 py-8 max-w-xl">
-      <h1 className="text-[24px] font-semibold text-stone-800 mb-6">Freelancer onboarding</h1>
+      <h1 className="text-[24px] font-semibold text-foreground mb-6">Freelancer onboarding</h1>
       <div className="space-y-3">
         {[
           { l: 'W-9 submitted', ok: true },
@@ -2133,16 +1954,16 @@ function FreelancerOnboarding({ onNavigate }: { onNavigate: (s: FreelancerScreen
           { l: 'Payment method (ACH)', ok: true },
           { l: 'NDA', ok: true },
         ].map(x => (
-          <div key={x.l} className="flex items-center gap-3 p-4 bg-white/70 rounded-xl border border-stone-200/40">
-            <span className="text-emerald-500 font-bold">✓</span>
-            <span className="text-[14px] text-stone-800">{x.l}</span>
+          <div key={x.l} className="flex items-center gap-3 p-4 portal-panel">
+            <span className="text-primary font-bold">✓</span>
+            <span className="text-[14px] text-foreground">{x.l}</span>
           </div>
         ))}
       </div>
       <BonsaiButton className="mt-6" variant="outline" onClick={() => addToast('Ops will confirm compliance within 24h.', 'info')}>
         Contact ops
       </BonsaiButton>
-      <button type="button" className="block mt-4 text-[13px] text-amber-700" onClick={() => onNavigate('contract-docs')}>
+      <button type="button" className="mt-4 block text-[13px] font-medium text-primary hover:underline" onClick={() => onNavigate('contract-docs')}>
         View contract PDFs →
       </button>
     </div>
@@ -2152,16 +1973,16 @@ function FreelancerOnboarding({ onNavigate }: { onNavigate: (s: FreelancerScreen
 function FreelancerAssignments() {
   return (
     <div className="px-8 py-8 max-w-3xl">
-      <h1 className="text-[24px] font-semibold text-stone-800 tracking-[-0.02em] mb-6">My Assignments</h1>
+      <h1 className="text-[24px] font-semibold text-foreground tracking-[-0.02em] mb-6">My Assignments</h1>
       <div className="space-y-3">
         {[
           { c: 'Acme Corp', r: 'Website Redesign', rate: '$95/hr', cap: '120h' },
           { c: 'Tech Startup Inc', r: 'Mobile App', rate: '$105/hr', cap: '80h' },
         ].map(a => (
-          <div key={a.c} className="bg-white/60 backdrop-blur-sm rounded-xl border border-stone-200/40 p-5">
-            <p className="text-[14px] font-semibold text-stone-800">{a.r}</p>
-            <p className="text-[12px] text-stone-500 mt-1">{a.c}</p>
-            <p className="text-[11px] text-stone-400 mt-3">{a.rate} · Cap {a.cap}</p>
+          <div key={a.c} className="portal-panel p-5">
+            <p className="text-[14px] font-semibold text-foreground">{a.r}</p>
+            <p className="text-[12px] text-muted-foreground mt-1">{a.c}</p>
+            <p className="text-[11px] text-muted-foreground mt-3">{a.rate} · Cap {a.cap}</p>
           </div>
         ))}
       </div>
@@ -2172,11 +1993,11 @@ function FreelancerAssignments() {
 function FreelancerTasks() {
   return (
     <div className="px-8 py-8 max-w-3xl">
-      <h1 className="text-[24px] font-semibold text-stone-800 tracking-[-0.02em] mb-6">My Tasks</h1>
+      <h1 className="text-[24px] font-semibold text-foreground tracking-[-0.02em] mb-6">My Tasks</h1>
       <div className="space-y-2">
         {['Design system tokens', 'Homepage mobile QA', 'Handoff documentation'].map(t => (
-          <div key={t} className="bg-white/60 rounded-xl border border-stone-200/40 px-5 py-3 flex justify-between items-center">
-            <span className="text-[13px] font-medium text-stone-800">{t}</span>
+          <div key={t} className="portal-panel px-5 py-3 flex justify-between items-center">
+            <span className="text-[13px] font-medium text-foreground">{t}</span>
             <BonsaiStatusPill status="pending" label="Assigned" />
           </div>
         ))}
@@ -2190,7 +2011,7 @@ function FreelancerTimesheets({ onNavigate }: { onNavigate: (s: FreelancerScreen
   return (
     <div className="px-8 py-8 max-w-3xl">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-[24px] font-semibold text-stone-800">My Timesheets</h1>
+        <h1 className="text-[24px] font-semibold text-foreground">My Timesheets</h1>
         <BonsaiButton
           variant="primary"
           onClick={() => {
@@ -2201,12 +2022,12 @@ function FreelancerTimesheets({ onNavigate }: { onNavigate: (s: FreelancerScreen
           Submit week
         </BonsaiButton>
       </div>
-      <div className="bg-white/70 rounded-xl border border-stone-200/40 p-6">
-        <p className="text-[13px] text-stone-600 mb-4">Week of Mar 31 — Apr 6 · 42h across Acme + Tech Startup</p>
-        <div className="h-2 bg-stone-100 rounded-full overflow-hidden">
-          <div className="h-full w-[85%] bg-amber-500 rounded-full" />
+      <div className="portal-panel p-6">
+        <p className="text-[13px] text-muted-foreground mb-4">Week of Mar 31 — Apr 6 · 42h across Acme + Tech Startup</p>
+        <div className="h-2 overflow-hidden rounded-full bg-secondary">
+          <div className="h-full w-[85%] rounded-full bg-primary" />
         </div>
-        <p className="text-[11px] text-stone-400 mt-2">After approval, self-bill can generate automatically.</p>
+        <p className="text-[11px] text-muted-foreground mt-2">After approval, self-bill can generate automatically.</p>
       </div>
     </div>
   );
@@ -2216,18 +2037,18 @@ function FreelancerExpenses() {
   return (
     <div className="px-8 py-8 max-w-3xl">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-[24px] font-semibold text-stone-800 tracking-[-0.02em]">My Expenses</h1>
+        <h1 className="text-[24px] font-semibold text-foreground tracking-[-0.02em]">My Expenses</h1>
         <BonsaiButton variant="primary">Submit Expense</BonsaiButton>
       </div>
-      <div className="bg-white/60 backdrop-blur-sm rounded-xl border border-stone-200/40 overflow-hidden divide-y divide-stone-100/60">
+      <div className="portal-panel overflow-hidden divide-y divide-border">
         {[
           { date: 'Jan 15, 2026', amount: 85.00, category: 'Software', status: 'Pending' },
           { date: 'Jan 12, 2026', amount: 42.50, category: 'Travel', status: 'Approved' },
         ].map((expense, i) => (
           <div key={i} className="px-5 py-4 flex items-center justify-between">
             <div>
-              <p className="text-[14px] font-medium text-stone-800">{expense.category} — ${expense.amount}</p>
-              <p className="text-[12px] text-stone-400 mt-0.5">{expense.date}</p>
+              <p className="text-[14px] font-medium text-foreground">{expense.category} — ${expense.amount}</p>
+              <p className="text-[12px] text-muted-foreground mt-0.5">{expense.date}</p>
             </div>
             <BonsaiStatusPill
               status={expense.status === 'Approved' ? 'active' : 'pending'}
@@ -2250,8 +2071,8 @@ function FreelancerDocuments() {
 
   return (
     <div className="px-8 py-8 max-w-3xl">
-      <h1 className="text-[24px] font-semibold text-stone-800 tracking-[-0.02em] mb-6">My Documents</h1>
-      <div className="bg-white/60 backdrop-blur-sm rounded-xl border border-stone-200/40 p-5">
+      <h1 className="text-[24px] font-semibold text-foreground tracking-[-0.02em] mb-6">My Documents</h1>
+      <div className="portal-panel p-5">
         <BonsaiDocumentList
           documents={documents}
           onDownload={doc => addToast(`Downloading ${doc.name}`, 'info')}
@@ -2265,9 +2086,9 @@ function FreelancerDocuments() {
 function FreelancerSelfBillsList({ onNavigate }: { onNavigate: (s: FreelancerScreen) => void }) {
   return (
     <div className="px-8 py-8 max-w-3xl">
-      <h1 className="text-[24px] font-semibold text-stone-800 mb-2">Self-bills</h1>
-      <p className="text-[13px] text-stone-500 mb-6">Generated from approved timesheets — download for taxes and records.</p>
-      <div className="bg-white/70 rounded-xl border border-stone-200/40 divide-y divide-stone-100">
+      <h1 className="text-[24px] font-semibold text-foreground mb-2">Self-bills</h1>
+      <p className="text-[13px] text-muted-foreground mb-6">Generated from approved timesheets — download for taxes and records.</p>
+      <div className="portal-panel divide-y divide-border">
         {[
           { id: 'SB-2026-03', period: 'Mar 1–31, 2026', amt: '$8,400', st: 'Ready' },
           { id: 'SB-2026-02', period: 'Feb 1–28, 2026', amt: '$7,200', st: 'Paid' },
@@ -2276,14 +2097,14 @@ function FreelancerSelfBillsList({ onNavigate }: { onNavigate: (s: FreelancerScr
             key={b.id}
             type="button"
             onClick={() => onNavigate('self-bill-detail')}
-            className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-stone-50/80"
+            className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-secondary/50"
           >
             <div>
-              <p className="font-semibold text-stone-800">{b.id}</p>
-              <p className="text-[12px] text-stone-500 mt-0.5">{b.period}</p>
+              <p className="font-semibold text-foreground">{b.id}</p>
+              <p className="text-[12px] text-muted-foreground mt-0.5">{b.period}</p>
             </div>
             <div className="text-right">
-              <p className="font-semibold text-stone-800">{b.amt}</p>
+              <p className="font-semibold text-foreground">{b.amt}</p>
               <BonsaiStatusPill status={b.st === 'Paid' ? 'active' : 'pending'} label={b.st} />
             </div>
           </button>
@@ -2297,21 +2118,21 @@ function FreelancerSelfBillDetail({ onNavigate }: { onNavigate: (s: FreelancerSc
   const { addToast } = useToast();
   return (
     <div className="px-8 py-8 max-w-2xl">
-      <button type="button" onClick={() => onNavigate('self-bills')} className="text-[13px] text-stone-500 hover:text-stone-800 mb-6">
+      <button type="button" onClick={() => onNavigate('self-bills')} className="text-[13px] text-muted-foreground hover:text-foreground mb-6">
         ← Self-bills
       </button>
-      <h1 className="text-[22px] font-semibold text-stone-800 mb-2">SB-2026-03</h1>
-      <p className="text-[13px] text-stone-500 mb-6">Mar 1–31, 2026 · 88 billable hours</p>
-      <div className="bg-white rounded-xl border border-stone-200/40 p-6 mb-6">
+      <h1 className="text-[22px] font-semibold text-foreground mb-2">SB-2026-03</h1>
+      <p className="text-[13px] text-muted-foreground mb-6">Mar 1–31, 2026 · 88 billable hours</p>
+      <div className="portal-panel rounded-xl p-6 mb-6">
         <div className="flex justify-between text-[13px] mb-2">
-          <span className="text-stone-500">Acme Corp</span>
+          <span className="text-muted-foreground">Acme Corp</span>
           <span className="font-semibold">$4,800</span>
         </div>
         <div className="flex justify-between text-[13px] mb-4">
-          <span className="text-stone-500">Tech Startup Inc</span>
+          <span className="text-muted-foreground">Tech Startup Inc</span>
           <span className="font-semibold">$3,600</span>
         </div>
-        <div className="border-t border-stone-100 pt-4 flex justify-between font-semibold text-stone-800">
+        <div className="border-t border-border/60 pt-4 flex justify-between font-semibold text-foreground">
           <span>Total</span>
           <span>$8,400</span>
         </div>
@@ -2327,17 +2148,17 @@ function FreelancerContractDocs() {
   const { addToast } = useToast();
   return (
     <div className="px-8 py-8 max-w-3xl">
-      <h1 className="text-[24px] font-semibold text-stone-800 mb-6">Contract documents</h1>
-      <div className="bg-white/70 rounded-xl border border-stone-200/40 p-6 space-y-4">
+      <h1 className="text-[24px] font-semibold text-foreground mb-6">Contract documents</h1>
+      <div className="portal-panel p-6 space-y-4">
         {[
           { n: 'Master services agreement — 2026', d: 'Jan 10, 2026' },
           { n: 'Statement of work — Website', d: 'Jan 12, 2026' },
           { n: 'NDA (mutual)', d: 'Nov 10, 2025' },
         ].map(f => (
-          <div key={f.n} className="flex items-center justify-between py-2 border-b border-stone-100 last:border-0">
+          <div key={f.n} className="flex items-center justify-between py-2 border-b border-border/60 last:border-0">
             <div>
-              <p className="font-medium text-stone-800">{f.n}</p>
-              <p className="text-[11px] text-stone-400">Signed {f.d}</p>
+              <p className="font-medium text-foreground">{f.n}</p>
+              <p className="text-[11px] text-muted-foreground">Signed {f.d}</p>
             </div>
             <BonsaiButton size="sm" variant="ghost" onClick={() => addToast(`Opening ${f.n}`, 'info')}>
               Download
@@ -2352,19 +2173,19 @@ function FreelancerContractDocs() {
 function FreelancerProfile({ onNavigate }: { onNavigate: (s: FreelancerScreen) => void }) {
   return (
     <div className="px-8 py-8 max-w-xl">
-      <h1 className="text-[24px] font-semibold text-stone-800 mb-6">Profile</h1>
-      <div className="bg-white rounded-xl border border-stone-200/40 p-6 space-y-4">
+      <h1 className="text-[24px] font-semibold text-foreground mb-6">Profile</h1>
+      <div className="portal-panel rounded-xl p-6 space-y-4">
         <div>
-          <p className="text-[11px] text-stone-400 uppercase tracking-wider">Display name</p>
-          <p className="text-[14px] font-medium text-stone-800">Sarah Johnson</p>
+          <p className="text-[11px] text-muted-foreground uppercase tracking-wider">Display name</p>
+          <p className="text-[14px] font-medium text-foreground">Sarah Johnson</p>
         </div>
         <div>
-          <p className="text-[11px] text-stone-400 uppercase tracking-wider">Business email</p>
-          <p className="text-[14px] text-stone-800">sarah.j@freelance.com</p>
+          <p className="text-[11px] text-muted-foreground uppercase tracking-wider">Business email</p>
+          <p className="text-[14px] text-foreground">sarah.j@freelance.com</p>
         </div>
         <div>
-          <p className="text-[11px] text-stone-400 uppercase tracking-wider">Tax entity</p>
-          <p className="text-[14px] text-stone-800">S Johnson LLC</p>
+          <p className="text-[11px] text-muted-foreground uppercase tracking-wider">Tax entity</p>
+          <p className="text-[14px] text-foreground">S Johnson LLC</p>
         </div>
         <BonsaiButton variant="outline" onClick={() => onNavigate('profile-change-request')}>
           Request data change
@@ -2378,12 +2199,12 @@ function FreelancerProfileChangeRequest({ onNavigate }: { onNavigate: (s: Freela
   const { addToast } = useToast();
   return (
     <div className="px-8 py-8 max-w-xl">
-      <button type="button" onClick={() => onNavigate('profile')} className="text-[13px] text-stone-500 hover:text-stone-800 mb-6">
+      <button type="button" onClick={() => onNavigate('profile')} className="text-[13px] text-muted-foreground hover:text-foreground mb-6">
         ← Profile
       </button>
-      <h1 className="text-[22px] font-semibold text-stone-800 mb-6">Request profile update</h1>
-      <div className="bg-white rounded-xl border border-stone-200/40 p-6 space-y-4">
-        <textarea className="w-full min-h-[120px] px-3 py-2 rounded-lg border border-stone-200 text-[13px]" placeholder="Describe the change (legal name, address, etc.)" />
+      <h1 className="text-[22px] font-semibold text-foreground mb-6">Request profile update</h1>
+      <div className="portal-panel rounded-xl p-6 space-y-4">
+        <textarea className="w-full min-h-[120px] px-3 py-2 rounded-lg border border-border text-[13px]" placeholder="Describe the change (legal name, address, etc.)" />
         <BonsaiButton variant="primary" onClick={() => { addToast('Request queued for HR / ops.', 'success'); onNavigate('profile'); }}>
           Submit
         </BonsaiButton>
@@ -2396,11 +2217,11 @@ function FreelancerProfileChangeRequest({ onNavigate }: { onNavigate: (s: Freela
 function ApprovalModal({ action, type, onClose, onSuccess }: { action: 'approve' | 'reject', type: 'proposal' | 'request' | 'invoice', onClose: () => void, onSuccess: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-stone-900/15 backdrop-blur-[8px]" onClick={onClose} />
-      <div className="relative bg-white/85 backdrop-blur-2xl rounded-2xl shadow-[0_24px_80px_-12px_rgba(0,0,0,0.12)] border border-white/50 p-6 w-full max-w-sm">
+      <div className="absolute inset-0 bg-background/60 backdrop-blur-[8px]" onClick={onClose} />
+      <div className="relative hub-modal-solid rounded-2xl p-6 w-full max-w-sm">
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/60 to-transparent" />
-        <h2 className="text-[16px] font-medium text-stone-800 mb-2">Confirm {action === 'approve' ? 'Approval' : 'Rejection'}</h2>
-        <p className="text-[13px] text-stone-500 mb-6 leading-relaxed">Are you sure you want to {action === 'approve' ? 'approve' : 'reject'} this {type}?</p>
+        <h2 className="text-[16px] font-medium text-foreground mb-2">Confirm {action === 'approve' ? 'Approval' : 'Rejection'}</h2>
+        <p className="text-[13px] text-muted-foreground mb-6 leading-relaxed">Are you sure you want to {action === 'approve' ? 'approve' : 'reject'} this {type}?</p>
         <div className="flex items-center justify-end gap-2">
           <BonsaiButton size="sm" variant="ghost" onClick={onClose}>Cancel</BonsaiButton>
           <BonsaiButton size="sm" variant={action === 'approve' ? 'primary' : 'destructive'} onClick={onSuccess}>{action === 'approve' ? 'Approve' : 'Reject'}</BonsaiButton>
@@ -2425,118 +2246,138 @@ function HRISPortal({ currentScreen, onNavigate }: { currentScreen: HRISScreen; 
     { id: 'd2', employee: 'Priya N.', doc: 'I-9 reverification', submitted: '2026-03-29', status: 'Pending' as const },
   ];
 
+  const hrisMenu = [
+    { id: 'profile-requests', label: 'Profile requests', icon: ClipboardList },
+    { id: 'document-requests', label: 'Document intake', icon: FileText },
+  ];
+
+  const hrisNavActive = (itemId: string) => {
+    if (itemId === 'profile-requests') {
+      return currentScreen === 'profile-requests' || currentScreen === 'profile-request-detail';
+    }
+    return currentScreen === 'document-requests';
+  };
+
   return (
-    <div className="max-w-4xl mx-auto px-8 py-10 min-h-screen" style={{ background: '#fafaf9' }}>
-      <div className="mb-8">
-        <h1 className="text-[24px] font-semibold text-stone-800 tracking-[-0.02em]">HRIS administration</h1>
-        <p className="text-[13px] text-stone-500 mt-1">Profile change requests (GDPR) and document intake from employee portal</p>
-      </div>
+    <div className="flex min-h-0 flex-1 overflow-hidden">
+      <PortalRail
+        brandLetter="H"
+        title="HRIS admin"
+        subtitle="People operations"
+        layoutId="portal-hris-rail"
+        items={hrisMenu}
+        isItemActive={hrisNavActive}
+        onSelect={(id) => onNavigate(id as HRISScreen)}
+        user={{ initials: 'HR', name: 'HR Ops', email: 'hr-ops@company.com' }}
+      />
 
-      <div className="flex gap-2 mb-8">
-        <button
-          type="button"
-          onClick={() => onNavigate('profile-requests')}
-          className={`px-3 py-1.5 text-[12px] rounded-md transition-all ${currentScreen === 'profile-requests' || currentScreen === 'profile-request-detail' ? 'bg-stone-800 text-white font-medium' : 'text-stone-500 hover:bg-stone-100'}`}
-        >
-          Profile requests
-        </button>
-        <button
-          type="button"
-          onClick={() => onNavigate('document-requests')}
-          className={`px-3 py-1.5 text-[12px] rounded-md transition-all ${currentScreen === 'document-requests' ? 'bg-stone-800 text-white font-medium' : 'text-stone-500 hover:bg-stone-100'}`}
-        >
-          Document requests
-        </button>
-      </div>
-
-      {currentScreen === 'profile-requests' && (
-        <div className="bg-white/80 backdrop-blur-sm rounded-xl border border-stone-200/40 overflow-hidden divide-y divide-stone-100/60 shadow-sm">
-          {requests.map(req => (
-            <button
-              key={req.id}
-              type="button"
-              onClick={() => onNavigate('profile-request-detail')}
-              className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-stone-50/80 transition-colors"
-            >
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-3 flex-wrap">
-                  <span className="text-[14px] font-medium text-stone-800">{req.employee}</span>
-                  <span className="text-[11px] text-stone-500 uppercase tracking-wide">{req.type}</span>
-                </div>
-                <div className="text-[12px] text-stone-400 mt-0.5">{req.field} · {req.submitted}</div>
-              </div>
-              <BonsaiStatusPill status={req.status === 'Pending' ? 'pending' : 'completed'} label={req.status} />
-            </button>
-          ))}
-        </div>
-      )}
-
-      {currentScreen === 'profile-request-detail' && (
-        <div>
-          <button type="button" onClick={() => onNavigate('profile-requests')} className="text-[13px] text-stone-500 hover:text-stone-800 mb-6">
-            ← All requests
-          </button>
-          <div className="bg-white rounded-xl border border-stone-200/40 p-6 shadow-sm mb-6">
-            <h2 className="text-[18px] font-semibold text-stone-800 mb-1">Jane Smith — Legal name</h2>
-            <p className="text-[12px] text-stone-500 mb-6">Submitted 2026-03-30 · Employee portal</p>
-            <div className="grid md:grid-cols-2 gap-4 mb-6">
-              <div className="p-4 rounded-lg bg-red-50/50 border border-red-100">
-                <p className="text-[10px] font-semibold text-red-800/80 uppercase tracking-wider mb-2">Current</p>
-                <p className="text-[14px] text-stone-800">Jane Smith</p>
-              </div>
-              <div className="p-4 rounded-lg bg-emerald-50/50 border border-emerald-100">
-                <p className="text-[10px] font-semibold text-emerald-800/80 uppercase tracking-wider mb-2">Requested</p>
-                <p className="text-[14px] text-stone-800">Jane Smith-Lee</p>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <BonsaiButton
-                variant="primary"
-                onClick={() => {
-                  addToast('Change approved — employee record updated.', 'success');
-                  onNavigate('profile-requests');
-                }}
-              >
-                Approve
-              </BonsaiButton>
-              <BonsaiButton
-                variant="destructive"
-                onClick={() => {
-                  addToast('Rejected — employee notified with reason.', 'warning');
-                  onNavigate('profile-requests');
-                }}
-              >
-                Reject
-              </BonsaiButton>
-              <BonsaiButton variant="ghost" onClick={() => addToast('Audit log entry added.', 'info')}>
-                Add note
-              </BonsaiButton>
-            </div>
+      <PortalMain>
+        <div className="mx-auto max-w-4xl px-6 py-8 md:px-8">
+          <div className="mb-8">
+            <h1 className="text-[24px] font-semibold tracking-[-0.02em] text-foreground">HRIS administration</h1>
+            <p className="mt-1 text-[13px] text-muted-foreground">
+              Profile change requests and sensitive document intake from the employee portal — audit-ready workflows.
+            </p>
           </div>
-        </div>
-      )}
 
-      {currentScreen === 'document-requests' && (
-        <div className="bg-white/80 backdrop-blur-sm rounded-xl border border-stone-200/40 overflow-hidden divide-y divide-stone-100 shadow-sm">
-          {docRequests.map(d => (
-            <div key={d.id} className="px-5 py-4 flex items-center justify-between gap-4">
-              <div>
-                <p className="font-medium text-stone-800">{d.doc}</p>
-                <p className="text-[12px] text-stone-500 mt-0.5">{d.employee} · {d.submitted}</p>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <BonsaiStatusPill status="pending" label={d.status} />
-                <BonsaiButton size="sm" variant="primary" onClick={() => addToast('Document marked verified.', 'success')}>
-                  Verify
-                </BonsaiButton>
-                <BonsaiButton size="sm" variant="ghost" onClick={() => addToast('Preview opened (demo).', 'info')}>
-                  Preview
-                </BonsaiButton>
+          {currentScreen === 'profile-requests' && (
+            <div className="portal-list divide-y divide-border shadow-sm">
+              {requests.map(req => (
+                <button
+                  key={req.id}
+                  type="button"
+                  onClick={() => onNavigate('profile-request-detail')}
+                  className="flex w-full items-center justify-between px-5 py-4 text-left transition-colors hover:bg-[color:var(--row-hover-bg)]"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <span className="text-[14px] font-medium text-foreground">{req.employee}</span>
+                      <span className="text-[11px] uppercase tracking-wide text-muted-foreground">{req.type}</span>
+                    </div>
+                    <div className="mt-0.5 text-[12px] text-muted-foreground">
+                      {req.field} · {req.submitted}
+                    </div>
+                  </div>
+                  <BonsaiStatusPill status={req.status === 'Pending' ? 'pending' : 'completed'} label={req.status} />
+                </button>
+              ))}
+            </div>
+          )}
+
+          {currentScreen === 'profile-request-detail' && (
+            <div>
+              <button
+                type="button"
+                onClick={() => onNavigate('profile-requests')}
+                className="mb-6 text-[13px] text-muted-foreground transition-colors hover:text-foreground"
+              >
+                ← All requests
+              </button>
+              <div className="portal-panel mb-6 p-6 shadow-sm">
+                <h2 className="mb-1 text-[18px] font-semibold text-foreground">Jane Smith — Legal name</h2>
+                <p className="mb-6 text-[12px] text-muted-foreground">Submitted 2026-03-30 · Employee portal</p>
+                <div className="mb-6 grid gap-4 md:grid-cols-2">
+                  <div className="rounded-lg border border-border bg-secondary/50 p-4">
+                    <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Current</p>
+                    <p className="text-[14px] text-foreground">Jane Smith</p>
+                  </div>
+                  <div className="rounded-lg border border-primary/25 bg-primary/5 p-4 dark:border-primary/30 dark:bg-primary/10">
+                    <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-primary">Requested</p>
+                    <p className="text-[14px] text-foreground">Jane Smith-Lee</p>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <BonsaiButton
+                    variant="primary"
+                    onClick={() => {
+                      addToast('Change approved — employee record updated.', 'success');
+                      onNavigate('profile-requests');
+                    }}
+                  >
+                    Approve
+                  </BonsaiButton>
+                  <BonsaiButton
+                    variant="destructive"
+                    onClick={() => {
+                      addToast('Rejected — employee notified with reason.', 'warning');
+                      onNavigate('profile-requests');
+                    }}
+                  >
+                    Reject
+                  </BonsaiButton>
+                  <BonsaiButton variant="ghost" onClick={() => addToast('Audit log entry added.', 'info')}>
+                    Add note
+                  </BonsaiButton>
+                </div>
               </div>
             </div>
-          ))}
+          )}
+
+          {currentScreen === 'document-requests' && (
+            <div className="portal-list divide-y divide-border shadow-sm">
+              {docRequests.map(d => (
+                <div key={d.id} className="flex items-center justify-between gap-4 px-5 py-4">
+                  <div>
+                    <p className="font-medium text-foreground">{d.doc}</p>
+                    <p className="mt-0.5 text-[12px] text-muted-foreground">
+                      {d.employee} · {d.submitted}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <BonsaiStatusPill status="pending" label={d.status} />
+                    <BonsaiButton size="sm" variant="primary" onClick={() => addToast('Document marked verified.', 'success')}>
+                      Verify
+                    </BonsaiButton>
+                    <BonsaiButton size="sm" variant="ghost" onClick={() => addToast('Preview opened (demo).', 'info')}>
+                      Preview
+                    </BonsaiButton>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-      )}
+      </PortalMain>
     </div>
   );
 }

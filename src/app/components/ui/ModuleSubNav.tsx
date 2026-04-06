@@ -13,13 +13,13 @@ export function ModuleSubNav({ children, className }: { children: React.ReactNod
 
 export function moduleSubNavButtonClass(active: boolean): string {
   return cn(
-    'px-3 py-1.5 text-[12px] rounded-md transition-all duration-200',
+    'px-3 py-1.5 text-[12px] rounded-md transition-all duration-200 border border-transparent',
     active
-      ? 'bg-stone-800 dark:bg-white/10 text-white dark:text-stone-100 font-medium'
-      : 'text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-200 hover:bg-stone-100/60 dark:hover:bg-white/[0.06]',
+      ? 'bg-primary/12 text-primary font-medium border-primary/20 shadow-sm dark:bg-white/10 dark:text-foreground dark:border-white/[0.12] dark:shadow-none'
+      : 'text-muted-foreground hover:text-foreground hover:bg-secondary hover:border-border/80 dark:hover:bg-white/[0.06] dark:hover:border-transparent',
   );
 }
 
 export function ModuleSubNavDivider() {
-  return <div className="w-px h-3.5 bg-stone-200/60 dark:bg-white/10 mx-1.5" />;
+  return <div className="w-px h-3.5 bg-border mx-1.5" />;
 }
