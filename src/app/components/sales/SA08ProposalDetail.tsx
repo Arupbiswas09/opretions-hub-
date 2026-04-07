@@ -21,11 +21,11 @@ export function SA08ProposalDetail() {
       <div className="flex items-start justify-between mb-6">
         <div className="flex-1">
           <div className="flex items-center gap-3 mb-2">
-            <h1 className="text-2xl font-semibold text-stone-800">Website Redesign Proposal</h1>
+            <h1 className="text-2xl font-semibold text-foreground">Website Redesign Proposal</h1>
             <BonsaiStatusPill status="pending" label="Sent" />
-            <span className="text-sm text-stone-500">v2.0</span>
+            <span className="text-sm text-muted-foreground">v2.0</span>
           </div>
-          <p className="text-sm text-stone-500">Acme Corp • $45,000 • Valid until Jan 20, 2026</p>
+          <p className="text-sm text-muted-foreground">Acme Corp • $45,000 • Valid until Jan 20, 2026</p>
         </div>
         
         <div className="flex items-center gap-2">
@@ -53,21 +53,21 @@ export function SA08ProposalDetail() {
         {activeTab === 'proposal' && (
           <div className="space-y-6">
             {/* PDF Preview Placeholder */}
-            <div className="bg-white rounded-lg border border-stone-200 overflow-hidden">
-              <div className="h-[800px] bg-stone-50 flex flex-col items-center justify-center">
-                <div className="w-full max-w-4xl bg-white shadow-lg mx-auto p-12">
+            <div className="hub-surface overflow-hidden rounded-lg">
+              <div className="h-[70vh] min-h-[520px] bg-muted/25 flex flex-col items-center justify-center p-6">
+                <div className="w-full max-w-4xl bg-[var(--background-2)] border border-border shadow-lg mx-auto p-10 rounded-xl">
                   {/* Mock PDF Content */}
                   <div className="text-center mb-8">
-                    <h2 className="text-3xl font-semibold text-stone-800 mb-2">Website Redesign Proposal</h2>
-                    <p className="text-stone-600">Prepared for Acme Corp</p>
-                    <p className="text-sm text-stone-500 mt-2">January 10, 2026</p>
+                    <h2 className="text-3xl font-semibold text-foreground mb-2">Website Redesign Proposal</h2>
+                    <p className="text-muted-foreground">Prepared for Acme Corp</p>
+                    <p className="text-sm text-muted-foreground mt-2">January 10, 2026</p>
                   </div>
 
                   <div className="space-y-8">
                     {/* Executive Summary */}
                     <div>
-                      <h3 className="text-xl font-semibold text-stone-800 mb-3">Executive Summary</h3>
-                      <p className="text-stone-600 leading-relaxed">
+                      <h3 className="text-xl font-semibold text-foreground mb-3">Executive summary</h3>
+                      <p className="text-muted-foreground leading-relaxed">
                         We are excited to present this proposal for a complete website redesign that will modernize
                         your online presence and improve user experience across all devices.
                       </p>
@@ -75,46 +75,46 @@ export function SA08ProposalDetail() {
 
                     {/* Scope of Work */}
                     <div>
-                      <h3 className="text-xl font-semibold text-stone-800 mb-3">Scope of Work</h3>
+                      <h3 className="text-xl font-semibold text-foreground mb-3">Scope of work</h3>
                       <div className="space-y-2">
                         <div className="flex items-start gap-2">
                           <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2" />
-                          <p className="text-stone-600">Modern, responsive design for all pages</p>
+                          <p className="text-muted-foreground">Modern, responsive design for all pages</p>
                         </div>
                         <div className="flex items-start gap-2">
                           <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2" />
-                          <p className="text-stone-600">Custom CMS integration</p>
+                          <p className="text-muted-foreground">Custom CMS integration</p>
                         </div>
                         <div className="flex items-start gap-2">
                           <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2" />
-                          <p className="text-stone-600">SEO optimization</p>
+                          <p className="text-muted-foreground">SEO optimization</p>
                         </div>
                         <div className="flex items-start gap-2">
                           <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2" />
-                          <p className="text-stone-600">Performance optimization</p>
+                          <p className="text-muted-foreground">Performance optimization</p>
                         </div>
                       </div>
                     </div>
 
                     {/* Investment */}
                     <div>
-                      <h3 className="text-xl font-semibold text-stone-800 mb-3">Investment</h3>
-                      <div className="bg-stone-50 rounded-lg p-6">
+                      <h3 className="text-xl font-semibold text-foreground mb-3">Investment</h3>
+                      <div className="bg-muted/25 border border-border rounded-lg p-6">
                         <div className="space-y-3">
                           <div className="flex justify-between">
-                            <span className="text-stone-600">Design & UX</span>
-                            <span className="font-semibold text-stone-800">$15,000</span>
+                            <span className="text-muted-foreground">Design & UX</span>
+                            <span className="font-semibold text-foreground">$15,000</span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-stone-600">Development</span>
-                            <span className="font-semibold text-stone-800">$25,000</span>
+                            <span className="text-muted-foreground">Development</span>
+                            <span className="font-semibold text-foreground">$25,000</span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-stone-600">Content Migration</span>
-                            <span className="font-semibold text-stone-800">$5,000</span>
+                            <span className="text-muted-foreground">Content Migration</span>
+                            <span className="font-semibold text-foreground">$5,000</span>
                           </div>
-                          <div className="pt-3 border-t border-stone-200 flex justify-between">
-                            <span className="font-semibold text-stone-800">Total Investment</span>
+                          <div className="pt-3 border-t border-border flex justify-between">
+                            <span className="font-semibold text-foreground">Total investment</span>
                             <span className="text-xl font-semibold text-primary">$45,000</span>
                           </div>
                         </div>
@@ -123,8 +123,8 @@ export function SA08ProposalDetail() {
 
                     {/* Timeline */}
                     <div>
-                      <h3 className="text-xl font-semibold text-stone-800 mb-3">Timeline</h3>
-                      <p className="text-stone-600">Estimated completion: 8-10 weeks from project kickoff</p>
+                      <h3 className="text-xl font-semibold text-foreground mb-3">Timeline</h3>
+                      <p className="text-muted-foreground">Estimated completion: 8-10 weeks from project kickoff</p>
                     </div>
                   </div>
                 </div>
@@ -134,7 +134,7 @@ export function SA08ProposalDetail() {
         )}
 
         {activeTab === 'activity' && (
-          <div className="bg-white rounded-lg border border-stone-200 p-6">
+          <div className="hub-surface rounded-lg p-6">
             <BonsaiTimeline
               items={[
                 {
@@ -166,7 +166,7 @@ export function SA08ProposalDetail() {
         {activeTab === 'documents' && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-stone-800">Related Documents</h3>
+              <h3 className="font-semibold text-foreground">Related documents</h3>
               <BonsaiButton size="sm">Upload Document</BonsaiButton>
             </div>
             <BonsaiDocumentList

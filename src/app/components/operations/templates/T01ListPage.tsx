@@ -40,24 +40,18 @@ export function T01ListPage({ title, subtitle }: T01ListPageProps) {
           }
         />
 
-        {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white rounded-lg border border-stone-200 p-4">
-            <p className="text-sm text-stone-600">Total Records</p>
-            <p className="text-2xl font-semibold text-stone-800 mt-1">{sampleData.length}</p>
-          </div>
-          <div className="bg-white rounded-lg border border-stone-200 p-4">
-            <p className="text-sm text-stone-600">Active</p>
-            <p className="text-2xl font-semibold text-stone-800 mt-1">8</p>
-          </div>
-          <div className="bg-white rounded-lg border border-stone-200 p-4">
-            <p className="text-sm text-stone-600">Pending</p>
-            <p className="text-2xl font-semibold text-stone-800 mt-1">9</p>
-          </div>
-          <div className="bg-white rounded-lg border border-stone-200 p-4">
-            <p className="text-sm text-stone-600">Completed</p>
-            <p className="text-2xl font-semibold text-stone-800 mt-1">8</p>
-          </div>
+          {[
+            { label: 'Total Records', value: sampleData.length },
+            { label: 'Active', value: 8 },
+            { label: 'Pending', value: 9 },
+            { label: 'Completed', value: 8 },
+          ].map((s) => (
+            <div key={s.label} className="hub-surface hub-surface-elevated rounded-lg p-4">
+              <p className="text-sm text-muted-foreground">{s.label}</p>
+              <p className="text-2xl font-semibold text-foreground mt-1">{s.value}</p>
+            </div>
+          ))}
         </div>
 
         {/* Enhanced Table with Bulk Actions */}

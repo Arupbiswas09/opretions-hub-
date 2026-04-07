@@ -100,11 +100,11 @@ export function CL05RequestDetail({ request, onBack }: CL05RequestDetailProps) {
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'Urgent': return 'bg-stone-100 text-stone-700';
-      case 'High': return 'bg-stone-100 text-stone-700';
-      case 'Medium': return 'bg-stone-100 text-stone-600';
-      case 'Low': return 'bg-stone-100 text-stone-700';
-      default: return 'bg-stone-100 text-stone-700';
+      case 'Urgent': return 'bg-destructive/10 text-destructive border border-destructive/20';
+      case 'High': return 'bg-primary/10 text-primary border border-primary/20';
+      case 'Medium': return 'bg-muted/60 text-foreground border border-border';
+      case 'Low': return 'bg-muted/40 text-muted-foreground border border-border';
+      default: return 'bg-muted/60 text-foreground border border-border';
     }
   };
 
@@ -112,8 +112,9 @@ export function CL05RequestDetail({ request, onBack }: CL05RequestDetailProps) {
     <div className="px-3 py-6 sm:p-8">
       {/* Back Button */}
       <button
+        type="button"
         onClick={onBack}
-        className="flex items-center gap-2 text-sm text-stone-600 hover:text-stone-800 mb-6"
+        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to Requests
@@ -123,8 +124,8 @@ export function CL05RequestDetail({ request, onBack }: CL05RequestDetailProps) {
       <div className="mb-6">
         <div className="flex items-start justify-between mb-3">
           <div>
-            <h1 className="text-2xl font-semibold text-stone-800 mb-2">{request.title}</h1>
-            <div className="flex items-center gap-3 text-sm text-stone-600">
+            <h1 className="text-2xl font-semibold text-foreground mb-1">{request.title}</h1>
+            <div className="flex items-center gap-3 text-sm text-muted-foreground">
               <span>{request.type}</span>
               <span>•</span>
               <span>Submitted by {request.submittedBy}</span>
@@ -144,28 +145,32 @@ export function CL05RequestDetail({ request, onBack }: CL05RequestDetailProps) {
         </div>
       </div>
 
-      {/* Status Flow */}
-      <div className="bg-white rounded-lg border border-stone-200 p-6 mb-6">
-        <h3 className="font-semibold text-stone-800 mb-4">Request Status Flow</h3>
-        <div className="flex items-center gap-2">
-          <div className={`flex-1 text-center p-3 rounded-lg ${request.status === 'New' ? 'bg-primary text-white' : 'bg-stone-100 text-stone-600'}`}>
-            <p className="text-xs font-medium">New</p>
+      {/* Status (compact) */}
+      <div className="hub-surface rounded-lg p-5 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
+          <div>
+            <p className="text-xs text-muted-foreground mb-1">Status</p>
+            <div className="flex items-center gap-2">
+              <BonsaiStatusPill status={getStatusColor(request.status)} label={request.status} />
+            </div>
           </div>
-          <div className="w-8 h-0.5 bg-stone-300"></div>
-          <div className={`flex-1 text-center p-3 rounded-lg ${request.status === 'In Review' ? 'bg-primary text-white' : request.status !== 'New' ? 'bg-stone-100 text-stone-700' : 'bg-stone-100 text-stone-600'}`}>
-            <p className="text-xs font-medium">In Review</p>
+          <div>
+            <p className="text-xs text-muted-foreground mb-1">Priority</p>
+            <span className={`inline-flex px-3 py-1 text-xs font-medium rounded-full ${getPriorityColor(request.priority)}`}>
+              {request.priority}
+            </span>
           </div>
-          <div className="w-8 h-0.5 bg-stone-300"></div>
-          <div className={`flex-1 text-center p-3 rounded-lg ${request.status === 'Approved' ? 'bg-primary text-white' : ['In Progress', 'Completed'].includes(request.status) ? 'bg-stone-100 text-stone-700' : 'bg-stone-100 text-stone-600'}`}>
-            <p className="text-xs font-medium">Approved</p>
+          <div>
+            <p className="text-xs text-muted-foreground mb-1">Owner</p>
+            <p className="text-sm text-foreground">John Doe</p>
           </div>
-          <div className="w-8 h-0.5 bg-stone-300"></div>
-          <div className={`flex-1 text-center p-3 rounded-lg ${request.status === 'In Progress' ? 'bg-primary text-white' : request.status === 'Completed' ? 'bg-stone-100 text-stone-700' : 'bg-stone-100 text-stone-600'}`}>
-            <p className="text-xs font-medium">In Progress</p>
+          <div>
+            <p className="text-xs text-muted-foreground mb-1">Next step</p>
+            <p className="text-sm text-foreground">Discovery call</p>
           </div>
-          <div className="w-8 h-0.5 bg-stone-300"></div>
-          <div className={`flex-1 text-center p-3 rounded-lg ${request.status === 'Completed' ? 'bg-stone-700 text-white' : request.status === 'Rejected' ? 'bg-stone-800 text-white' : 'bg-stone-100 text-stone-600'}`}>
-            <p className="text-xs font-medium">{request.status === 'Rejected' ? 'Rejected' : 'Completed'}</p>
+          <div className="sm:text-right">
+            <p className="text-xs text-muted-foreground mb-1">ETA</p>
+            <p className="text-sm text-foreground">Feb 15, 2026</p>
           </div>
         </div>
       </div>
@@ -181,65 +186,65 @@ export function CL05RequestDetail({ request, onBack }: CL05RequestDetailProps) {
       <div className="mt-6">
         {activeTab === 'overview' && (
           <div className="space-y-6">
-            <div className="bg-white rounded-lg border border-stone-200 p-6">
-              <h3 className="font-semibold text-stone-800 mb-4">Request Details</h3>
+            <div className="hub-surface rounded-lg p-6">
+              <h3 className="font-semibold text-foreground mb-4">Request details</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-xs text-stone-600 mb-1">Request Type</p>
-                  <p className="text-sm font-medium text-stone-800">{request.type}</p>
+                  <p className="text-xs text-muted-foreground mb-1">Request type</p>
+                  <p className="text-sm font-medium text-foreground">{request.type}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-stone-600 mb-1">Priority</p>
-                  <p className="text-sm font-medium text-stone-800">{request.priority}</p>
+                  <p className="text-xs text-muted-foreground mb-1">Priority</p>
+                  <p className="text-sm font-medium text-foreground">{request.priority}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-stone-600 mb-1">Submitted By</p>
-                  <p className="text-sm font-medium text-stone-800">{request.submittedBy}</p>
+                  <p className="text-xs text-muted-foreground mb-1">Submitted by</p>
+                  <p className="text-sm font-medium text-foreground">{request.submittedBy}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-stone-600 mb-1">Submitted Date</p>
-                  <p className="text-sm font-medium text-stone-800">{request.submittedDate}</p>
+                  <p className="text-xs text-muted-foreground mb-1">Submitted</p>
+                  <p className="text-sm font-medium text-foreground">{request.submittedDate}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-stone-600 mb-1">Assigned To</p>
-                  <p className="text-sm font-medium text-stone-800">John Doe</p>
+                  <p className="text-xs text-muted-foreground mb-1">Assigned to</p>
+                  <p className="text-sm font-medium text-foreground">John Doe</p>
                 </div>
                 <div>
-                  <p className="text-xs text-stone-600 mb-1">Expected Completion</p>
-                  <p className="text-sm font-medium text-stone-800">Feb 15, 2026</p>
+                  <p className="text-xs text-muted-foreground mb-1">Expected completion</p>
+                  <p className="text-sm font-medium text-foreground">Feb 15, 2026</p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-lg border border-stone-200 p-6">
-              <h3 className="font-semibold text-stone-800 mb-4">Description</h3>
-              <p className="text-sm text-stone-700 leading-relaxed">
+            <div className="hub-surface rounded-lg p-6">
+              <h3 className="font-semibold text-foreground mb-3">Description</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
                 We need a complete redesign of our corporate website. The current site is outdated and not mobile-responsive. 
                 Looking for a modern, clean design that showcases our products and services effectively. 
                 Must include improved user experience, faster load times, and better SEO optimization.
               </p>
             </div>
 
-            <div className="bg-white rounded-lg border border-stone-200 p-6">
-              <h3 className="font-semibold text-stone-800 mb-4">Requirements</h3>
+            <div className="hub-surface rounded-lg p-6">
+              <h3 className="font-semibold text-foreground mb-4">Requirements</h3>
               <ul className="space-y-2">
-                <li className="flex items-start gap-2 text-sm text-stone-700">
+                <li className="flex items-start gap-2 text-sm text-muted-foreground">
                   <span className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0"></span>
                   <span>Responsive design for mobile, tablet, and desktop</span>
                 </li>
-                <li className="flex items-start gap-2 text-sm text-stone-700">
+                <li className="flex items-start gap-2 text-sm text-muted-foreground">
                   <span className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0"></span>
                   <span>Content management system integration</span>
                 </li>
-                <li className="flex items-start gap-2 text-sm text-stone-700">
+                <li className="flex items-start gap-2 text-sm text-muted-foreground">
                   <span className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0"></span>
                   <span>SEO optimization</span>
                 </li>
-                <li className="flex items-start gap-2 text-sm text-stone-700">
+                <li className="flex items-start gap-2 text-sm text-muted-foreground">
                   <span className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0"></span>
                   <span>Contact form and newsletter signup</span>
                 </li>
-                <li className="flex items-start gap-2 text-sm text-stone-700">
+                <li className="flex items-start gap-2 text-sm text-muted-foreground">
                   <span className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0"></span>
                   <span>Integration with existing CRM system</span>
                 </li>
@@ -251,11 +256,11 @@ export function CL05RequestDetail({ request, onBack }: CL05RequestDetailProps) {
         {activeTab === 'conversation' && (
           <div className="space-y-4">
             {/* Internal Notes Toggle */}
-            <div className="flex items-center justify-between bg-white rounded-lg border border-stone-200 p-4">
+            <div className="flex items-center justify-between hub-surface rounded-lg p-4">
               <div className="flex items-center gap-2">
-                <Lock className="w-4 h-4 text-stone-600" />
-                <span className="text-sm font-medium text-stone-800">Show Internal Notes</span>
-                <span className="text-xs text-stone-500">(Only visible to team)</span>
+                <Lock className="w-4 h-4 text-muted-foreground" />
+                <span className="text-sm font-medium text-foreground">Show internal notes</span>
+                <span className="text-xs text-muted-foreground">(team only)</span>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input
@@ -264,19 +269,19 @@ export function CL05RequestDetail({ request, onBack }: CL05RequestDetailProps) {
                   onChange={(e) => setShowInternalNotes(e.target.checked)}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-stone-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                <div className="w-11 h-6 bg-muted peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-ring/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-background after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
               </label>
             </div>
 
             {/* Conversation Thread */}
-            <div className="bg-white rounded-lg border border-stone-200 p-6 space-y-4">
+            <div className="hub-surface rounded-lg p-6 space-y-4 max-h-[55vh] overflow-y-auto pr-2">
               {filteredMessages.map((msg) => (
                 <div
                   key={msg.id}
                   className={`p-4 rounded-lg ${
                     msg.isInternal
-                      ? 'bg-stone-100 border border-stone-200'
-                      : 'bg-stone-50'
+                      ? 'bg-muted/50 border border-border'
+                      : 'bg-muted/25'
                   }`}
                 >
                   <div className="flex items-start justify-between mb-2">
@@ -287,25 +292,25 @@ export function CL05RequestDetail({ request, onBack }: CL05RequestDetailProps) {
                         </span>
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-stone-800">{msg.author}</p>
-                        <p className="text-xs text-stone-500">{msg.role}</p>
+                        <p className="text-sm font-medium text-foreground">{msg.author}</p>
+                        <p className="text-xs text-muted-foreground">{msg.role}</p>
                       </div>
                       {msg.isInternal && (
-                        <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-stone-200 text-stone-700 flex items-center gap-1">
+                        <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-muted text-muted-foreground border border-border flex items-center gap-1">
                           <Lock className="w-3 h-3" />
                           Internal
                         </span>
                       )}
                     </div>
-                    <span className="text-xs text-stone-500">{msg.timestamp}</span>
+                    <span className="text-xs text-muted-foreground">{msg.timestamp}</span>
                   </div>
-                  <p className="text-sm text-stone-700">{msg.message}</p>
+                  <p className="text-sm text-muted-foreground">{msg.message}</p>
                 </div>
               ))}
             </div>
 
             {/* New Message */}
-            <div className="bg-white rounded-lg border border-stone-200 p-4">
+            <div className="hub-surface rounded-lg p-4">
               <div className="mb-3 flex items-center gap-4">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
@@ -313,11 +318,11 @@ export function CL05RequestDetail({ request, onBack }: CL05RequestDetailProps) {
                     name="messageType"
                     checked={!isInternal}
                     onChange={() => setIsInternal(false)}
-                    className="w-4 h-4 text-primary focus:ring-2 focus:ring-primary/20"
+                    className="w-4 h-4 text-primary focus:ring-2 focus:ring-ring/30"
                   />
                   <div className="flex items-center gap-1">
-                    <Eye className="w-4 h-4 text-stone-600" />
-                    <span className="text-sm text-stone-700">Client Message</span>
+                    <Eye className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm text-foreground">Client message</span>
                   </div>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
@@ -326,11 +331,11 @@ export function CL05RequestDetail({ request, onBack }: CL05RequestDetailProps) {
                     name="messageType"
                     checked={isInternal}
                     onChange={() => setIsInternal(true)}
-                    className="w-4 h-4 text-primary focus:ring-2 focus:ring-primary/20"
+                    className="w-4 h-4 text-primary focus:ring-2 focus:ring-ring/30"
                   />
                   <div className="flex items-center gap-1">
-                    <Lock className="w-4 h-4 text-stone-600" />
-                    <span className="text-sm text-stone-700">Internal Note</span>
+                    <Lock className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm text-foreground">Internal note</span>
                   </div>
                 </label>
               </div>
@@ -339,7 +344,7 @@ export function CL05RequestDetail({ request, onBack }: CL05RequestDetailProps) {
                 onChange={(e) => setNewMessage(e.target.value)}
                 rows={4}
                 placeholder={isInternal ? "Add internal note (only visible to team)..." : "Reply to client..."}
-                className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none mb-3"
+                className="hub-field px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground resize-none mb-3"
               />
               <div className="flex items-center justify-end">
                 <BonsaiButton size="sm" icon={<MessageSquare />}>
@@ -353,7 +358,7 @@ export function CL05RequestDetail({ request, onBack }: CL05RequestDetailProps) {
         {activeTab === 'documents' && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-stone-800">Attached Documents</h3>
+              <h3 className="font-semibold text-foreground">Attached documents</h3>
               <BonsaiButton size="sm">Upload Document</BonsaiButton>
             </div>
             <BonsaiDocumentList
@@ -390,18 +395,18 @@ export function CL05RequestDetail({ request, onBack }: CL05RequestDetailProps) {
         )}
 
         {activeTab === 'audit' && (
-          <div className="bg-white rounded-lg border border-stone-200">
-            <div className="p-4 border-b border-stone-200">
-              <h3 className="font-semibold text-stone-800">Activity Log</h3>
+          <div className="hub-surface overflow-hidden rounded-lg">
+            <div className="p-4 border-b border-border">
+              <h3 className="font-semibold text-foreground">Activity log</h3>
             </div>
-            <div className="divide-y divide-stone-200">
+            <div className="divide-y divide-border">
               {auditLog.map((log, idx) => (
                 <div key={idx} className="p-4 flex items-start justify-between">
                   <div>
-                    <p className="text-sm font-medium text-stone-800">{log.action}</p>
-                    <p className="text-xs text-stone-500 mt-1">by {log.user}</p>
+                    <p className="text-sm font-medium text-foreground">{log.action}</p>
+                    <p className="text-xs text-muted-foreground mt-1">by {log.user}</p>
                   </div>
-                  <span className="text-xs text-stone-500">{log.timestamp}</span>
+                  <span className="text-xs text-muted-foreground">{log.timestamp}</span>
                 </div>
               ))}
             </div>

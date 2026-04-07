@@ -15,7 +15,7 @@ export function T02KanbanPage({ title, subtitle }: T02KanbanPageProps) {
       id: 'new',
       title: 'New',
       count: 5,
-      color: 'bg-stone-400',
+      color: 'bg-muted-foreground/35',
       cards: [
         {
           id: '1',
@@ -38,7 +38,7 @@ export function T02KanbanPage({ title, subtitle }: T02KanbanPageProps) {
       id: 'inprogress',
       title: 'In Progress',
       count: 8,
-      color: 'bg-stone-1000',
+      color: 'bg-primary/50',
       cards: [
         {
           id: '3',
@@ -61,7 +61,7 @@ export function T02KanbanPage({ title, subtitle }: T02KanbanPageProps) {
       id: 'review',
       title: 'Review',
       count: 3,
-      color: 'bg-stone-1000',
+      color: 'bg-primary/50',
       cards: [
         {
           id: '5',
@@ -77,7 +77,7 @@ export function T02KanbanPage({ title, subtitle }: T02KanbanPageProps) {
       id: 'done',
       title: 'Done',
       count: 12,
-      color: 'bg-stone-1000',
+      color: 'bg-primary/50',
       cards: [
         {
           id: '6',
@@ -107,24 +107,18 @@ export function T02KanbanPage({ title, subtitle }: T02KanbanPageProps) {
         }
       />
 
-      {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white rounded-lg border border-stone-200 p-4">
-          <p className="text-sm text-stone-600">Total Cards</p>
-          <p className="text-2xl font-semibold text-stone-800 mt-1">28</p>
-        </div>
-        <div className="bg-white rounded-lg border border-stone-200 p-4">
-          <p className="text-sm text-stone-600">In Progress</p>
-          <p className="text-2xl font-semibold text-stone-800 mt-1">8</p>
-        </div>
-        <div className="bg-white rounded-lg border border-stone-200 p-4">
-          <p className="text-sm text-stone-600">Blocked</p>
-          <p className="text-2xl font-semibold text-stone-800 mt-1">3</p>
-        </div>
-        <div className="bg-white rounded-lg border border-stone-200 p-4">
-          <p className="text-sm text-stone-600">Completed</p>
-          <p className="text-2xl font-semibold text-stone-800 mt-1">12</p>
-        </div>
+        {[
+          { label: 'Total Cards', value: 28 },
+          { label: 'In Progress', value: 8 },
+          { label: 'Blocked', value: 3 },
+          { label: 'Completed', value: 12 },
+        ].map((s) => (
+          <div key={s.label} className="hub-surface hub-surface-elevated rounded-lg p-4">
+            <p className="text-sm text-muted-foreground">{s.label}</p>
+            <p className="text-2xl font-semibold text-foreground mt-1">{s.value}</p>
+          </div>
+        ))}
       </div>
 
       {/* Kanban Board */}

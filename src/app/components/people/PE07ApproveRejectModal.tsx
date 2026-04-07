@@ -39,29 +39,33 @@ export function PE07ApproveRejectModal({ isOpen, onClose, onApprove, onReject, r
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 hub-modal-overlay" onClick={onClose}>
         <div
-          className="bg-white rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+          className="hub-modal-solid rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="px-6 py-4 border-b border-stone-200 flex items-center justify-between">
+          <div className="px-6 py-4 border-b border-border flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-lg ${isLeave ? 'bg-stone-100' : 'bg-stone-100'} flex items-center justify-center`}>
+              <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
                 {isLeave ? (
-                  <Calendar className="w-5 h-5 text-stone-600" />
+                  <Calendar className="w-5 h-5 text-muted-foreground" />
                 ) : (
-                  <DollarSign className="w-5 h-5 text-stone-600" />
+                  <DollarSign className="w-5 h-5 text-muted-foreground" />
                 )}
               </div>
               <div>
-                <h2 className="text-xl font-semibold text-stone-800">
+                <h2 className="text-xl font-semibold text-foreground">
                   {isLeave ? 'Leave Request' : 'Expense Claim'}
                 </h2>
-                <p className="text-sm text-stone-500">{request.employee}</p>
+                <p className="text-sm text-muted-foreground">{request.employee}</p>
               </div>
             </div>
-            <button onClick={onClose} className="p-2 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-lg">
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            >
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -70,71 +74,71 @@ export function PE07ApproveRejectModal({ isOpen, onClose, onApprove, onReject, r
           <div className="p-6 space-y-6">
             {/* Request Details */}
             {isLeave ? (
-              <div className="bg-stone-50 rounded-lg p-6">
-                <h3 className="font-semibold text-stone-800 mb-4">Leave Details</h3>
+              <div className="bg-muted/25 border border-border rounded-lg p-6">
+                <h3 className="font-semibold text-foreground mb-4">Leave details</h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-xs text-stone-600 mb-1">Leave Type</p>
-                    <p className="text-sm font-medium text-stone-800">{request.leaveType}</p>
+                    <p className="text-xs text-muted-foreground mb-1">Leave type</p>
+                    <p className="text-sm font-medium text-foreground">{request.leaveType}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-stone-600 mb-1">Duration</p>
-                    <p className="text-sm font-medium text-stone-800">
+                    <p className="text-xs text-muted-foreground mb-1">Duration</p>
+                    <p className="text-sm font-medium text-foreground">
                       {request.days} {request.days === 1 ? 'day' : 'days'}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-stone-600 mb-1">Start Date</p>
-                    <p className="text-sm font-medium text-stone-800">{request.startDate}</p>
+                    <p className="text-xs text-muted-foreground mb-1">Start date</p>
+                    <p className="text-sm font-medium text-foreground">{request.startDate}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-stone-600 mb-1">End Date</p>
-                    <p className="text-sm font-medium text-stone-800">{request.endDate}</p>
+                    <p className="text-xs text-muted-foreground mb-1">End date</p>
+                    <p className="text-sm font-medium text-foreground">{request.endDate}</p>
                   </div>
                   <div className="col-span-2">
-                    <p className="text-xs text-stone-600 mb-1">Reason</p>
-                    <p className="text-sm font-medium text-stone-800">Family vacation</p>
+                    <p className="text-xs text-muted-foreground mb-1">Reason</p>
+                    <p className="text-sm font-medium text-foreground">Family vacation</p>
                   </div>
                 </div>
               </div>
             ) : (
               <div className="space-y-4">
-                <div className="bg-stone-50 rounded-lg p-6">
-                  <h3 className="font-semibold text-stone-800 mb-4">Expense Summary</h3>
+                <div className="bg-muted/25 border border-border rounded-lg p-6">
+                  <h3 className="font-semibold text-foreground mb-4">Expense summary</h3>
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 bg-white rounded-lg">
+                    <div className="flex items-center justify-between p-3 bg-muted/30 border border-border rounded-lg">
                       <div>
-                        <p className="text-sm font-medium text-stone-800">Client Meeting Dinner</p>
-                        <p className="text-xs text-stone-600">Meals & Entertainment • Jan 12, 2026</p>
+                        <p className="text-sm font-medium text-foreground">Client Meeting Dinner</p>
+                        <p className="text-xs text-muted-foreground">Meals & Entertainment • Jan 12, 2026</p>
                       </div>
-                      <p className="text-sm font-semibold text-stone-800">$145.00</p>
+                      <p className="text-sm font-semibold text-foreground">$145.00</p>
                     </div>
-                    <div className="flex items-center justify-between p-3 bg-white rounded-lg">
+                    <div className="flex items-center justify-between p-3 bg-muted/30 border border-border rounded-lg">
                       <div>
-                        <p className="text-sm font-medium text-stone-800">Taxi to/from venue</p>
-                        <p className="text-xs text-stone-600">Travel • Jan 12, 2026</p>
+                        <p className="text-sm font-medium text-foreground">Taxi to/from venue</p>
+                        <p className="text-xs text-muted-foreground">Travel • Jan 12, 2026</p>
                       </div>
-                      <p className="text-sm font-semibold text-stone-800">$42.50</p>
+                      <p className="text-sm font-semibold text-foreground">$42.50</p>
                     </div>
-                    <div className="flex items-center justify-between p-3 bg-white rounded-lg">
+                    <div className="flex items-center justify-between p-3 bg-muted/30 border border-border rounded-lg">
                       <div>
-                        <p className="text-sm font-medium text-stone-800">Office supplies</p>
-                        <p className="text-xs text-stone-600">Office Supplies • Jan 14, 2026</p>
+                        <p className="text-sm font-medium text-foreground">Office supplies</p>
+                        <p className="text-xs text-muted-foreground">Office Supplies • Jan 14, 2026</p>
                       </div>
-                      <p className="text-sm font-semibold text-stone-800">$85.00</p>
+                      <p className="text-sm font-semibold text-foreground">$85.00</p>
                     </div>
-                    <div className="flex items-center justify-between p-3 bg-white rounded-lg">
+                    <div className="flex items-center justify-between p-3 bg-muted/30 border border-border rounded-lg">
                       <div>
-                        <p className="text-sm font-medium text-stone-800">Software license</p>
-                        <p className="text-xs text-stone-600">Software & Tools • Jan 15, 2026</p>
+                        <p className="text-sm font-medium text-foreground">Software license</p>
+                        <p className="text-xs text-muted-foreground">Software & Tools • Jan 15, 2026</p>
                       </div>
-                      <p className="text-sm font-semibold text-stone-800">$115.00</p>
+                      <p className="text-sm font-semibold text-foreground">$115.00</p>
                     </div>
                   </div>
                 </div>
                 <div className="p-4 bg-primary/10 border border-primary/20 rounded-lg">
                   <div className="flex items-center justify-between">
-                    <span className="font-semibold text-stone-800">Total Amount</span>
+                    <span className="font-semibold text-foreground">Total amount</span>
                     <span className="text-2xl font-bold text-primary">${request.amount?.toFixed(2)}</span>
                   </div>
                 </div>
@@ -162,31 +166,31 @@ export function PE07ApproveRejectModal({ isOpen, onClose, onApprove, onReject, r
             )}
 
             {action === 'approve' && (
-              <div className="bg-stone-100 border-2 border-stone-200 rounded-lg p-6">
+              <div className="bg-primary/5 border border-primary/20 rounded-lg p-6">
                 <div className="flex items-start gap-3 mb-4">
-                  <CheckCircle className="w-6 h-6 text-stone-600 flex-shrink-0 mt-0.5" />
+                  <CheckCircle className="w-6 h-6 text-primary flex-shrink-0 mt-0.5" />
                   <div className="flex-1">
-                    <h3 className="font-semibold text-stone-800 mb-2">Approve Request</h3>
-                    <p className="text-sm text-green-800 mb-4">
+                    <h3 className="font-semibold text-foreground mb-2">Approve request</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
                       This {isLeave ? 'leave request' : 'expense claim'} will be approved and the employee will be notified.
                     </p>
-                    <label className="block text-sm font-medium text-stone-800 mb-2">
+                    <label className="block text-sm font-medium text-foreground mb-2">
                       Comment (optional)
                     </label>
                     <textarea
                       value={comment}
                       onChange={(e) => setComment(e.target.value)}
                       rows={3}
-                      className="w-full px-3 py-2 bg-white border border-green-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500/20 resize-none"
+                      className="hub-field px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground resize-none"
                       placeholder="Add a comment for the employee..."
                     />
                   </div>
                 </div>
                 <div className="flex items-center justify-end gap-3">
-                  <BonsaiButton variant="ghost" onClick={() => setAction(null)}>
+                  <BonsaiButton variant="ghost" onClick={() => setAction(null)} type="button">
                     Cancel
                   </BonsaiButton>
-                  <BonsaiButton variant="primary" icon={<CheckCircle />} onClick={handleApprove}>
+                  <BonsaiButton variant="primary" icon={<CheckCircle />} onClick={handleApprove} type="button">
                     Confirm Approval
                   </BonsaiButton>
                 </div>
@@ -194,32 +198,32 @@ export function PE07ApproveRejectModal({ isOpen, onClose, onApprove, onReject, r
             )}
 
             {action === 'reject' && (
-              <div className="bg-stone-100 border-2 border-red-200 rounded-lg p-6">
+              <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-6">
                 <div className="flex items-start gap-3 mb-4">
-                  <XCircle className="w-6 h-6 text-stone-700 flex-shrink-0 mt-0.5" />
+                  <XCircle className="w-6 h-6 text-destructive flex-shrink-0 mt-0.5" />
                   <div className="flex-1">
                     <h3 className="font-semibold text-red-900 mb-2">Reject Request</h3>
-                    <p className="text-sm text-red-800 mb-4">
+                    <p className="text-sm text-muted-foreground mb-4">
                       The request will be rejected and returned to the employee with your feedback.
                     </p>
                     <label className="block text-sm font-medium text-red-900 mb-2">
-                      Rejection Reason * <span className="font-normal text-stone-700">(Required)</span>
+                      Rejection Reason * <span className="font-normal text-muted-foreground">(Required)</span>
                     </label>
                     <textarea
                       value={reason}
                       onChange={(e) => setReason(e.target.value)}
                       rows={3}
-                      className="w-full px-3 py-2 bg-white border border-red-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 resize-none"
+                      className="hub-field px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground resize-none"
                       placeholder="Please explain why this request is being rejected..."
                       required
                     />
                   </div>
                 </div>
                 <div className="flex items-center justify-end gap-3">
-                  <BonsaiButton variant="ghost" onClick={() => setAction(null)}>
+                  <BonsaiButton variant="ghost" onClick={() => setAction(null)} type="button">
                     Cancel
                   </BonsaiButton>
-                  <BonsaiButton variant="destructive" icon={<XCircle />} onClick={handleReject}>
+                  <BonsaiButton variant="destructive" icon={<XCircle />} onClick={handleReject} type="button">
                     Confirm Rejection
                   </BonsaiButton>
                 </div>

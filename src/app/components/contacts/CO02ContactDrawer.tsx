@@ -74,7 +74,7 @@ export function CO02ContactDrawer({ isOpen, onClose, onSave, initialContact }: C
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* Basic Information */}
           <div>
-            <h3 className="font-semibold text-stone-800 mb-4">Basic Information</h3>
+            <h3 className="font-semibold text-foreground mb-4">Basic Information</h3>
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <BonsaiInput
@@ -129,7 +129,7 @@ export function CO02ContactDrawer({ isOpen, onClose, onSave, initialContact }: C
 
           {/* Contact Classification */}
           <div>
-            <h3 className="font-semibold text-stone-800 mb-4">Classification</h3>
+            <h3 className="font-semibold text-foreground mb-4">Classification</h3>
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <BonsaiSelect
@@ -180,7 +180,7 @@ export function CO02ContactDrawer({ isOpen, onClose, onSave, initialContact }: C
 
           {/* GDPR & Consent */}
           <div>
-            <h3 className="font-semibold text-stone-800 mb-4">GDPR & Consent</h3>
+            <h3 className="font-semibold text-foreground mb-4">GDPR & Consent</h3>
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <BonsaiSelect
@@ -222,9 +222,9 @@ export function CO02ContactDrawer({ isOpen, onClose, onSave, initialContact }: C
                     type="checkbox"
                     checked={formData.marketingOptIn}
                     onChange={(e) => setFormData({ ...formData, marketingOptIn: e.target.checked })}
-                    className="w-4 h-4 rounded border-stone-300 text-primary focus:ring-2 focus:ring-primary/20"
+                    className="w-4 h-4 rounded border-border text-primary focus:ring-2 focus:ring-ring/30"
                   />
-                  <span className="text-sm text-stone-700">Marketing opt-in</span>
+                  <span className="text-sm text-foreground">Marketing opt-in</span>
                 </label>
 
                 <label className="flex items-center gap-2 cursor-pointer">
@@ -232,14 +232,14 @@ export function CO02ContactDrawer({ isOpen, onClose, onSave, initialContact }: C
                     type="checkbox"
                     checked={formData.thirdPartySharing}
                     onChange={(e) => setFormData({ ...formData, thirdPartySharing: e.target.checked })}
-                    className="w-4 h-4 rounded border-stone-300 text-primary focus:ring-2 focus:ring-primary/20"
+                    className="w-4 h-4 rounded border-border text-primary focus:ring-2 focus:ring-ring/30"
                   />
-                  <span className="text-sm text-stone-700">Third-party data sharing consent</span>
+                  <span className="text-sm text-foreground">Third-party data sharing consent</span>
                 </label>
               </div>
 
-              <div className="p-3 bg-stone-100 border border-stone-200 rounded-lg">
-                <p className="text-xs text-stone-700">
+              <div className="p-3 rounded-lg bg-muted/60 border border-border">
+                <p className="text-xs text-muted-foreground">
                   <strong>GDPR Notice:</strong> Ensure you have a lawful basis for processing this contact's data. 
                   Document the consent and keep records of when and how consent was obtained.
                 </p>
@@ -249,20 +249,20 @@ export function CO02ContactDrawer({ isOpen, onClose, onSave, initialContact }: C
 
           {/* Notes */}
           <div>
-            <label className="block text-sm font-medium text-stone-700 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Notes
             </label>
             <textarea
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               rows={4}
-              className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none"
+              className="hub-field px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground resize-none"
               placeholder="Additional information about this contact..."
             />
           </div>
 
           {/* Actions */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-stone-200">
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
             <BonsaiButton variant="ghost" onClick={onClose} type="button">
               Cancel
             </BonsaiButton>

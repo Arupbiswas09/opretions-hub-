@@ -82,7 +82,7 @@ export function CL02ClientDrawer({ isOpen, onClose, onSave, initialClient }: CL0
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* Basic Information */}
           <div>
-            <h3 className="font-semibold text-stone-800 mb-4">Basic Information</h3>
+            <h3 className="font-semibold text-foreground mb-4">Basic Information</h3>
             <div className="space-y-4">
               <BonsaiInput
                 label="Company Name"
@@ -153,7 +153,7 @@ export function CL02ClientDrawer({ isOpen, onClose, onSave, initialClient }: CL0
 
           {/* Address */}
           <div>
-            <h3 className="font-semibold text-stone-800 mb-4">Address</h3>
+            <h3 className="font-semibold text-foreground mb-4">Address</h3>
             <div className="space-y-4">
               <BonsaiInput
                 label="Street Address"
@@ -202,15 +202,15 @@ export function CL02ClientDrawer({ isOpen, onClose, onSave, initialClient }: CL0
 
           {/* Billing Information */}
           <div>
-            <h3 className="font-semibold text-stone-800 mb-4">Billing Information</h3>
+            <h3 className="font-semibold text-foreground mb-4">Billing Information</h3>
             <div className="space-y-4">
               <div className="flex items-center gap-2">
                 <input
                   type="checkbox"
                   id="sameBilling"
-                  className="w-4 h-4 rounded border-stone-300 text-primary focus:ring-2 focus:ring-primary/20"
+                  className="w-4 h-4 rounded border-border text-primary focus:ring-2 focus:ring-ring/30"
                 />
-                <label htmlFor="sameBilling" className="text-sm text-stone-700">
+                <label htmlFor="sameBilling" className="text-sm text-foreground">
                   Same as company address
                 </label>
               </div>
@@ -247,7 +247,7 @@ export function CL02ClientDrawer({ isOpen, onClose, onSave, initialClient }: CL0
 
           {/* Account Management */}
           <div>
-            <h3 className="font-semibold text-stone-800 mb-4">Account Management</h3>
+            <h3 className="font-semibold text-foreground mb-4">Account Management</h3>
             <div className="space-y-4">
               <BonsaiInput
                 label="Account Owner"
@@ -267,18 +267,18 @@ export function CL02ClientDrawer({ isOpen, onClose, onSave, initialClient }: CL0
 
           {/* Settings */}
           <div>
-            <h3 className="font-semibold text-stone-800 mb-4">Settings</h3>
+            <h3 className="font-semibold text-foreground mb-4">Settings</h3>
             <div className="space-y-3">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={formData.portalAccess}
                   onChange={(e) => setFormData({ ...formData, portalAccess: e.target.checked })}
-                  className="w-4 h-4 rounded border-stone-300 text-primary focus:ring-2 focus:ring-primary/20"
+                  className="w-4 h-4 rounded border-border text-primary focus:ring-2 focus:ring-ring/30"
                 />
                 <div>
-                  <span className="text-sm font-medium text-stone-700">Enable Client Portal Access</span>
-                  <p className="text-xs text-stone-500">Allow client users to access their portal</p>
+                  <span className="text-sm font-medium text-foreground">Enable Client Portal Access</span>
+                  <p className="text-xs text-muted-foreground">Allow client users to access their portal</p>
                 </div>
               </label>
 
@@ -287,11 +287,11 @@ export function CL02ClientDrawer({ isOpen, onClose, onSave, initialClient }: CL0
                   type="checkbox"
                   checked={formData.autoInvoicing}
                   onChange={(e) => setFormData({ ...formData, autoInvoicing: e.target.checked })}
-                  className="w-4 h-4 rounded border-stone-300 text-primary focus:ring-2 focus:ring-primary/20"
+                  className="w-4 h-4 rounded border-border text-primary focus:ring-2 focus:ring-ring/30"
                 />
                 <div>
-                  <span className="text-sm font-medium text-stone-700">Automatic Invoicing</span>
-                  <p className="text-xs text-stone-500">Generate invoices automatically based on project milestones</p>
+                  <span className="text-sm font-medium text-foreground">Automatic Invoicing</span>
+                  <p className="text-xs text-muted-foreground">Generate invoices automatically based on project milestones</p>
                 </div>
               </label>
             </div>
@@ -299,20 +299,20 @@ export function CL02ClientDrawer({ isOpen, onClose, onSave, initialClient }: CL0
 
           {/* Notes */}
           <div>
-            <label className="block text-sm font-medium text-stone-700 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Notes
             </label>
             <textarea
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               rows={4}
-              className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none"
+              className="hub-field px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground resize-none"
               placeholder="Additional notes about this client..."
             />
           </div>
 
           {/* Actions */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-stone-200">
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
             <BonsaiButton variant="ghost" onClick={onClose} type="button">
               Cancel
             </BonsaiButton>

@@ -140,8 +140,8 @@ export function CO01ContactsList({ onContactClick, onCreateContact, onBulkAction
       {/* Header */}
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <h1 className="text-2xl font-semibold text-stone-800 dark:text-stone-100">Contacts</h1>
-          <p className="text-sm text-stone-500 dark:text-stone-400">Manage all contacts with GDPR compliance</p>
+          <h1 className="text-2xl font-semibold text-foreground">Contacts</h1>
+          <p className="text-sm text-muted-foreground">Manage all contacts with GDPR compliance</p>
         </div>
         <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 sm:gap-3">
           {/* View Switcher */}
@@ -152,7 +152,7 @@ export function CO01ContactsList({ onContactClick, onCreateContact, onBulkAction
             <button
               type="button"
               onClick={() => setViewMode('list')}
-              className={`rounded p-2 transition-[background-color] duration-[120ms] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 ${viewMode === 'list' ? 'bg-primary/10 text-primary' : 'text-stone-600 hover:bg-[var(--row-hover-bg)] dark:text-stone-400'}`}
+              className={`rounded p-2 transition-[background-color] duration-[120ms] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 ${viewMode === 'list' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-[var(--row-hover-bg)]'}`}
               title="List View"
             >
               <List className="w-4 h-4" />
@@ -160,7 +160,7 @@ export function CO01ContactsList({ onContactClick, onCreateContact, onBulkAction
             <button
               type="button"
               onClick={() => setViewMode('kanban')}
-              className={`rounded p-2 transition-[background-color] duration-[120ms] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 ${viewMode === 'kanban' ? 'bg-primary/10 text-primary' : 'text-stone-600 hover:bg-[var(--row-hover-bg)] dark:text-stone-400'}`}
+              className={`rounded p-2 transition-[background-color] duration-[120ms] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 ${viewMode === 'kanban' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-[var(--row-hover-bg)]'}`}
               title="Kanban View"
             >
               <Columns3 className="w-4 h-4" />
@@ -168,7 +168,7 @@ export function CO01ContactsList({ onContactClick, onCreateContact, onBulkAction
             <button
               type="button"
               onClick={() => setViewMode('grid')}
-              className={`rounded p-2 transition-[background-color] duration-[120ms] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 ${viewMode === 'grid' ? 'bg-primary/10 text-primary' : 'text-stone-600 hover:bg-[var(--row-hover-bg)] dark:text-stone-400'}`}
+              className={`rounded p-2 transition-[background-color] duration-[120ms] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 ${viewMode === 'grid' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-[var(--row-hover-bg)]'}`}
               title="Grid View"
             >
               <LayoutGrid className="w-4 h-4" />
@@ -392,8 +392,8 @@ export function CO01ContactsList({ onContactClick, onCreateContact, onBulkAction
               <div className="flex items-center gap-3">
                 <OpsAvatar name={contact.name} size="md" />
                 <div>
-                  <p className="text-[13px] font-medium text-stone-800 dark:text-stone-100">{contact.name}</p>
-                  <p className="text-[10px] text-stone-400 dark:text-stone-500">{contact.email}</p>
+                  <p className="text-[13px] font-medium text-foreground">{contact.name}</p>
+                  <p className="text-[10px] text-muted-foreground">{contact.email}</p>
                 </div>
               </div>
             ),

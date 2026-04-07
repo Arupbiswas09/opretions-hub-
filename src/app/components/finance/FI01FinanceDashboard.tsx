@@ -10,6 +10,7 @@ import { BonsaiButton } from '../bonsai/BonsaiButton';
 import { BonsaiStatusPill } from '../bonsai/BonsaiStatusPill';
 import { useTheme } from '../../lib/theme';
 import { EASE_OUT_EXPO } from '../../lib/motion';
+import { dashboardFoldRootClass, DashboardScrollPanel } from '../dashboard/DashboardFoldLayout';
 
 const REVENUE_DATA = [
   { month: 'Aug', revenue: 123000, expenses: 89000, profit: 34000 },
@@ -159,11 +160,11 @@ export function FI01FinanceDashboard({ onNavigateToInvoices, onNavigateToExpense
   ];
 
   return (
-    <div className="w-full min-w-0 px-3 py-5 sm:px-5 lg:px-8">
+    <div className={dashboardFoldRootClass}>
 
       {/* Header */}
       <motion.div
-        className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"
+        className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, ease: EASE_OUT_EXPO }}
@@ -179,7 +180,7 @@ export function FI01FinanceDashboard({ onNavigateToInvoices, onNavigateToExpense
       </motion.div>
 
       {/* ── KPI Cards ── */}
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {KPI_CARDS.map((card, i) => {
           const Icon = card.icon;
           return (
@@ -218,7 +219,7 @@ export function FI01FinanceDashboard({ onNavigateToInvoices, onNavigateToExpense
       </div>
 
       {/* ── Revenue Chart + Expense Breakdown ── */}
-      <div className="mb-6 grid grid-cols-1 gap-5 xl:grid-cols-[1fr_300px]">
+      <div className="grid grid-cols-1 gap-3 xl:grid-cols-[1fr_300px]">
 
         {/* Revenue area chart */}
         <GlassPanel delay={0.22}>
@@ -244,7 +245,7 @@ export function FI01FinanceDashboard({ onNavigateToInvoices, onNavigateToExpense
             </div>
           </div>
           <div className="min-w-0 px-1 pb-4 sm:px-2">
-            <ResponsiveContainer width="100%" height={220}>
+            <ResponsiveContainer width="100%" height={190}>
               <AreaChart data={REVENUE_DATA} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
                 <defs>
                   <linearGradient id="revGradLight" x1="0" y1="0" x2="0" y2="1">
@@ -370,7 +371,7 @@ export function FI01FinanceDashboard({ onNavigateToInvoices, onNavigateToExpense
       </div>
 
       {/* ── Invoice volume + Profitability Table ── */}
-      <div className="mb-6 grid grid-cols-1 gap-5 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
 
         {/* Monthly invoice volume chart */}
         <GlassPanel delay={0.30}>
@@ -412,39 +413,66 @@ export function FI01FinanceDashboard({ onNavigateToInvoices, onNavigateToExpense
             </h3>
             <p className="text-[10px] mt-0.5" style={{ color: 'var(--foreground-muted)' }}>Revenue vs cost per client</p>
           </div>
-          <div className="px-5 py-3">
+          <DashboardScrollPanel size="sm" className="px-5 py-3">
             <table className="w-full text-[11px]">
               <thead>
                 <tr>
-                  <th className="text-left font-medium py-1.5 pr-2"
-                    style={{ color: 'var(--foreground-muted)' }}>Client</th>
-                  <th className="text-right font-medium py-1.5 px-2"
-                    style={{ color: 'var(--foreground-muted)' }}>Revenue</th>
-                  <th className="text-right font-medium py-1.5 px-2"
-                    style={{ color: 'var(--foreground-muted)' }}>Cost</th>
-                  <th className="text-right font-medium py-1.5 pl-2"
-                    style={{ color: 'var(--foreground-muted)' }}>Margin</th>
+                  <th
+                    className="text-left font-medium py-1.5 pr-2"
+                    style={{ color: 'var(--foreground-muted)' }}
+                  >
+                    Client
+                  </th>
+                  <th
+                    className="text-right font-medium py-1.5 px-2"
+                    style={{ color: 'var(--foreground-muted)' }}
+                  >
+                    Revenue
+                  </th>
+                  <th
+                    className="text-right font-medium py-1.5 px-2"
+                    style={{ color: 'var(--foreground-muted)' }}
+                  >
+                    Cost
+                  </th>
+                  <th
+                    className="text-right font-medium py-1.5 pl-2"
+                    style={{ color: 'var(--foreground-muted)' }}
+                  >
+                    Margin
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {CLIENT_PROFITABILITY.map((row) => (
                   <tr key={row.client}>
-                    <td className="py-2 pr-2 font-medium" style={{ color: 'var(--foreground)' }}>{row.client}</td>
+                    <td className="py-2 pr-2 font-medium" style={{ color: 'var(--foreground)' }}>
+                      {row.client}
+                    </td>
                     <td className="py-2 px-2 text-right tabular-nums" style={{ color: 'var(--foreground-secondary)' }}>
                       ${(row.revenue / 1000).toFixed(0)}K
                     </td>
                     <td className="py-2 px-2 text-right tabular-nums" style={{ color: 'var(--foreground-secondary)' }}>
                       ${(row.cost / 1000).toFixed(1)}K
                     </td>
-                    <td className="py-2 pl-2 text-right tabular-nums font-semibold"
-                      style={{ color: row.margin > 20 ? 'var(--success)' : row.margin > 5 ? 'var(--warning)' : 'var(--destructive)' }}>
+                    <td
+                      className="py-2 pl-2 text-right tabular-nums font-semibold"
+                      style={{
+                        color:
+                          row.margin > 20
+                            ? 'var(--success)'
+                            : row.margin > 5
+                              ? 'var(--warning)'
+                              : 'var(--destructive)',
+                      }}
+                    >
                       {row.margin}%
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </div>
+          </DashboardScrollPanel>
         </GlassPanel>
       </div>
 

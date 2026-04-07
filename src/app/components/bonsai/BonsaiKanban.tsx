@@ -39,14 +39,15 @@ export function BonsaiKanban({ columns, onCardClick, onAddCard, className }: Bon
               {column.color && (
                 <div className={cn("w-2 h-2 rounded-full", column.color)} />
               )}
-              <h3 className="text-[13px] font-medium text-stone-700">{column.title}</h3>
-              <span className="text-[11px] tabular-nums text-stone-400">
+              <h3 className="text-[13px] font-medium text-foreground">{column.title}</h3>
+              <span className="text-[11px] tabular-nums text-muted-foreground">
                 {column.count}
               </span>
             </div>
             <button
+              type="button"
               onClick={() => onAddCard?.(column.id)}
-              className="p-1 text-stone-300 hover:text-stone-500 hover:bg-stone-100/60 rounded-md transition-colors"
+              className="p-1 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors"
             >
               <Plus className="w-3.5 h-3.5" />
             </button>
@@ -57,20 +58,21 @@ export function BonsaiKanban({ columns, onCardClick, onAddCard, className }: Bon
             {column.cards.map((card) => (
               <button
                 key={card.id}
+                type="button"
                 onClick={() => onCardClick?.(card)}
-                className="w-full text-left p-4 bg-white/60 backdrop-blur-sm rounded-xl border border-stone-200/40 hover:border-stone-300/60 hover:shadow-sm hover:bg-white/80 transition-all duration-200 group"
+                className="w-full text-left p-4 rounded-xl border border-border bg-[var(--glass-bg)] backdrop-blur-sm hover:shadow-sm hover:bg-[var(--glass-bg)] transition-all duration-200 group"
               >
                 <div className="flex items-start justify-between mb-2">
-                  <h4 className="text-[13px] font-medium text-stone-700 leading-snug group-hover:text-stone-900 transition-colors">
+                  <h4 className="text-[13px] font-medium text-foreground leading-snug transition-colors">
                     {card.title}
                   </h4>
-                  <span className="p-0.5 text-stone-300 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <span className="p-0.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
                     <MoreHorizontal className="w-3.5 h-3.5" />
                   </span>
                 </div>
 
                 {card.description && (
-                  <p className="text-[12px] text-stone-400 mb-3 line-clamp-2 leading-relaxed">
+                  <p className="text-[12px] text-muted-foreground mb-3 line-clamp-2 leading-relaxed">
                     {card.description}
                   </p>
                 )}
@@ -78,7 +80,7 @@ export function BonsaiKanban({ columns, onCardClick, onAddCard, className }: Bon
                 {card.tags && card.tags.length > 0 && (
                   <div className="flex flex-wrap gap-1 mb-3">
                     {card.tags.map((tag, i) => (
-                      <span key={i} className="px-2 py-0.5 text-[10px] font-medium rounded-md bg-stone-100/80 text-stone-500">
+                      <span key={i} className="px-2 py-0.5 text-[10px] font-medium rounded-md bg-muted/60 text-muted-foreground border border-border">
                         {tag}
                       </span>
                     ))}
@@ -87,14 +89,14 @@ export function BonsaiKanban({ columns, onCardClick, onAddCard, className }: Bon
 
                 <div className="flex items-center justify-between">
                   {card.assignee && (
-                    <div className="w-6 h-6 rounded-full bg-stone-200 flex items-center justify-center">
-                      <span className="text-[9px] font-medium text-stone-500">
+                    <div className="w-6 h-6 rounded-full bg-muted border border-border flex items-center justify-center">
+                      <span className="text-[9px] font-medium text-muted-foreground">
                         {card.assignee.name.split(' ').map(n => n[0]).join('')}
                       </span>
                     </div>
                   )}
                   {card.dueDate && (
-                    <span className="text-[11px] text-stone-400">{card.dueDate}</span>
+                    <span className="text-[11px] text-muted-foreground">{card.dueDate}</span>
                   )}
                 </div>
               </button>

@@ -31,10 +31,10 @@ const icons: Record<ToastType, React.ElementType> = {
 };
 
 const styles: Record<ToastType, { border: string; icon: string; bg: string }> = {
-  success: { border: 'border-emerald-200/60', icon: 'text-emerald-600', bg: 'bg-emerald-50/30' },
-  error:   { border: 'border-red-200/60',     icon: 'text-red-600',     bg: 'bg-red-50/30' },
-  warning: { border: 'border-amber-200/60',   icon: 'text-amber-600',   bg: 'bg-amber-50/30' },
-  info:    { border: 'border-stone-200/60',    icon: 'text-stone-600',   bg: 'bg-stone-50/30' },
+  success: { border: 'border-emerald-500/20', icon: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+  error:   { border: 'border-destructive/20', icon: 'text-destructive', bg: 'bg-destructive/10' },
+  warning: { border: 'border-amber-500/20',   icon: 'text-amber-500',   bg: 'bg-amber-500/10' },
+  info:    { border: 'border-border',         icon: 'text-muted-foreground', bg: 'bg-muted/30' },
 };
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
@@ -67,19 +67,19 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -8, scale: 0.96 }}
                 transition={{ type: 'spring', damping: 26, stiffness: 340 }}
-                className={`pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl border ${s.border} ${s.bg} min-w-[280px] max-w-[400px]`}
+                className={`pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl border ${s.border} ${s.bg} min-w-[280px] max-w-[400px] text-foreground`}
                 style={{
                   backdropFilter: 'blur(32px) saturate(180%)',
                   WebkitBackdropFilter: 'blur(32px) saturate(180%)',
-                  boxShadow: '0 8px 32px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.03)',
-                  background: 'rgba(255,255,255,0.85)',
+                  boxShadow: 'var(--shadow-modal)',
+                  background: 'var(--glass-bg)',
                 }}
               >
                 <Icon className={`w-4 h-4 flex-shrink-0 ${s.icon}`} />
-                <p className="text-[13px] text-stone-700 flex-1">{toast.message}</p>
+                <p className="text-[13px] text-foreground flex-1">{toast.message}</p>
                 <button
                   onClick={() => removeToast(toast.id)}
-                  className="p-1 text-stone-400 hover:text-stone-600 rounded-md transition-colors flex-shrink-0"
+                  className="p-1 text-muted-foreground hover:text-foreground rounded-md transition-colors flex-shrink-0"
                 >
                   <X className="w-3 h-3" />
                 </button>

@@ -13,18 +13,18 @@ const buttonVariants = cva(
           "shadow-sm hover:shadow-md border border-transparent",
         secondary:
           "bg-secondary text-secondary-foreground " +
-          "hover:bg-muted dark:bg-white/[0.07] dark:text-foreground dark:hover:bg-white/[0.11]",
+          "hover:bg-muted",
         ghost:
           "text-muted-foreground " +
-          "hover:text-foreground hover:bg-secondary/90 dark:hover:bg-white/[0.06]",
+          "hover:text-foreground hover:bg-secondary/90",
         destructive:
-          "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 " +
-          "hover:bg-red-100 dark:hover:bg-red-900/30",
+          "bg-destructive/10 text-destructive border border-destructive/20 " +
+          "hover:bg-destructive/15",
         outline:
-          "border border-stone-200 dark:border-white/[0.10] " +
-          "bg-white/60 dark:bg-white/[0.05] " +
-          "text-stone-700 dark:text-stone-200 " +
-          "hover:bg-stone-50 dark:hover:bg-white/[0.08] hover:border-stone-300 dark:hover:border-white/15",
+          "border border-border " +
+          "bg-[var(--background-2)] " +
+          "text-foreground " +
+          "hover:bg-muted",
       },
       size: {
         sm: "px-3 py-1.5 text-[12px]",

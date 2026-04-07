@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Calendar, DollarSign, CheckCircle, XCircle } from 'lucide-react';
 import { BonsaiTabs } from '../bonsai/BonsaiTabs';
 import { BonsaiStatusPill } from '../bonsai/BonsaiStatusPill';
+import { dashboardFoldRootRelaxedClass, DashboardScrollPanel } from '../dashboard/DashboardFoldLayout';
 
 interface Request {
   id: string;
@@ -77,98 +78,104 @@ export function PE04ApprovalsInbox({ onRequestClick }: PE04ApprovalsInboxProps) 
     { label: 'Expense Claims', value: 'expense', count: expenseRequests.length },
   ];
 
+  const statTile = 'hub-surface hub-surface-elevated rounded-2xl p-4 sm:p-5';
+
   return (
-    <div className="px-3 py-6 sm:p-8">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-semibold text-stone-800">Approvals Inbox</h1>
-          <p className="text-sm text-stone-500">Review and approve team requests</p>
-        </div>
+    <div className={dashboardFoldRootRelaxedClass}>
+      <div>
+        <h1 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">People approvals</h1>
+        <p className="mt-0.5 text-[13px] text-muted-foreground">Leave and expenses.</p>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white rounded-lg border border-stone-200 p-4">
-          <p className="text-sm text-stone-600">Pending Leave</p>
-          <p className="text-2xl font-semibold text-stone-600 mt-1">{leaveRequests.length}</p>
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
+        <div className={statTile}>
+          <p className="text-[13px] text-muted-foreground">Leave</p>
+          <p className="mt-1 text-2xl font-semibold tabular-nums text-foreground">{leaveRequests.length}</p>
         </div>
-        <div className="bg-white rounded-lg border border-stone-200 p-4">
-          <p className="text-sm text-stone-600">Pending Expenses</p>
-          <p className="text-2xl font-semibold text-stone-600 mt-1">{expenseRequests.length}</p>
+        <div className={statTile}>
+          <p className="text-[13px] text-muted-foreground">Expenses</p>
+          <p className="mt-1 text-2xl font-semibold tabular-nums text-foreground">{expenseRequests.length}</p>
         </div>
-        <div className="bg-white rounded-lg border border-stone-200 p-4">
-          <p className="text-sm text-stone-600">Total Pending Amount</p>
-          <p className="text-2xl font-semibold text-primary mt-1">
+        <div className={statTile}>
+          <p className="text-[13px] text-muted-foreground">Open amount</p>
+          <p className="mt-1 text-2xl font-semibold tabular-nums text-primary">
             ${expenseRequests.reduce((sum, req) => sum + (req.amount || 0), 0).toFixed(2)}
           </p>
         </div>
-        <div className="bg-white rounded-lg border border-stone-200 p-4">
-          <p className="text-sm text-stone-600">Approved This Week</p>
-          <p className="text-2xl font-semibold text-stone-800 mt-1">8</p>
+        <div className={statTile}>
+          <p className="text-[13px] text-muted-foreground">Approved (week)</p>
+          <p className="mt-1 text-2xl font-semibold tabular-nums text-foreground">8</p>
         </div>
       </div>
 
-      {/* Tabs */}
-      <BonsaiTabs
-        tabs={tabs.map(tab => ({
-          ...tab,
-          label: `${tab.label} (${tab.count})`,
-        }))}
-        value={activeTab}
-        onValueChange={setActiveTab}
-      />
+      <div className="mt-1">
+        <BonsaiTabs
+          tabs={tabs.map(tab => ({
+            ...tab,
+            label: `${tab.label} (${tab.count})`,
+          }))}
+          value={activeTab}
+          onValueChange={setActiveTab}
+        />
+      </div>
 
-      {/* Content */}
-      <div className="mt-6">
+      <div className="mt-2">
         {activeTab === 'leave' && (
-          <div className="bg-white rounded-lg border border-stone-200">
-            <div className="divide-y divide-stone-200">
+          <DashboardScrollPanel size="lg" className="-mr-0.5 min-h-[200px]">
+            <div className="hub-surface hub-surface-elevated divide-y divide-border overflow-hidden rounded-2xl">
               {leaveRequests.map((request) => (
                 <button
                   key={request.id}
+                  type="button"
                   onClick={() => onRequestClick(request)}
-                  className="w-full p-4 hover:bg-stone-50 transition-colors text-left"
+                  className="w-full px-4 py-4 text-left transition-colors hover:bg-[var(--row-hover-bg)] sm:px-5 sm:py-5"
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4 flex-1">
-                      <div className="w-12 h-12 rounded-lg bg-stone-100 flex items-center justify-center">
-                        <Calendar className="w-6 h-6 text-stone-600" />
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex min-w-0 flex-1 items-start gap-3 sm:gap-4">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-muted sm:h-12 sm:w-12">
+                        <Calendar className="h-5 w-5 text-muted-foreground sm:h-6 sm:w-6" />
                       </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-medium text-stone-800">{request.employee}</h3>
-                          <span className="text-sm text-stone-500">•</span>
-                          <span className="text-sm text-stone-600">{request.leaveType}</span>
+                      <div className="min-w-0 flex-1">
+                        <div className="mb-1 flex flex-wrap items-center gap-2">
+                          <h3 className="font-medium text-foreground">{request.employee}</h3>
+                          <span className="text-muted-foreground">·</span>
+                          <span className="text-[13px] text-muted-foreground">{request.leaveType}</span>
                           <BonsaiStatusPill status="pending" label={request.status} />
                         </div>
-                        <div className="flex items-center gap-3 text-sm text-stone-600">
-                          <span>{request.startDate} - {request.endDate}</span>
-                          <span>•</span>
-                          <span>{request.days} {request.days === 1 ? 'day' : 'days'}</span>
-                          <span>•</span>
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[13px] text-muted-foreground">
+                          <span>
+                            {request.startDate} – {request.endDate}
+                          </span>
+                          <span>·</span>
+                          <span>
+                            {request.days} {request.days === 1 ? 'day' : 'days'}
+                          </span>
+                          <span>·</span>
                           <span>Submitted {request.submittedDate}</span>
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex shrink-0 items-center gap-2">
                       <button
+                        type="button"
                         onClick={(e) => {
                           e.stopPropagation();
                           onRequestClick(request);
                         }}
-                        className="px-3 py-1.5 text-xs font-medium rounded-lg bg-stone-100 text-stone-700 hover:bg-stone-200 flex items-center gap-1"
+                        className="inline-flex items-center gap-1 rounded-lg border border-border bg-secondary/80 px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-secondary"
                       >
-                        <CheckCircle className="w-3 h-3" />
+                        <CheckCircle className="h-3.5 w-3.5" />
                         Approve
                       </button>
                       <button
+                        type="button"
                         onClick={(e) => {
                           e.stopPropagation();
                           onRequestClick(request);
                         }}
-                        className="px-3 py-1.5 text-xs font-medium rounded-lg bg-stone-100 text-stone-700 hover:bg-red-200 flex items-center gap-1"
+                        className="inline-flex items-center gap-1 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-1.5 text-xs font-medium text-destructive transition-colors hover:bg-destructive/15"
                       >
-                        <XCircle className="w-3 h-3" />
+                        <XCircle className="h-3.5 w-3.5" />
                         Reject
                       </button>
                     </div>
@@ -176,56 +183,61 @@ export function PE04ApprovalsInbox({ onRequestClick }: PE04ApprovalsInboxProps) 
                 </button>
               ))}
             </div>
-          </div>
+          </DashboardScrollPanel>
         )}
 
         {activeTab === 'expense' && (
-          <div className="bg-white rounded-lg border border-stone-200">
-            <div className="divide-y divide-stone-200">
+          <DashboardScrollPanel size="lg" className="-mr-0.5 min-h-[200px]">
+            <div className="hub-surface hub-surface-elevated divide-y divide-border overflow-hidden rounded-2xl">
               {expenseRequests.map((request) => (
                 <button
                   key={request.id}
+                  type="button"
                   onClick={() => onRequestClick(request)}
-                  className="w-full p-4 hover:bg-stone-50 transition-colors text-left"
+                  className="w-full px-4 py-4 text-left transition-colors hover:bg-[var(--row-hover-bg)] sm:px-5 sm:py-5"
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4 flex-1">
-                      <div className="w-12 h-12 rounded-lg bg-stone-100 flex items-center justify-center">
-                        <DollarSign className="w-6 h-6 text-stone-600" />
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex min-w-0 flex-1 items-start gap-3 sm:gap-4">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-muted sm:h-12 sm:w-12">
+                        <DollarSign className="h-5 w-5 text-muted-foreground sm:h-6 sm:w-6" />
                       </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-medium text-stone-800">{request.employee}</h3>
-                          <span className="text-sm text-stone-500">•</span>
-                          <span className="text-lg font-semibold text-primary">${request.amount?.toFixed(2)}</span>
+                      <div className="min-w-0 flex-1">
+                        <div className="mb-1 flex flex-wrap items-center gap-2">
+                          <h3 className="font-medium text-foreground">{request.employee}</h3>
+                          <span className="text-muted-foreground">·</span>
+                          <span className="text-lg font-semibold tabular-nums text-primary">${request.amount?.toFixed(2)}</span>
                           <BonsaiStatusPill status="pending" label={request.status} />
                         </div>
-                        <div className="flex items-center gap-3 text-sm text-stone-600">
-                          <span>{request.items} {request.items === 1 ? 'item' : 'items'}</span>
-                          <span>•</span>
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[13px] text-muted-foreground">
+                          <span>
+                            {request.items} {request.items === 1 ? 'item' : 'items'}
+                          </span>
+                          <span>·</span>
                           <span>Submitted {request.submittedDate}</span>
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex shrink-0 items-center gap-2">
                       <button
+                        type="button"
                         onClick={(e) => {
                           e.stopPropagation();
                           onRequestClick(request);
                         }}
-                        className="px-3 py-1.5 text-xs font-medium rounded-lg bg-stone-100 text-stone-700 hover:bg-stone-200 flex items-center gap-1"
+                        className="inline-flex items-center gap-1 rounded-lg border border-border bg-secondary/80 px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-secondary"
                       >
-                        <CheckCircle className="w-3 h-3" />
+                        <CheckCircle className="h-3.5 w-3.5" />
                         Approve
                       </button>
                       <button
+                        type="button"
                         onClick={(e) => {
                           e.stopPropagation();
                           onRequestClick(request);
                         }}
-                        className="px-3 py-1.5 text-xs font-medium rounded-lg bg-stone-100 text-stone-700 hover:bg-red-200 flex items-center gap-1"
+                        className="inline-flex items-center gap-1 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-1.5 text-xs font-medium text-destructive transition-colors hover:bg-destructive/15"
                       >
-                        <XCircle className="w-3 h-3" />
+                        <XCircle className="h-3.5 w-3.5" />
                         Reject
                       </button>
                     </div>
@@ -233,7 +245,7 @@ export function PE04ApprovalsInbox({ onRequestClick }: PE04ApprovalsInboxProps) 
                 </button>
               ))}
             </div>
-          </div>
+          </DashboardScrollPanel>
         )}
       </div>
     </div>

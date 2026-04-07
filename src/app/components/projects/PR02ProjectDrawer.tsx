@@ -40,25 +40,29 @@ export function PR02ProjectDrawer({ isOpen, onClose, onSave, initialProject }: P
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/50 z-40" onClick={onClose} />
-      
-      <div className="fixed right-0 top-0 bottom-0 w-full max-w-2xl bg-white shadow-2xl z-50 overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-stone-200 px-6 py-4 flex items-center justify-between">
+      <div className="fixed inset-0 z-40 hub-modal-overlay" onClick={onClose} aria-hidden />
+
+      <div className="hub-modal-solid fixed right-0 top-0 bottom-0 z-50 w-full max-w-2xl overflow-y-auto shadow-2xl">
+        <div className="sticky top-0 flex items-center justify-between border-b border-border px-6 py-4 hub-modal-solid">
           <div>
-            <h2 className="text-xl font-semibold text-stone-800">
-              {initialProject ? 'Edit Project' : 'Create New Project'}
+            <h2 className="text-xl font-semibold text-foreground">
+              {initialProject ? 'Edit project' : 'New project'}
             </h2>
-            <p className="text-sm text-stone-500">Set up project details and team</p>
+            <p className="text-sm text-muted-foreground">Details &amp; billing</p>
           </div>
-          <button onClick={onClose} className="p-2 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-lg">
-            <X className="w-5 h-5" />
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+          >
+            <X className="h-5 w-5" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* Basic Information */}
           <div>
-            <h3 className="font-semibold text-stone-800 mb-4">Basic Information</h3>
+            <h3 className="mb-4 font-semibold text-foreground">Basics</h3>
             <div className="space-y-4">
               <BonsaiInput
                 label="Project Name"
@@ -77,11 +81,11 @@ export function PR02ProjectDrawer({ isOpen, onClose, onSave, initialProject }: P
                   placeholder="Select client"
                 />
                 <div>
-                  <label className="block text-sm font-medium text-stone-700 mb-2">Status *</label>
+                  <label className="mb-2 block text-sm font-medium text-foreground">Status *</label>
                   <select
                     value={formData.status}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                    className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                     required
                   >
                     <option value="Planning">Planning</option>
@@ -104,26 +108,23 @@ export function PR02ProjectDrawer({ isOpen, onClose, onSave, initialProject }: P
           </div>
 
           {/* Project Description - PROMINENT */}
-          <div className="p-4 bg-stone-100 border-2 border-stone-200 rounded-lg">
-            <label className="block text-sm font-semibold text-stone-800 mb-2">
-              Project Description *
+          <div className="rounded-xl border border-border bg-muted/30 p-4">
+            <label className="mb-2 block text-sm font-semibold text-foreground">
+              Description *
             </label>
-            <p className="text-xs text-stone-600 mb-3">
-              Provide a clear overview of project goals, deliverables, and success criteria
-            </p>
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={6}
-              className="w-full px-3 py-2 bg-white border border-blue-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none"
-              placeholder="Describe the project objectives, scope, deliverables, and key milestones..."
+              className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+              placeholder="Scope, deliverables, milestones…"
               required
             />
           </div>
 
           {/* Timeline */}
           <div>
-            <h3 className="font-semibold text-stone-800 mb-4">Timeline</h3>
+            <h3 className="mb-4 font-semibold text-foreground">Timeline</h3>
             <div className="grid grid-cols-2 gap-4">
               <BonsaiInput
                 label="Start Date"
@@ -144,14 +145,14 @@ export function PR02ProjectDrawer({ isOpen, onClose, onSave, initialProject }: P
 
           {/* Budget & Billing */}
           <div>
-            <h3 className="font-semibold text-stone-800 mb-4">Budget & Billing</h3>
+            <h3 className="mb-4 font-semibold text-foreground">Budget &amp; billing</h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-stone-700 mb-2">Billing Type *</label>
+                <label className="mb-2 block text-sm font-medium text-foreground">Billing type *</label>
                 <select
                   value={formData.billingType}
                   onChange={(e) => setFormData({ ...formData, billingType: e.target.value })}
-                  className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                   required
                 >
                   <option value="Fixed Price">Fixed Price</option>
@@ -195,31 +196,31 @@ export function PR02ProjectDrawer({ isOpen, onClose, onSave, initialProject }: P
 
           {/* Project Settings */}
           <div>
-            <h3 className="font-semibold text-stone-800 mb-4">Project Settings</h3>
+            <h3 className="mb-4 font-semibold text-foreground">Settings</h3>
             <div className="space-y-3">
-              <label className="flex items-center gap-2 cursor-pointer">
+              <label className="flex cursor-pointer items-center gap-2">
                 <input
                   type="checkbox"
                   checked={formData.requireTimesheets}
                   onChange={(e) => setFormData({ ...formData, requireTimesheets: e.target.checked })}
-                  className="w-4 h-4 rounded border-stone-300 text-primary focus:ring-2 focus:ring-primary/20"
+                  className="h-4 w-4 rounded border-border text-primary focus:ring-2 focus:ring-primary/20"
                 />
                 <div>
-                  <span className="text-sm font-medium text-stone-700">Require Timesheets</span>
-                  <p className="text-xs text-stone-500">Team members must track time for this project</p>
+                  <span className="text-sm font-medium text-foreground">Require timesheets</span>
+                  <p className="text-xs text-muted-foreground">Time required on this project</p>
                 </div>
               </label>
 
-              <label className="flex items-center gap-2 cursor-pointer">
+              <label className="flex cursor-pointer items-center gap-2">
                 <input
                   type="checkbox"
                   checked={formData.clientTimesheetApproval}
                   onChange={(e) => setFormData({ ...formData, clientTimesheetApproval: e.target.checked })}
-                  className="w-4 h-4 rounded border-stone-300 text-primary focus:ring-2 focus:ring-primary/20"
+                  className="h-4 w-4 rounded border-border text-primary focus:ring-2 focus:ring-primary/20"
                 />
                 <div>
-                  <span className="text-sm font-medium text-stone-700">Client Timesheet Approval</span>
-                  <p className="text-xs text-stone-500">Client must approve timesheets before billing</p>
+                  <span className="text-sm font-medium text-foreground">Client approves timesheets</span>
+                  <p className="text-xs text-muted-foreground">Before invoicing</p>
                 </div>
               </label>
 
@@ -246,7 +247,7 @@ export function PR02ProjectDrawer({ isOpen, onClose, onSave, initialProject }: P
           />
 
           {/* Actions */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-stone-200">
+          <div className="flex items-center justify-end gap-3 border-t border-border pt-4">
             <BonsaiButton variant="ghost" onClick={onClose} type="button">
               Cancel
             </BonsaiButton>

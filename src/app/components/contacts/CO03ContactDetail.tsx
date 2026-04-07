@@ -123,7 +123,7 @@ export function CO03ContactDetail({ contact, onEdit, onLinkClient }: CO03Contact
           <OpsAvatar name={contact.name} size="lg" className="!w-16 !h-16 !text-[22px]" />
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-2xl font-semibold text-stone-900 dark:text-stone-50">{contact.name}</h1>
+              <h1 className="text-2xl font-semibold text-foreground">{contact.name}</h1>
               <BonsaiStatusPill
                 status={contact.consent === 'Given' ? 'active' : contact.consent === 'Pending' ? 'pending' : 'draft'}
                 label={`Consent: ${contact.consent}`}
@@ -134,11 +134,11 @@ export function CO03ContactDetail({ contact, onEdit, onLinkClient }: CO03Contact
                   label={contact.gdprStatus}
                 />
               )}
-              <span className="inline-flex px-3 py-1 text-xs rounded-full bg-stone-100 text-stone-600">
+              <span className="inline-flex px-3 py-1 text-xs rounded-full bg-muted/60 text-muted-foreground border border-border">
                 {contact.type}
               </span>
             </div>
-            <div className="flex items-center gap-4 text-sm text-stone-600 dark:text-stone-400">
+            <div className="flex items-center gap-4 text-sm text-muted-foreground">
               <div className="flex items-center gap-2">
                 <Mail className="w-4 h-4" />
                 <span>{contact.email}</span>
@@ -179,9 +179,9 @@ export function CO03ContactDetail({ contact, onEdit, onLinkClient }: CO03Contact
       {/* Tags */}
       {contact.tags.length > 0 && (
         <div className="flex items-center gap-2 mb-6">
-          <TagIcon className="w-4 h-4 text-stone-400" />
+          <TagIcon className="w-4 h-4 text-muted-foreground" />
           {contact.tags.map((tag, idx) => (
-            <span key={idx} className="inline-flex px-3 py-1 text-xs rounded-full bg-stone-100 text-stone-700">
+            <span key={idx} className="inline-flex px-3 py-1 text-xs rounded-full bg-muted/60 text-foreground border border-border">
               {tag}
             </span>
           ))}
@@ -308,9 +308,9 @@ export function CO03ContactDetail({ contact, onEdit, onLinkClient }: CO03Contact
             </div>
 
             {/* Notes */}
-            <div className="bg-white rounded-lg border border-stone-200 p-6">
-              <h3 className="font-semibold text-stone-800 mb-4">Notes</h3>
-              <p className="text-sm text-stone-700 leading-relaxed">
+            <div className="hub-surface rounded-lg p-6">
+              <h3 className="font-semibold text-foreground mb-3">Notes</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
                 Very interested in our website redesign services. Has budget approved for Q1 2026. 
                 Decision maker for marketing initiatives. Follow up after proposal review.
               </p>
@@ -321,27 +321,27 @@ export function CO03ContactDetail({ contact, onEdit, onLinkClient }: CO03Contact
         {activeTab === 'related' && (
           <div className="space-y-6">
             {/* Deals Section */}
-            <div className="bg-white rounded-lg border border-stone-200 p-6">
+            <div className="hub-surface rounded-lg p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-stone-800">Related Deals</h3>
-                <button className="text-sm text-primary hover:underline">View all →</button>
+                <h3 className="font-semibold text-foreground">Related deals</h3>
+                <button type="button" className="text-sm text-primary hover:underline">View all →</button>
               </div>
               <div className="space-y-2">
-                <div className="flex items-center justify-between p-3 bg-stone-50 rounded-lg">
+                <div className="flex items-center justify-between p-3 bg-muted/25 border border-border rounded-lg">
                   <div>
-                    <p className="text-sm font-medium text-stone-800">Website Redesign Project</p>
-                    <p className="text-xs text-stone-500">Proposal Sent</p>
+                    <p className="text-sm font-medium text-foreground">Website Redesign Project</p>
+                    <p className="text-xs text-muted-foreground">Proposal sent</p>
                   </div>
-                  <p className="text-sm font-semibold text-stone-800">$45,000</p>
+                  <p className="text-sm font-semibold text-foreground">$45,000</p>
                 </div>
               </div>
             </div>
 
             {/* Projects Section */}
-            <div className="bg-white rounded-lg border border-stone-200 p-6">
+            <div className="hub-surface rounded-lg p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-stone-800">Related Projects</h3>
-                <button className="text-sm text-primary hover:underline">View all →</button>
+                <h3 className="font-semibold text-foreground">Related projects</h3>
+                <button type="button" className="text-sm text-primary hover:underline">View all →</button>
               </div>
               <BonsaiEmptyState
                 title="No projects yet"
@@ -350,10 +350,10 @@ export function CO03ContactDetail({ contact, onEdit, onLinkClient }: CO03Contact
             </div>
 
             {/* Jobs Section */}
-            <div className="bg-white rounded-lg border border-stone-200 p-6">
+            <div className="hub-surface rounded-lg p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-stone-800">Related Jobs</h3>
-                <button className="text-sm text-primary hover:underline">View all →</button>
+                <h3 className="font-semibold text-foreground">Related jobs</h3>
+                <button type="button" className="text-sm text-primary hover:underline">View all →</button>
               </div>
               <BonsaiEmptyState
                 title="No jobs yet"
@@ -362,10 +362,10 @@ export function CO03ContactDetail({ contact, onEdit, onLinkClient }: CO03Contact
             </div>
 
             {/* Requests Section */}
-            <div className="bg-white rounded-lg border border-stone-200 p-6">
+            <div className="hub-surface rounded-lg p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-stone-800">Support Requests</h3>
-                <button className="text-sm text-primary hover:underline">View all →</button>
+                <h3 className="font-semibold text-foreground">Support requests</h3>
+                <button type="button" className="text-sm text-primary hover:underline">View all →</button>
               </div>
               <BonsaiEmptyState
                 title="No support requests"
@@ -379,15 +379,16 @@ export function CO03ContactDetail({ contact, onEdit, onLinkClient }: CO03Contact
           <div className="space-y-4">
             {/* Activity Filter Chips */}
             <div className="flex items-center gap-2 flex-wrap">
-              <Filter className="w-4 h-4 text-stone-400" />
+              <Filter className="w-4 h-4 text-muted-foreground" />
               {activityTypes.map((type) => (
                 <button
                   key={type.value}
+                  type="button"
                   onClick={() => toggleActivityFilter(type.value)}
                   className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
                     activityFilter.includes(type.value) || (type.value === 'all' && activityFilter.includes('all'))
                       ? 'bg-primary text-white'
-                      : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                      : 'bg-muted/60 text-muted-foreground hover:bg-muted'
                   }`}
                 >
                   {type.label}
@@ -396,14 +397,14 @@ export function CO03ContactDetail({ contact, onEdit, onLinkClient }: CO03Contact
             </div>
 
             {/* Timeline with Edit/Delete Actions */}
-            <div className="bg-white rounded-lg border border-stone-200 p-6">
+            <div className="hub-surface rounded-lg p-6">
               <BonsaiTimeline
                 items={filteredActivities.map(item => ({
                   ...item,
                   actions: item.type !== 'system' ? (
                     <div className="flex items-center gap-2">
                       <button className="text-xs text-primary hover:underline">Edit</button>
-                      <button className="text-xs text-stone-700 hover:underline">Delete</button>
+                      <button className="text-xs text-muted-foreground hover:text-foreground hover:underline transition-colors">Delete</button>
                     </div>
                   ) : undefined,
                 }))}
@@ -415,7 +416,7 @@ export function CO03ContactDetail({ contact, onEdit, onLinkClient }: CO03Contact
         {activeTab === 'documents' && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-stone-800">All Documents</h3>
+              <h3 className="font-semibold text-foreground">All documents</h3>
               <BonsaiButton size="sm">Upload Document</BonsaiButton>
             </div>
             <BonsaiDocumentList

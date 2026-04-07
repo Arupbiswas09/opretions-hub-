@@ -10,6 +10,7 @@ import { BonsaiButton } from '../bonsai/BonsaiButton';
 import { StatCard } from '../bonsai/StatCard';
 import { staggerContainer, fadeInUp, cardInteraction, easeOutQuart, EASE_OUT_EXPO } from '../../lib/motion';
 import { useTheme } from '../../lib/theme';
+import { dashboardFoldRootClass, DashboardScrollPanel } from '../dashboard/DashboardFoldLayout';
 
 /* ── Animated stat number ──────────────────────────────── */
 function AnimatedStat({ to, prefix = '', suffix = '' }: { to: number; prefix?: string; suffix?: string }) {
@@ -93,11 +94,11 @@ const RECENT_DEALS = [
 export function SA01Dashboard({ onNavigateToDeals, onNavigateToPipeline, onCreateDeal }: SA01DashboardProps) {
   const { isDark } = useTheme();
 
-  const wonColor   = isDark ? 'rgba(251,191,36,0.85)' : '#1c1917';
-  const lostColor  = isDark ? 'rgba(255,255,255,0.20)' : '#d6d3d1';
-  const valueColor = isDark ? 'rgba(52,211,153,0.70)'  : '#059669';
-  const gridColor  = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)';
-  const tickColor  = isDark ? '#57534e' : '#a8a29e';
+  const wonColor   = isDark ? 'rgba(251,191,36,0.85)' : 'rgba(37,99,235,0.85)';
+  const lostColor  = isDark ? 'rgba(255,255,255,0.18)' : 'rgba(15,23,42,0.08)';
+  const valueColor = isDark ? 'rgba(52,211,153,0.70)'  : 'rgba(37,99,235,0.65)';
+  const gridColor  = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(15,23,42,0.06)';
+  const tickColor  = 'var(--muted-foreground)';
 
   /* Pipeline bar fill — warmer amber gradient in dark */
   const stageBarColor = (idx: number) => {
@@ -106,7 +107,7 @@ export function SA01Dashboard({ onNavigateToDeals, onNavigateToPipeline, onCreat
       return `rgba(251,191,36,${alphas[idx] ?? 0.20})`;
     }
     const alphas = [0.85, 0.65, 0.48, 0.34, 0.22];
-    return `rgba(28,25,23,${alphas[idx] ?? 0.20})`;
+    return `rgba(37,99,235,${alphas[idx] ?? 0.20})`;
   };
 
   const glassPanel: React.CSSProperties = {
@@ -118,23 +119,21 @@ export function SA01Dashboard({ onNavigateToDeals, onNavigateToPipeline, onCreat
 
   return (
     <motion.div
-      className="w-full min-w-0 px-3 py-6 sm:px-6 lg:px-8"
+      className={dashboardFoldRootClass}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.25 }}
     >
       {/* ── Header ──────────────────────────────────────── */}
       <motion.div
-        className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"
+        className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, ease: EASE_OUT_EXPO }}
       >
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.1em] mb-1
-                        text-stone-400 dark:text-stone-500">Sales</p>
-          <h1 className="text-[28px] font-semibold tracking-[-0.025em]
-                         text-stone-900 dark:text-stone-50">Pipeline Overview</h1>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.1em] mb-1 text-muted-foreground">Sales</p>
+          <h1 className="text-[28px] font-semibold tracking-[-0.025em] text-foreground">Pipeline overview</h1>
         </div>
         <BonsaiButton variant="primary" icon={<Plus className="w-4 h-4" />} onClick={onCreateDeal}>
           New Deal
@@ -143,7 +142,7 @@ export function SA01Dashboard({ onNavigateToDeals, onNavigateToPipeline, onCreat
 
       {/* ── Stats row ─── */}
       <motion.div
-        className="mb-7 grid grid-cols-2 gap-4 lg:grid-cols-4"
+        className="grid grid-cols-2 gap-3 lg:grid-cols-4"
         variants={staggerContainer}
         initial="hidden"
         animate="visible"
@@ -162,7 +161,7 @@ export function SA01Dashboard({ onNavigateToDeals, onNavigateToPipeline, onCreat
       </motion.div>
 
       {/* ── Pipeline funnel + Monthly performance ── */}
-      <div className="mb-7 grid grid-cols-1 gap-5 xl:grid-cols-[1fr_280px]">
+      <div className="grid grid-cols-1 gap-3 xl:grid-cols-[1fr_280px]">
 
         {/* Visual funnel */}
         <motion.div
@@ -175,63 +174,68 @@ export function SA01Dashboard({ onNavigateToDeals, onNavigateToPipeline, onCreat
           <div className="flex items-center justify-between px-5 py-4"
             style={{ borderBottom: '1px solid var(--border)' }}>
             <div className="flex items-center gap-2.5">
-              <Target className="w-4 h-4 text-stone-400 dark:text-stone-500" />
-              <h3 className="text-[13px] font-semibold text-stone-800 dark:text-stone-100">Pipeline Funnel</h3>
+              <Target className="w-4 h-4 text-muted-foreground" />
+              <h3 className="text-[13px] font-semibold text-foreground">Pipeline funnel</h3>
             </div>
             <button onClick={onNavigateToPipeline}
               className="text-[12px] flex items-center gap-1 group transition-colors
-                         text-stone-400 dark:text-stone-500 hover:text-stone-700 dark:hover:text-stone-200">
+                         text-muted-foreground hover:text-foreground">
               View board <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
             </button>
           </div>
 
           {/* Horizontal bar funnel */}
-          <div className="px-5 py-5 space-y-3">
-            {PIPELINE_STAGES.map((stage, i) => (
-              <motion.div
-                key={stage.stage}
-                initial={{ opacity: 0, x: -8 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.22 + i * 0.06, duration: 0.35, ease: EASE_OUT_EXPO }}
-                className="group cursor-pointer"
-                onClick={onNavigateToPipeline}
-              >
-                <div className="flex items-center justify-between mb-1.5">
-                  <div className="flex items-center gap-2.5">
-                    <span className="text-[10px] font-bold tabular-nums w-3 text-right
-                                     text-stone-400 dark:text-stone-500">{stage.count}</span>
-                    <span className="text-[12px] font-medium text-stone-700 dark:text-stone-200">{stage.stage}</span>
+          <DashboardScrollPanel size="md" className="px-5 py-5">
+            <div className="space-y-3">
+              {PIPELINE_STAGES.map((stage, i) => (
+                <motion.div
+                  key={stage.stage}
+                  initial={{ opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.22 + i * 0.06, duration: 0.35, ease: EASE_OUT_EXPO }}
+                  className="group cursor-pointer"
+                  onClick={onNavigateToPipeline}
+                >
+                  <div className="flex items-center justify-between mb-1.5">
+                    <div className="flex items-center gap-2.5">
+                      <span
+                        className="text-[10px] font-bold tabular-nums w-3 text-right text-muted-foreground"
+                      >
+                        {stage.count}
+                      </span>
+                      <span className="text-[12px] font-medium text-foreground">{stage.stage}</span>
+                    </div>
+                    <span className="text-[12px] font-semibold tabular-nums text-foreground">
+                      ${stage.value}K
+                    </span>
                   </div>
-                  <span className="text-[12px] font-semibold tabular-nums text-stone-700 dark:text-stone-200">
-                    ${stage.value}K
-                  </span>
-                </div>
-                <div className="h-[6px] rounded-full overflow-hidden" style={{ background: 'var(--border)' }}>
-                  <motion.div
-                    className="h-full rounded-full"
-                    style={{ background: stageBarColor(i) }}
-                    initial={{ width: 0 }}
-                    animate={{ width: `${stage.width}%` }}
-                    transition={{ delay: 0.28 + i * 0.07, duration: 0.9, ease: EASE_OUT_EXPO }}
-                  />
-                </div>
-              </motion.div>
-            ))}
+                  <div className="h-[6px] rounded-full overflow-hidden" style={{ background: 'var(--border)' }}>
+                    <motion.div
+                      className="h-full rounded-full"
+                      style={{ background: stageBarColor(i) }}
+                      initial={{ width: 0 }}
+                      animate={{ width: `${stage.width}%` }}
+                      transition={{ delay: 0.28 + i * 0.07, duration: 0.9, ease: EASE_OUT_EXPO }}
+                    />
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </DashboardScrollPanel>
 
             {/* Conversion summary */}
             <div className="flex items-center gap-4 pt-3 mt-1"
               style={{ borderTop: '1px solid var(--border)' }}>
               <div className="flex items-center gap-1.5">
-                <Zap className="w-3 h-3 text-stone-400 dark:text-stone-500" />
-                <span className="text-[11px] text-stone-400 dark:text-stone-500">Lead → Close:</span>
-                <span className="text-[11px] font-bold text-stone-700 dark:text-stone-200">25.6%</span>
+                <Zap className="w-3 h-3 text-muted-foreground" />
+                <span className="text-[11px] text-muted-foreground">Lead → Close:</span>
+                <span className="text-[11px] font-bold text-foreground">25.6%</span>
               </div>
-              <span className="text-stone-200 dark:text-stone-700">·</span>
-              <div className="text-[11px] text-stone-400 dark:text-stone-500">
-                Avg deal: <span className="font-bold text-stone-700 dark:text-stone-200">$21.1K</span>
+              <span className="text-muted-foreground/40">·</span>
+              <div className="text-[11px] text-muted-foreground">
+                Avg deal: <span className="font-bold text-foreground">$21.1K</span>
               </div>
             </div>
-          </div>
         </motion.div>
 
         {/* Monthly won/lost performance */}
@@ -243,8 +247,8 @@ export function SA01Dashboard({ onNavigateToDeals, onNavigateToPipeline, onCreat
           transition={{ delay: 0.22, duration: 0.4, ease: EASE_OUT_EXPO }}
         >
           <div className="px-5 py-4" style={{ borderBottom: '1px solid var(--border)' }}>
-            <h3 className="text-[13px] font-semibold text-stone-800 dark:text-stone-100">Deals Closed</h3>
-            <p className="text-[11px] mt-0.5 text-stone-400 dark:text-stone-500">Last 6 months</p>
+            <h3 className="text-[13px] font-semibold text-foreground">Deals closed</h3>
+            <p className="text-[11px] mt-0.5 text-muted-foreground">Last 6 months</p>
           </div>
 
           <div className="px-2 pb-2">
@@ -267,7 +271,7 @@ export function SA01Dashboard({ onNavigateToDeals, onNavigateToPipeline, onCreat
           {/* Pipeline value trend */}
           <div className="px-5 pb-0" style={{ borderTop: '1px solid var(--border)' }}>
             <p className="text-[10px] font-semibold uppercase tracking-[0.08em] pt-3 mb-1
-                          text-stone-400 dark:text-stone-500">Value ($K)</p>
+                          text-muted-foreground">Value (\$K)</p>
             <ResponsiveContainer width="100%" height={60}>
               <LineChart data={MONTHLY_PERFORMANCE}>
                 <CartesianGrid strokeDasharray="2 4" stroke={gridColor} vertical={false} />
@@ -289,15 +293,15 @@ export function SA01Dashboard({ onNavigateToDeals, onNavigateToPipeline, onCreat
           <div className="flex items-center gap-3 px-5 py-3">
             <div className="flex items-center gap-1.5">
               <div className="w-2 h-2 rounded-full" style={{ background: wonColor }} />
-              <span className="text-[10px] text-stone-400 dark:text-stone-500">Won</span>
+              <span className="text-[10px] text-muted-foreground">Won</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-2 h-2 rounded-full" style={{ background: lostColor }} />
-              <span className="text-[10px] text-stone-400 dark:text-stone-500">Lost</span>
+              <span className="text-[10px] text-muted-foreground">Lost</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-2 h-2 rounded-full" style={{ background: valueColor }} />
-              <span className="text-[10px] text-stone-400 dark:text-stone-500">Value</span>
+              <span className="text-[10px] text-muted-foreground">Value</span>
             </div>
           </div>
         </motion.div>
@@ -315,53 +319,65 @@ export function SA01Dashboard({ onNavigateToDeals, onNavigateToPipeline, onCreat
           className="flex items-center justify-between px-3 py-4 sm:px-6"
           style={{ borderBottom: '1px solid var(--border)' }}
         >
-          <h3 className="text-[13px] font-semibold text-stone-800 dark:text-stone-100">Hot Deals</h3>
+          <h3 className="text-[13px] font-semibold text-foreground">Hot deals</h3>
           <button onClick={onNavigateToDeals}
             className="text-[12px] flex items-center gap-1 group transition-colors
-                       text-stone-400 dark:text-stone-500 hover:text-stone-700 dark:hover:text-stone-200">
+                       text-muted-foreground hover:text-foreground">
             View all <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
           </button>
         </div>
 
-        <div style={{ borderBottom: 'none' }}>
-          {RECENT_DEALS.map((deal, i) => (
-            <motion.button
-              key={deal.name}
-              className="group flex w-full items-center gap-3 px-3 py-4 text-left transition-colors sm:gap-4 sm:px-6"
-              style={{ borderBottom: i < RECENT_DEALS.length - 1 ? '1px solid var(--border)' : 'none' }}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.38 + i * 0.05 }}
-              whileHover={{ backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)', x: 2 }}
-              whileTap={{ scale: 0.998 }}
-              onClick={onNavigateToDeals}
-            >
-              {/* Type badge */}
-              <span className={`text-[9px] font-bold uppercase tracking-[0.08em] px-1.5 py-0.5 rounded-md flex-shrink-0 ${
-                deal.type === 'Project'
-                  ? 'bg-stone-800 dark:bg-white/10 text-white dark:text-stone-100'
-                  : 'bg-stone-200 dark:bg-white/[0.07] text-stone-600 dark:text-stone-300'
-              }`}>
-                {deal.type}
-              </span>
+        <DashboardScrollPanel size="md" className="pb-1">
+          <div>
+            {RECENT_DEALS.map((deal, i) => (
+              <motion.button
+                key={deal.name}
+                className="group flex w-full items-center gap-3 px-3 py-4 text-left transition-colors sm:gap-4 sm:px-6"
+                style={{ borderBottom: i < RECENT_DEALS.length - 1 ? '1px solid var(--border)' : 'none' }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.38 + i * 0.05 }}
+                whileHover={{ backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)', x: 2 }}
+                whileTap={{ scale: 0.998 }}
+                onClick={onNavigateToDeals}
+              >
+                {/* Type badge */}
+                <span
+                  className={`text-[9px] font-bold uppercase tracking-[0.08em] px-1.5 py-0.5 rounded-md flex-shrink-0 ${
+                    deal.type === 'Project'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-muted text-muted-foreground'
+                  }`}
+                >
+                  {deal.type}
+                </span>
 
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className="text-[13px] font-medium text-stone-800 dark:text-stone-100 truncate">{deal.name}</p>
-                  {deal.hot && (
-                    <span className="text-[9px] font-bold uppercase tracking-[0.06em] px-1.5 py-0.5 rounded-full flex-shrink-0
-                                     bg-amber-100 dark:bg-amber-400/15 text-amber-700 dark:text-amber-300">Hot</span>
-                  )}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="text-[13px] font-medium text-foreground truncate">{deal.name}</p>
+                    {deal.hot && (
+                      <span
+                        className="text-[9px] font-bold uppercase tracking-[0.06em] px-1.5 py-0.5 rounded-full flex-shrink-0
+                                     bg-amber-100 dark:bg-amber-400/15 text-amber-700 dark:text-amber-300"
+                      >
+                        Hot
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[11px] mt-0.5 text-muted-foreground">{deal.client}</p>
                 </div>
-                <p className="text-[11px] mt-0.5 text-stone-400 dark:text-stone-500">{deal.client}</p>
-              </div>
 
-              <span className="text-[11px] flex-shrink-0 hidden md:block text-stone-400 dark:text-stone-500">{deal.stage}</span>
-              <span className="text-[13px] font-semibold tabular-nums flex-shrink-0 text-stone-800 dark:text-stone-100">{deal.value}</span>
-              <ArrowUpRight className="w-4 h-4 flex-shrink-0 transition-colors text-stone-200 dark:text-stone-700 group-hover:text-stone-500 dark:group-hover:text-stone-300" />
-            </motion.button>
-          ))}
-        </div>
+                <span className="text-[11px] flex-shrink-0 hidden md:block text-muted-foreground">
+                  {deal.stage}
+                </span>
+                <span className="text-[13px] font-semibold tabular-nums flex-shrink-0 text-foreground">
+                  {deal.value}
+                </span>
+                <ArrowUpRight className="w-4 h-4 flex-shrink-0 transition-colors text-muted-foreground group-hover:text-foreground" />
+              </motion.button>
+            ))}
+          </div>
+        </DashboardScrollPanel>
       </motion.div>
     </motion.div>
   );

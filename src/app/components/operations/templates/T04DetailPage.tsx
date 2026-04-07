@@ -35,20 +35,29 @@ export function T04DetailPage({ title, subtitle, moduleTabs = [] }: T04DetailPag
             <div className="flex items-start justify-between mb-6">
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
-                  <h1 className="text-2xl font-semibold text-stone-800">{title}</h1>
+                  <h1 className="text-2xl font-semibold text-foreground">{title}</h1>
                   <BonsaiStatusPill status="active" label="Active" />
                 </div>
-                {subtitle && <p className="text-sm text-stone-500">{subtitle}</p>}
+                {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
               </div>
               
               <div className="flex items-center gap-2">
-                <button className="p-2 text-stone-600 hover:bg-stone-100 rounded-lg">
+                <button
+                  type="button"
+                  className="p-2 text-muted-foreground hover:bg-muted rounded-lg transition-colors"
+                >
                   <Star className="w-5 h-5" />
                 </button>
-                <button className="p-2 text-stone-600 hover:bg-stone-100 rounded-lg">
+                <button
+                  type="button"
+                  className="p-2 text-muted-foreground hover:bg-muted rounded-lg transition-colors"
+                >
                   <Share2 className="w-5 h-5" />
                 </button>
-                <button className="p-2 text-stone-600 hover:bg-stone-100 rounded-lg">
+                <button
+                  type="button"
+                  className="p-2 text-muted-foreground hover:bg-muted rounded-lg transition-colors"
+                >
                   <MoreVertical className="w-5 h-5" />
                 </button>
                 <BonsaiButton variant="ghost" size="sm" icon={<Edit />}>
@@ -73,47 +82,45 @@ export function T04DetailPage({ title, subtitle, moduleTabs = [] }: T04DetailPag
                 <div className="space-y-6">
                   {/* Key Info Cards */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="bg-white rounded-lg border border-stone-200 p-4">
-                      <p className="text-xs text-stone-600 mb-1">Record ID</p>
-                      <p className="text-sm font-semibold text-stone-800">#12345</p>
+                    <div className="hub-surface rounded-lg p-4">
+                      <p className="text-xs text-muted-foreground mb-1">Record ID</p>
+                      <p className="text-sm font-semibold text-foreground">#12345</p>
                     </div>
-                    <div className="bg-white rounded-lg border border-stone-200 p-4">
-                      <p className="text-xs text-stone-600 mb-1">Created</p>
-                      <p className="text-sm font-semibold text-stone-800">Jan 5, 2026</p>
+                    <div className="hub-surface rounded-lg p-4">
+                      <p className="text-xs text-muted-foreground mb-1">Created</p>
+                      <p className="text-sm font-semibold text-foreground">Jan 5, 2026</p>
                     </div>
-                    <div className="bg-white rounded-lg border border-stone-200 p-4">
-                      <p className="text-xs text-stone-600 mb-1">Last Updated</p>
-                      <p className="text-sm font-semibold text-stone-800">2 hours ago</p>
+                    <div className="hub-surface rounded-lg p-4">
+                      <p className="text-xs text-muted-foreground mb-1">Last Updated</p>
+                      <p className="text-sm font-semibold text-foreground">2 hours ago</p>
                     </div>
                   </div>
 
-                  {/* Details Section */}
-                  <div className="bg-white rounded-lg border border-stone-200 p-6">
-                    <h3 className="font-semibold text-stone-800 mb-4">Details</h3>
+                  <div className="hub-surface rounded-lg p-6">
+                    <h3 className="font-semibold text-foreground mb-4">Details</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <p className="text-xs text-stone-600 mb-1">Owner</p>
-                        <p className="text-sm text-stone-800">John Doe</p>
+                        <p className="text-xs text-muted-foreground mb-1">Owner</p>
+                        <p className="text-sm text-foreground">John Doe</p>
                       </div>
                       <div>
-                        <p className="text-xs text-stone-600 mb-1">Type</p>
-                        <p className="text-sm text-stone-800">Standard</p>
+                        <p className="text-xs text-muted-foreground mb-1">Type</p>
+                        <p className="text-sm text-foreground">Standard</p>
                       </div>
                       <div>
-                        <p className="text-xs text-stone-600 mb-1">Priority</p>
-                        <p className="text-sm text-stone-800">High</p>
+                        <p className="text-xs text-muted-foreground mb-1">Priority</p>
+                        <p className="text-sm text-foreground">High</p>
                       </div>
                       <div>
-                        <p className="text-xs text-stone-600 mb-1">Value</p>
-                        <p className="text-sm text-stone-800">$15,000</p>
+                        <p className="text-xs text-muted-foreground mb-1">Value</p>
+                        <p className="text-sm text-foreground">$15,000</p>
                       </div>
                     </div>
                   </div>
 
-                  {/* Description */}
-                  <div className="bg-white rounded-lg border border-stone-200 p-6">
-                    <h3 className="font-semibold text-stone-800 mb-4">Description</h3>
-                    <p className="text-sm text-stone-600 leading-relaxed">
+                  <div className="hub-surface rounded-lg p-6">
+                    <h3 className="font-semibold text-foreground mb-4">Description</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
                       This is a detailed description of the record. It contains comprehensive information
                       about the item, including relevant context, background information, and any special
                       notes that are important for understanding the full picture.
@@ -121,16 +128,19 @@ export function T04DetailPage({ title, subtitle, moduleTabs = [] }: T04DetailPag
                   </div>
 
                   {/* Related Items */}
-                  <div className="bg-white rounded-lg border border-stone-200 p-6">
-                    <h3 className="font-semibold text-stone-800 mb-4">Related Items</h3>
+                  <div className="hub-surface rounded-lg p-6">
+                    <h3 className="font-semibold text-foreground mb-4">Related Items</h3>
                     <div className="space-y-2">
                       {['Related Item 1', 'Related Item 2', 'Related Item 3'].map((item, idx) => (
-                        <div key={idx} className="flex items-center justify-between p-3 bg-stone-50 rounded-lg hover:bg-stone-100 cursor-pointer">
+                        <div
+                          key={idx}
+                          className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted cursor-pointer transition-colors"
+                        >
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded bg-stone-200 flex items-center justify-center">
-                              <FileText className="w-4 h-4 text-stone-600" />
+                            <div className="w-8 h-8 rounded bg-muted flex items-center justify-center">
+                              <FileText className="w-4 h-4 text-muted-foreground" />
                             </div>
-                            <span className="text-sm text-stone-800">{item}</span>
+                            <span className="text-sm text-foreground">{item}</span>
                           </div>
                           <BonsaiStatusPill status="active" label="Active" />
                         </div>
@@ -141,7 +151,7 @@ export function T04DetailPage({ title, subtitle, moduleTabs = [] }: T04DetailPag
               )}
 
               {activeTab === 'activity' && (
-                <div className="bg-white rounded-lg border border-stone-200 p-6">
+                <div className="hub-surface rounded-lg p-6">
                   <BonsaiTimeline
                     items={[
                       {
@@ -180,7 +190,7 @@ export function T04DetailPage({ title, subtitle, moduleTabs = [] }: T04DetailPag
               {activeTab === 'documents' && (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <h3 className="font-semibold text-stone-800">All Documents</h3>
+                    <h3 className="font-semibold text-foreground">All Documents</h3>
                     <BonsaiButton size="sm">Upload Document</BonsaiButton>
                   </div>
                   <BonsaiDocumentList

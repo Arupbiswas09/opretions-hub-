@@ -40,23 +40,22 @@ export function CL08EditRoleModal({ isOpen, onClose, onSave, user }: CL08EditRol
     <>
       {/* Overlay */}
       <div 
-        className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 hub-modal-overlay"
         onClick={onClose}
       >
-        {/* Modal */}
         <div 
-          className="bg-white rounded-lg shadow-2xl w-full max-w-lg"
+          className="hub-modal-solid rounded-lg w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Header */}
-          <div className="px-6 py-4 border-b border-stone-200 flex items-center justify-between">
+          <div className="px-6 py-4 border-b border-border flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-semibold text-stone-800">Edit User Role & Permissions</h2>
-              <p className="text-sm text-stone-500">{user.name}</p>
+              <h2 className="text-xl font-semibold text-foreground">Edit User Role & Permissions</h2>
+              <p className="text-sm text-muted-foreground">{user.name}</p>
             </div>
             <button
+              type="button"
               onClick={onClose}
-              className="p-2 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-lg"
+              className="p-2 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -65,22 +64,22 @@ export function CL08EditRoleModal({ isOpen, onClose, onSave, user }: CL08EditRol
           {/* Form */}
           <form onSubmit={handleSubmit} className="p-6 space-y-5">
             {/* User Info */}
-            <div className="p-4 bg-stone-50 rounded-lg">
+            <div className="p-4 rounded-lg bg-muted/50 border border-border">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <p className="text-xs text-stone-600">Name</p>
-                  <p className="text-sm font-medium text-stone-800">{user.name}</p>
+                  <p className="text-xs text-muted-foreground">Name</p>
+                  <p className="text-sm font-medium text-foreground">{user.name}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-stone-600">Email</p>
-                  <p className="text-sm font-medium text-stone-800">{user.email}</p>
+                  <p className="text-xs text-muted-foreground">Email</p>
+                  <p className="text-sm font-medium text-foreground">{user.email}</p>
                 </div>
               </div>
             </div>
 
             {/* Role */}
             <div>
-              <label className="block text-sm font-medium text-stone-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Portal Role *
               </label>
               <select
@@ -91,7 +90,7 @@ export function CL08EditRoleModal({ isOpen, onClose, onSave, user }: CL08EditRol
                     setPermissions({ ...permissions, manageUsers: false });
                   }
                 }}
-                className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                className="hub-field px-3 py-2 text-sm bg-background text-foreground"
                 required
               >
                 <option value="Admin">Admin - Full access to all portal features</option>
@@ -102,7 +101,7 @@ export function CL08EditRoleModal({ isOpen, onClose, onSave, user }: CL08EditRol
 
             {/* Permissions */}
             <div>
-              <label className="block text-sm font-medium text-stone-700 mb-3">
+              <label className="block text-sm font-medium text-foreground mb-3">
                 Permissions
               </label>
               <div className="space-y-2">
@@ -111,36 +110,36 @@ export function CL08EditRoleModal({ isOpen, onClose, onSave, user }: CL08EditRol
                     type="checkbox"
                     checked={permissions.viewProjects}
                     onChange={(e) => setPermissions({ ...permissions, viewProjects: e.target.checked })}
-                    className="w-4 h-4 rounded border-stone-300 text-primary focus:ring-2 focus:ring-primary/20"
+                    className="w-4 h-4 rounded border-border text-primary focus:ring-2 focus:ring-ring/30"
                   />
-                  <span className="text-sm text-stone-700">View projects and progress</span>
+                  <span className="text-sm text-foreground">View projects and progress</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={permissions.viewInvoices}
                     onChange={(e) => setPermissions({ ...permissions, viewInvoices: e.target.checked })}
-                    className="w-4 h-4 rounded border-stone-300 text-primary focus:ring-2 focus:ring-primary/20"
+                    className="w-4 h-4 rounded border-border text-primary focus:ring-2 focus:ring-ring/30"
                   />
-                  <span className="text-sm text-stone-700">View invoices and payments</span>
+                  <span className="text-sm text-foreground">View invoices and payments</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={permissions.submitRequests}
                     onChange={(e) => setPermissions({ ...permissions, submitRequests: e.target.checked })}
-                    className="w-4 h-4 rounded border-stone-300 text-primary focus:ring-2 focus:ring-primary/20"
+                    className="w-4 h-4 rounded border-border text-primary focus:ring-2 focus:ring-ring/30"
                   />
-                  <span className="text-sm text-stone-700">Submit requests and support tickets</span>
+                  <span className="text-sm text-foreground">Submit requests and support tickets</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={permissions.viewDocuments}
                     onChange={(e) => setPermissions({ ...permissions, viewDocuments: e.target.checked })}
-                    className="w-4 h-4 rounded border-stone-300 text-primary focus:ring-2 focus:ring-primary/20"
+                    className="w-4 h-4 rounded border-border text-primary focus:ring-2 focus:ring-ring/30"
                   />
-                  <span className="text-sm text-stone-700">Access shared documents</span>
+                  <span className="text-sm text-foreground">Access shared documents</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
@@ -148,9 +147,9 @@ export function CL08EditRoleModal({ isOpen, onClose, onSave, user }: CL08EditRol
                     checked={permissions.manageUsers}
                     onChange={(e) => setPermissions({ ...permissions, manageUsers: e.target.checked })}
                     disabled={role !== 'Admin'}
-                    className="w-4 h-4 rounded border-stone-300 text-primary focus:ring-2 focus:ring-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-4 h-4 rounded border-border text-primary focus:ring-2 focus:ring-ring/30 disabled:opacity-50 disabled:cursor-not-allowed"
                   />
-                  <span className={`text-sm ${role !== 'Admin' ? 'text-stone-400' : 'text-stone-700'}`}>
+                  <span className={`text-sm ${role !== 'Admin' ? 'text-muted-foreground' : 'text-foreground'}`}>
                     Manage other portal users (Admin only)
                   </span>
                 </label>
@@ -159,8 +158,8 @@ export function CL08EditRoleModal({ isOpen, onClose, onSave, user }: CL08EditRol
 
             {/* Warning */}
             {role !== user.role && (
-              <div className="p-4 bg-stone-100 border border-stone-200 rounded-lg">
-                <p className="text-xs text-stone-700">
+              <div className="p-4 rounded-lg bg-muted/60 border border-border">
+                <p className="text-xs text-muted-foreground">
                   <strong>Role Change:</strong> Changing this user's role will immediately update their 
                   portal access and available features.
                 </p>
@@ -168,7 +167,7 @@ export function CL08EditRoleModal({ isOpen, onClose, onSave, user }: CL08EditRol
             )}
 
             {/* Actions */}
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-stone-200">
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
               <BonsaiButton variant="ghost" onClick={onClose} type="button">
                 Cancel
               </BonsaiButton>

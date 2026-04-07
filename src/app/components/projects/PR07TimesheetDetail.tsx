@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ArrowLeft, Plus, Trash2, Save, Send } from 'lucide-react';
 import { BonsaiButton } from '../bonsai/BonsaiButton';
 import { BonsaiStatusPill } from '../bonsai/BonsaiStatusPill';
+import { dashboardFoldRootRelaxedClass, DashboardScrollPanel } from '../dashboard/DashboardFoldLayout';
 
 interface TimesheetEntry {
   id: string;
@@ -114,146 +115,151 @@ export function PR07TimesheetDetail({ timesheet, onBack, onSubmit }: PR07Timeshe
     }
   };
 
+  const inputClass =
+    'w-full rounded-md border border-border bg-background px-2 py-1 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20';
+
   return (
-    <div className="px-3 py-6 sm:p-8">
-      <button onClick={onBack} className="flex items-center gap-2 text-sm text-stone-600 hover:text-stone-800 mb-6">
-        <ArrowLeft className="w-4 h-4" />
-        Back to My Timesheets
+    <div className={dashboardFoldRootRelaxedClass}>
+      <button
+        type="button"
+        onClick={onBack}
+        className="mb-2 flex items-center gap-2 text-[13px] text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back
       </button>
 
-      {/* Header */}
-      <div className="flex items-start justify-between mb-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-stone-800">Timesheet - Week of {timesheet.weekOf}</h1>
-          <p className="text-sm text-stone-500">{timesheet.employee}</p>
+          <h1 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+            Week of {timesheet.weekOf}
+          </h1>
+          <p className="mt-0.5 text-[13px] text-muted-foreground">{timesheet.employee}</p>
         </div>
         <BonsaiStatusPill status={getStatusColor(timesheet.status)} label={timesheet.status} />
       </div>
 
-      {/* Weekly Grid */}
-      <div className="bg-white rounded-lg border border-stone-200 overflow-hidden mb-6">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-stone-50 border-b border-stone-200">
-                <th className="text-left px-4 py-3 text-xs font-semibold text-stone-700 w-64">Project</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-stone-700 w-64">Task</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold text-stone-700 w-20">Mon<br/>01/13</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold text-stone-700 w-20">Tue<br/>01/14</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold text-stone-700 w-20">Wed<br/>01/15</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold text-stone-700 w-20">Thu<br/>01/16</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold text-stone-700 w-20">Fri<br/>01/17</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold text-stone-700 w-20">Sat<br/>01/18</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold text-stone-700 w-20">Sun<br/>01/19</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold text-stone-700 w-20 bg-stone-100">Total</th>
-                <th className="w-12"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-stone-200">
-              {entries.map((entry) => (
-                <tr key={entry.id} className="hover:bg-stone-50">
-                  <td className="px-4 py-3">
-                    <input
-                      type="text"
-                      value={entry.project}
-                      onChange={(e) => updateEntry(entry.id, 'project', e.target.value as any)}
-                      placeholder="Select project"
-                      className="w-full px-2 py-1 text-sm border border-stone-200 rounded focus:outline-none focus:ring-2 focus:ring-primary/20"
-                      disabled={timesheet.status !== 'Draft'}
-                    />
-                  </td>
-                  <td className="px-4 py-3">
-                    <input
-                      type="text"
-                      value={entry.task}
-                      onChange={(e) => updateEntry(entry.id, 'task', e.target.value as any)}
-                      placeholder="Task description"
-                      className="w-full px-2 py-1 text-sm border border-stone-200 rounded focus:outline-none focus:ring-2 focus:ring-primary/20"
-                      disabled={timesheet.status !== 'Draft'}
-                    />
-                  </td>
-                  {(['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const).map((day) => (
-                    <td key={day} className="px-4 py-3">
+      <DashboardScrollPanel size="lg" className="-mr-0.5 min-h-[200px]">
+        <div className="hub-surface hub-surface-elevated mb-4 overflow-hidden rounded-2xl sm:mb-6">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border bg-muted/35">
+                  <th className="w-64 px-4 py-3 text-left text-xs font-semibold text-muted-foreground">Project</th>
+                  <th className="w-64 px-4 py-3 text-left text-xs font-semibold text-muted-foreground">Task</th>
+                  <th className="w-20 px-4 py-3 text-center text-xs font-semibold text-muted-foreground">Mon<br />01/13</th>
+                  <th className="w-20 px-4 py-3 text-center text-xs font-semibold text-muted-foreground">Tue<br />01/14</th>
+                  <th className="w-20 px-4 py-3 text-center text-xs font-semibold text-muted-foreground">Wed<br />01/15</th>
+                  <th className="w-20 px-4 py-3 text-center text-xs font-semibold text-muted-foreground">Thu<br />01/16</th>
+                  <th className="w-20 px-4 py-3 text-center text-xs font-semibold text-muted-foreground">Fri<br />01/17</th>
+                  <th className="w-20 px-4 py-3 text-center text-xs font-semibold text-muted-foreground">Sat<br />01/18</th>
+                  <th className="w-20 px-4 py-3 text-center text-xs font-semibold text-muted-foreground">Sun<br />01/19</th>
+                  <th className="w-20 bg-muted/50 px-4 py-3 text-center text-xs font-semibold text-muted-foreground">Total</th>
+                  <th className="w-12" />
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {entries.map((entry) => (
+                  <tr key={entry.id} className="transition-colors hover:bg-[var(--row-hover-bg)]">
+                    <td className="px-4 py-3">
                       <input
-                        type="number"
-                        min="0"
-                        max="24"
-                        step="0.5"
-                        value={entry[day]}
-                        onChange={(e) => updateEntry(entry.id, day, parseFloat(e.target.value) || 0)}
-                        className="w-full px-2 py-1 text-sm text-center border border-stone-200 rounded focus:outline-none focus:ring-2 focus:ring-primary/20"
+                        type="text"
+                        value={entry.project}
+                        onChange={(e) => updateEntry(entry.id, 'project', e.target.value as any)}
+                        placeholder="Project"
+                        className={inputClass}
                         disabled={timesheet.status !== 'Draft'}
                       />
                     </td>
-                  ))}
-                  <td className="px-4 py-3 bg-stone-50">
-                    <div className="text-sm font-semibold text-center text-stone-800">
-                      {calculateEntryTotal(entry)}h
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    {timesheet.status === 'Draft' && (
-                      <button
-                        onClick={() => removeEntry(entry.id)}
-                        className="p-1 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-
-              {/* Daily Totals Row */}
-              <tr className="bg-stone-100 font-semibold">
-                <td colSpan={2} className="px-4 py-3 text-sm text-stone-800">Daily Totals</td>
-                {(['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const).map((day) => (
-                  <td key={day} className="px-4 py-3 text-sm text-center text-stone-800">
-                    {calculateDayTotal(day)}h
-                  </td>
+                    <td className="px-4 py-3">
+                      <input
+                        type="text"
+                        value={entry.task}
+                        onChange={(e) => updateEntry(entry.id, 'task', e.target.value as any)}
+                        placeholder="Task"
+                        className={inputClass}
+                        disabled={timesheet.status !== 'Draft'}
+                      />
+                    </td>
+                    {(['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const).map((day) => (
+                      <td key={day} className="px-4 py-3">
+                        <input
+                          type="number"
+                          min="0"
+                          max="24"
+                          step="0.5"
+                          value={entry[day]}
+                          onChange={(e) => updateEntry(entry.id, day, parseFloat(e.target.value) || 0)}
+                          className={`${inputClass} text-center tabular-nums`}
+                          disabled={timesheet.status !== 'Draft'}
+                        />
+                      </td>
+                    ))}
+                    <td className="bg-muted/30 px-4 py-3">
+                      <div className="text-center text-sm font-semibold tabular-nums text-foreground">
+                        {calculateEntryTotal(entry)}h
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      {timesheet.status === 'Draft' && (
+                        <button
+                          type="button"
+                          onClick={() => removeEntry(entry.id)}
+                          className="rounded p-1 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      )}
+                    </td>
+                  </tr>
                 ))}
-                <td className="px-4 py-3 bg-primary/10">
-                  <div className="text-sm font-bold text-center text-primary">
-                    {calculateWeekTotal()}h
-                  </div>
-                </td>
-                <td></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
 
-        {timesheet.status === 'Draft' && (
-          <div className="p-4 border-t border-stone-200">
-            <BonsaiButton size="sm" variant="ghost" icon={<Plus />} onClick={addEntry}>
-              Add Entry
-            </BonsaiButton>
+                <tr className="bg-muted/40 font-semibold">
+                  <td colSpan={2} className="px-4 py-3 text-sm text-foreground">
+                    Daily totals
+                  </td>
+                  {(['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const).map((day) => (
+                    <td key={day} className="px-4 py-3 text-center text-sm tabular-nums text-foreground">
+                      {calculateDayTotal(day)}h
+                    </td>
+                  ))}
+                  <td className="bg-primary/10 px-4 py-3">
+                    <div className="text-center text-sm font-bold tabular-nums text-primary">{calculateWeekTotal()}h</div>
+                  </td>
+                  <td />
+                </tr>
+              </tbody>
+            </table>
           </div>
-        )}
-      </div>
 
-      {/* Notes */}
-      <div className="bg-white rounded-lg border border-stone-200 p-6 mb-6">
-        <label className="block text-sm font-medium text-stone-700 mb-2">
-          Notes (optional)
-        </label>
+          {timesheet.status === 'Draft' && (
+            <div className="border-t border-border p-4">
+              <BonsaiButton size="sm" variant="ghost" icon={<Plus className="h-4 w-4" />} onClick={addEntry}>
+                Add row
+              </BonsaiButton>
+            </div>
+          )}
+        </div>
+      </DashboardScrollPanel>
+
+      <div className="hub-surface hub-surface-elevated mb-6 rounded-2xl p-5 sm:p-6">
+        <label className="mb-2 block text-sm font-medium text-foreground">Notes</label>
         <textarea
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           rows={3}
-          className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
-          placeholder="Add any notes about this week's work..."
+          className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+          placeholder="Optional"
           disabled={timesheet.status !== 'Draft'}
         />
       </div>
 
-      {/* Actions */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           {timesheet.status === 'Rejected' && (
-            <div className="text-sm text-stone-700">
-              <strong>Rejection Reason:</strong> Please add more detail to task descriptions.
-            </div>
+            <p className="text-[13px] text-muted-foreground">
+              <span className="font-medium text-foreground">Returned:</span> Add more task detail.
+            </p>
           )}
         </div>
         <div className="flex items-center gap-3">

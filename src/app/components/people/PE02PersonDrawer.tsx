@@ -72,7 +72,7 @@ export function PE02PersonDrawer({ isOpen, onClose, onSave, initialPerson }: PE0
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* Type Selection */}
           <div>
-            <label className="block text-sm font-medium text-stone-700 mb-2">Type *</label>
+            <label className="block text-sm font-medium text-foreground mb-2">Type *</label>
             <div className="flex gap-3">
               <button
                 type="button"
@@ -80,11 +80,11 @@ export function PE02PersonDrawer({ isOpen, onClose, onSave, initialPerson }: PE0
                 className={`flex-1 p-4 rounded-lg border-2 transition-all ${
                   formData.type === 'Employee'
                     ? 'border-primary bg-primary/5'
-                    : 'border-stone-200 hover:border-primary/50'
+                    : 'border-border hover:border-primary/50'
                 }`}
               >
-                <p className="font-medium text-stone-800">Employee</p>
-                <p className="text-xs text-stone-600">Full-time or part-time team member</p>
+                <p className="font-medium text-foreground">Employee</p>
+                <p className="text-xs text-muted-foreground">Full-time or part-time team member</p>
               </button>
               <button
                 type="button"
@@ -92,18 +92,18 @@ export function PE02PersonDrawer({ isOpen, onClose, onSave, initialPerson }: PE0
                 className={`flex-1 p-4 rounded-lg border-2 transition-all ${
                   formData.type === 'Freelancer'
                     ? 'border-primary bg-primary/5'
-                    : 'border-stone-200 hover:border-primary/50'
+                    : 'border-border hover:border-primary/50'
                 }`}
               >
-                <p className="font-medium text-stone-800">Freelancer</p>
-                <p className="text-xs text-stone-600">Contract or project-based</p>
+                <p className="font-medium text-foreground">Freelancer</p>
+                <p className="text-xs text-muted-foreground">Contract or project-based</p>
               </button>
             </div>
           </div>
 
           {/* Basic Information */}
           <div>
-            <h3 className="font-semibold text-stone-800 mb-4">Basic Information</h3>
+            <h3 className="font-semibold text-foreground mb-4">Basic information</h3>
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <BonsaiInput
@@ -169,7 +169,7 @@ export function PE02PersonDrawer({ isOpen, onClose, onSave, initialPerson }: PE0
           {/* Employment Details */}
           {formData.type === 'Employee' && (
             <div>
-              <h3 className="font-semibold text-stone-800 mb-4">Employment Details</h3>
+              <h3 className="font-semibold text-foreground mb-4">Employment details</h3>
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <BonsaiInput
@@ -209,7 +209,7 @@ export function PE02PersonDrawer({ isOpen, onClose, onSave, initialPerson }: PE0
           {/* Freelancer Details */}
           {formData.type === 'Freelancer' && (
             <div>
-              <h3 className="font-semibold text-stone-800 mb-4">Freelancer Details</h3>
+              <h3 className="font-semibold text-foreground mb-4">Freelancer details</h3>
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <BonsaiInput
@@ -249,7 +249,7 @@ export function PE02PersonDrawer({ isOpen, onClose, onSave, initialPerson }: PE0
 
           {/* Skills & Availability */}
           <div>
-            <h3 className="font-semibold text-stone-800 mb-4">Skills & Availability</h3>
+            <h3 className="font-semibold text-foreground mb-4">Skills & availability</h3>
             <div className="space-y-4">
               <BonsaiInput
                 label="Skills (comma-separated)"
@@ -273,7 +273,7 @@ export function PE02PersonDrawer({ isOpen, onClose, onSave, initialPerson }: PE0
 
           {/* Location */}
           <div>
-            <h3 className="font-semibold text-stone-800 mb-4">Location</h3>
+            <h3 className="font-semibold text-foreground mb-4">Location</h3>
             <div className="grid grid-cols-2 gap-4">
               <BonsaiInput
                 label="Location"
@@ -311,7 +311,7 @@ export function PE02PersonDrawer({ isOpen, onClose, onSave, initialPerson }: PE0
           </div>
 
           {/* Actions */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-stone-200">
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
             <BonsaiButton variant="ghost" onClick={onClose} type="button">
               Cancel
             </BonsaiButton>

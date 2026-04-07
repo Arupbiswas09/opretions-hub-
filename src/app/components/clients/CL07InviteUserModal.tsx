@@ -36,23 +36,24 @@ export function CL07InviteUserModal({ isOpen, onClose, onInvite }: CL07InviteUse
     <>
       {/* Overlay */}
       <div 
-        className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 hub-modal-overlay"
         onClick={onClose}
       >
         {/* Modal */}
         <div 
-          className="bg-white rounded-lg shadow-2xl w-full max-w-lg"
+          className="hub-modal-solid rounded-lg shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="px-6 py-4 border-b border-stone-200 flex items-center justify-between">
+          <div className="px-6 py-4 border-b border-border flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-semibold text-stone-800">Invite Client Portal User</h2>
-              <p className="text-sm text-stone-500">Grant portal access to a client team member</p>
+              <h2 className="text-xl font-semibold text-foreground">Invite portal user</h2>
+              <p className="text-sm text-muted-foreground">Grant access to a client team member</p>
             </div>
             <button
+              type="button"
               onClick={onClose}
-              className="p-2 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-lg"
+              className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -90,13 +91,13 @@ export function CL07InviteUserModal({ isOpen, onClose, onInvite }: CL07InviteUse
 
             {/* Role */}
             <div>
-              <label className="block text-sm font-medium text-stone-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Portal Role *
               </label>
               <select
                 value={formData.role}
                 onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                className="hub-field px-3 py-2 text-sm bg-background text-foreground"
                 required
               >
                 <option value="Admin">Admin - Full access to all portal features</option>
@@ -107,7 +108,7 @@ export function CL07InviteUserModal({ isOpen, onClose, onInvite }: CL07InviteUse
 
             {/* Permissions */}
             <div>
-              <label className="block text-sm font-medium text-stone-700 mb-3">
+              <label className="block text-sm font-medium text-foreground mb-3">
                 Permissions
               </label>
               <div className="space-y-2">
@@ -119,9 +120,9 @@ export function CL07InviteUserModal({ isOpen, onClose, onInvite }: CL07InviteUse
                       ...formData,
                       permissions: { ...formData.permissions, viewProjects: e.target.checked }
                     })}
-                    className="w-4 h-4 rounded border-stone-300 text-primary focus:ring-2 focus:ring-primary/20"
+                    className="w-4 h-4 rounded border-border text-primary focus:ring-2 focus:ring-ring/30"
                   />
-                  <span className="text-sm text-stone-700">View projects and progress</span>
+                  <span className="text-sm text-foreground">View projects and progress</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
@@ -131,9 +132,9 @@ export function CL07InviteUserModal({ isOpen, onClose, onInvite }: CL07InviteUse
                       ...formData,
                       permissions: { ...formData.permissions, viewInvoices: e.target.checked }
                     })}
-                    className="w-4 h-4 rounded border-stone-300 text-primary focus:ring-2 focus:ring-primary/20"
+                    className="w-4 h-4 rounded border-border text-primary focus:ring-2 focus:ring-ring/30"
                   />
-                  <span className="text-sm text-stone-700">View invoices and payments</span>
+                  <span className="text-sm text-foreground">View invoices and payments</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
@@ -143,9 +144,9 @@ export function CL07InviteUserModal({ isOpen, onClose, onInvite }: CL07InviteUse
                       ...formData,
                       permissions: { ...formData.permissions, submitRequests: e.target.checked }
                     })}
-                    className="w-4 h-4 rounded border-stone-300 text-primary focus:ring-2 focus:ring-primary/20"
+                    className="w-4 h-4 rounded border-border text-primary focus:ring-2 focus:ring-ring/30"
                   />
-                  <span className="text-sm text-stone-700">Submit requests and support tickets</span>
+                  <span className="text-sm text-foreground">Submit requests and support tickets</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
@@ -155,9 +156,9 @@ export function CL07InviteUserModal({ isOpen, onClose, onInvite }: CL07InviteUse
                       ...formData,
                       permissions: { ...formData.permissions, viewDocuments: e.target.checked }
                     })}
-                    className="w-4 h-4 rounded border-stone-300 text-primary focus:ring-2 focus:ring-primary/20"
+                    className="w-4 h-4 rounded border-border text-primary focus:ring-2 focus:ring-ring/30"
                   />
-                  <span className="text-sm text-stone-700">Access shared documents</span>
+                  <span className="text-sm text-foreground">Access shared documents</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
@@ -167,23 +168,23 @@ export function CL07InviteUserModal({ isOpen, onClose, onInvite }: CL07InviteUse
                       ...formData,
                       permissions: { ...formData.permissions, manageUsers: e.target.checked }
                     })}
-                    className="w-4 h-4 rounded border-stone-300 text-primary focus:ring-2 focus:ring-primary/20"
+                    className="w-4 h-4 rounded border-border text-primary focus:ring-2 focus:ring-ring/30"
                   />
-                  <span className="text-sm text-stone-700">Manage other portal users (Admin only)</span>
+                  <span className="text-sm text-foreground">Manage other portal users (Admin only)</span>
                 </label>
               </div>
             </div>
 
             {/* Info */}
-            <div className="p-4 bg-stone-100 border border-stone-200 rounded-lg">
-              <p className="text-xs text-blue-800">
+            <div className="p-4 bg-primary/10 border border-primary/20 rounded-lg">
+              <p className="text-xs text-foreground">
                 <strong>Email Invitation:</strong> An invitation email will be sent to the user with instructions 
                 to set up their password and access the client portal.
               </p>
             </div>
 
             {/* Actions */}
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-stone-200">
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
               <BonsaiButton variant="ghost" onClick={onClose} type="button">
                 Cancel
               </BonsaiButton>

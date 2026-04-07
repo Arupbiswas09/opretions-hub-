@@ -89,29 +89,32 @@ export function SA02DealsList({ onDealClick, onCreateDeal }: SA02DealsListProps)
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-stone-800">Deals</h1>
-          <p className="text-sm text-stone-500">Manage all sales opportunities</p>
+          <h1 className="text-2xl font-semibold text-foreground">Deals</h1>
+          <p className="text-sm text-muted-foreground">Manage all opportunities</p>
         </div>
         <div className="flex items-center gap-3">
           {/* View Switcher */}
-          <div className="flex items-center gap-1 bg-white border border-stone-200 rounded-lg p-1">
+          <div className="flex items-center gap-1 hub-surface rounded-lg p-1">
             <button
+              type="button"
               onClick={() => setViewMode('list')}
-              className={`p-2 rounded ${viewMode === 'list' ? 'bg-primary/10 text-primary' : 'text-stone-600 hover:bg-stone-100'}`}
+              className={`p-2 rounded transition-colors ${viewMode === 'list' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted'}`}
               title="List View"
             >
               <List className="w-4 h-4" />
             </button>
             <button
+              type="button"
               onClick={() => setViewMode('kanban')}
-              className={`p-2 rounded ${viewMode === 'kanban' ? 'bg-primary/10 text-primary' : 'text-stone-600 hover:bg-stone-100'}`}
+              className={`p-2 rounded transition-colors ${viewMode === 'kanban' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted'}`}
               title="Kanban View"
             >
               <Columns3 className="w-4 h-4" />
             </button>
             <button
+              type="button"
               onClick={() => setViewMode('grid')}
-              className={`p-2 rounded ${viewMode === 'grid' ? 'bg-primary/10 text-primary' : 'text-stone-600 hover:bg-stone-100'}`}
+              className={`p-2 rounded transition-colors ${viewMode === 'grid' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted'}`}
               title="Grid View"
             >
               <LayoutGrid className="w-4 h-4" />
@@ -125,22 +128,17 @@ export function SA02DealsList({ onDealClick, onCreateDeal }: SA02DealsListProps)
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white rounded-lg border border-stone-200 p-4">
-          <p className="text-sm text-stone-600">Total Deals</p>
-          <p className="text-2xl font-semibold text-stone-800 mt-1">{deals.length}</p>
-        </div>
-        <div className="bg-white rounded-lg border border-stone-200 p-4">
-          <p className="text-sm text-stone-600">Total Value</p>
-          <p className="text-2xl font-semibold text-stone-800 mt-1">$208K</p>
-        </div>
-        <div className="bg-white rounded-lg border border-stone-200 p-4">
-          <p className="text-sm text-stone-600">Project Deals</p>
-          <p className="text-2xl font-semibold text-stone-800 mt-1">3</p>
-        </div>
-        <div className="bg-white rounded-lg border border-stone-200 p-4">
-          <p className="text-sm text-stone-600">Talent Deals</p>
-          <p className="text-2xl font-semibold text-stone-800 mt-1">2</p>
-        </div>
+        {[
+          { label: 'Total deals', value: deals.length },
+          { label: 'Total value', value: '$208K' },
+          { label: 'Project deals', value: 3 },
+          { label: 'Talent deals', value: 2 },
+        ].map((s) => (
+          <div key={s.label} className="hub-surface hub-surface-elevated rounded-lg p-4">
+            <p className="text-sm text-muted-foreground">{s.label}</p>
+            <p className="text-2xl font-semibold text-foreground mt-1">{s.value}</p>
+          </div>
+        ))}
       </div>
 
       {/* Content based on view mode */}
@@ -158,11 +156,7 @@ export function SA02DealsList({ onDealClick, onCreateDeal }: SA02DealsListProps)
           data={deals.map(deal => ({
             ...deal,
             type: (
-              <span className={`inline-flex px-2 py-1 text-xs rounded-full ${
-                deal.type === 'Project' 
-                  ? 'bg-stone-100 text-stone-600' 
-                  : 'bg-stone-100 text-stone-600'
-              }`}>
+              <span className="inline-flex px-2 py-1 text-xs rounded-full bg-muted/60 text-muted-foreground border border-border">
                 {deal.type}
               </span>
             ),
@@ -193,9 +187,9 @@ export function SA02DealsList({ onDealClick, onCreateDeal }: SA02DealsListProps)
       )}
 
       {viewMode === 'kanban' && (
-        <div className="text-center py-12 bg-white rounded-lg border border-stone-200">
-          <p className="text-stone-600 mb-4">Kanban view available in Pipeline screen</p>
-          <BonsaiButton onClick={() => {/* Navigate to pipeline */}}>
+        <div className="text-center py-12 hub-surface rounded-lg">
+          <p className="text-muted-foreground mb-4">Kanban view is available in Pipeline.</p>
+          <BonsaiButton type="button" onClick={() => {/* Navigate to pipeline */}}>
             Go to Pipeline View
           </BonsaiButton>
         </div>

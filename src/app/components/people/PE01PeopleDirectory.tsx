@@ -134,8 +134,8 @@ export function PE01PeopleDirectory({ onPersonClick, onCreatePerson, onBulkActio
     switch (availability) {
       case 'Available': return 'bg-emerald-50 text-emerald-700 border border-emerald-100';
       case 'Busy':      return 'bg-amber-50 text-amber-700 border border-amber-100';
-      case 'On Leave':  return 'bg-stone-100 text-stone-600';
-      default:          return 'bg-stone-100 text-stone-700';
+      case 'On Leave':  return 'bg-muted/60 text-muted-foreground border border-border';
+      default:          return 'bg-muted/60 text-muted-foreground border border-border';
     }
   };
 
@@ -150,8 +150,8 @@ export function PE01PeopleDirectory({ onPersonClick, onCreatePerson, onBulkActio
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-stone-800 dark:text-stone-100">People</h1>
-          <p className="text-sm text-stone-500 dark:text-stone-400">Manage team members and freelancers</p>
+          <h1 className="text-2xl font-semibold text-foreground">People</h1>
+          <p className="text-sm text-muted-foreground">Manage team members and freelancers</p>
         </div>
         <div className="flex items-center gap-3">
           {/* View Switcher */}
@@ -160,14 +160,16 @@ export function PE01PeopleDirectory({ onPersonClick, onCreatePerson, onBulkActio
             style={{ background: 'var(--table-header-bg)', border: '1px solid var(--border)' }}
           >
             <button
+              type="button"
               onClick={() => setViewMode('list')}
-              className={`p-2 rounded transition-[background-color] duration-[120ms] ${viewMode === 'list' ? 'bg-primary/10 text-primary' : 'text-stone-600 dark:text-stone-400 hover:bg-[var(--row-hover-bg)]'}`}
+              className={`p-2 rounded transition-[background-color] duration-[120ms] ${viewMode === 'list' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-[var(--row-hover-bg)]'}`}
             >
               <List className="w-4 h-4" />
             </button>
             <button
+              type="button"
               onClick={() => setViewMode('grid')}
-              className={`p-2 rounded transition-[background-color] duration-[120ms] ${viewMode === 'grid' ? 'bg-primary/10 text-primary' : 'text-stone-600 dark:text-stone-400 hover:bg-[var(--row-hover-bg)]'}`}
+              className={`p-2 rounded transition-[background-color] duration-[120ms] ${viewMode === 'grid' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-[var(--row-hover-bg)]'}`}
             >
               <LayoutGrid className="w-4 h-4" />
             </button>
@@ -175,7 +177,13 @@ export function PE01PeopleDirectory({ onPersonClick, onCreatePerson, onBulkActio
 
           {/* Column Chooser */}
           <div className="relative">
-            <BonsaiButton variant="ghost" size="sm" icon={<Settings />} onClick={() => setShowColumnChooser(!showColumnChooser)}>
+            <BonsaiButton
+              variant="ghost"
+              size="sm"
+              icon={<Settings />}
+              onClick={() => setShowColumnChooser(!showColumnChooser)}
+              type="button"
+            >
               Columns
             </BonsaiButton>
             <AnimatePresence>
@@ -185,16 +193,9 @@ export function PE01PeopleDirectory({ onPersonClick, onCreatePerson, onBulkActio
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.97, y: 4 }}
                   transition={{ type: 'spring', damping: 28, stiffness: 380 }}
-                  className="absolute right-0 top-full mt-2 w-64 rounded-xl p-4 z-10"
-                  style={{
-                    background: 'rgba(255,255,255,0.9)',
-                    backdropFilter: 'blur(48px) saturate(200%)',
-                    WebkitBackdropFilter: 'blur(48px) saturate(200%)',
-                    boxShadow: '0 16px 48px -8px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.04)',
-                    border: '1px solid rgba(255,255,255,0.5)',
-                  }}
+                  className="absolute right-0 top-full mt-2 w-64 rounded-xl p-4 z-10 hub-modal-solid shadow-xl"
                 >
-                <h3 className="font-medium text-stone-800 mb-3">Show Columns</h3>
+                <h3 className="font-medium text-foreground mb-3">Show columns</h3>
                 <div className="space-y-2">
                   {visibleColumns.map((col) => (
                     <label key={col.key} className="flex items-center gap-2 cursor-pointer">
@@ -206,9 +207,9 @@ export function PE01PeopleDirectory({ onPersonClick, onCreatePerson, onBulkActio
                             visibleColumns.map((c) => c.key === col.key ? { ...c, visible: e.target.checked } : c)
                           );
                         }}
-                        className="w-4 h-4 rounded border-stone-300 text-primary focus:ring-2 focus:ring-primary/20"
+                        className="w-4 h-4 rounded border-border text-primary focus:ring-2 focus:ring-ring/30"
                       />
-                      <span className="text-sm text-stone-700">{col.label}</span>
+                      <span className="text-sm text-foreground">{col.label}</span>
                     </label>
                   ))}
                 </div>
@@ -241,19 +242,19 @@ export function PE01PeopleDirectory({ onPersonClick, onCreatePerson, onBulkActio
 
       {/* Filters Panel */}
       {showFilters && (
-        <div className="bg-white rounded-lg border border-stone-200 p-4 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div className="hub-surface hub-surface-elevated mb-6 rounded-2xl p-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-5">
             <div>
-              <label className="block text-xs font-medium text-stone-600 mb-1">Type</label>
-              <select className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm">
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">Type</label>
+              <select className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground">
                 <option>All Types</option>
                 <option>Employee</option>
                 <option>Freelancer</option>
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-stone-600 mb-1">Status</label>
-              <select className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm">
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">Status</label>
+              <select className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground">
                 <option>All Statuses</option>
                 <option>Active</option>
                 <option>Inactive</option>
@@ -261,8 +262,8 @@ export function PE01PeopleDirectory({ onPersonClick, onCreatePerson, onBulkActio
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-stone-600 mb-1">Department</label>
-              <select className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm">
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">Department</label>
+              <select className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground">
                 <option>All Departments</option>
                 <option>Operations</option>
                 <option>Design</option>
@@ -270,8 +271,8 @@ export function PE01PeopleDirectory({ onPersonClick, onCreatePerson, onBulkActio
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-stone-600 mb-1">Skills</label>
-              <select className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm">
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">Skills</label>
+              <select className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground">
                 <option>All Skills</option>
                 <option>Project Management</option>
                 <option>UI/UX Design</option>
@@ -279,8 +280,8 @@ export function PE01PeopleDirectory({ onPersonClick, onCreatePerson, onBulkActio
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-stone-600 mb-1">Availability</label>
-              <select className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-sm">
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">Availability</label>
+              <select className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground">
                 <option>All</option>
                 <option>Available</option>
                 <option>Busy</option>
@@ -326,15 +327,13 @@ export function PE01PeopleDirectory({ onPersonClick, onCreatePerson, onBulkActio
               <div className="flex items-center gap-3">
                 <OpsAvatar name={person.name} size="md" presence={presenceForAvatar(person.availability)} />
                 <div>
-                  <p className="text-[13px] font-medium text-stone-800 dark:text-stone-100">{person.name}</p>
-                  <p className="text-[10px] text-stone-400 dark:text-stone-500">{person.role}</p>
+                  <p className="text-[13px] font-medium text-foreground">{person.name}</p>
+                  <p className="text-[10px] text-muted-foreground">{person.role}</p>
                 </div>
               </div>
             ),
             type: (
-              <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                person.type === 'Employee' ? 'bg-stone-100 text-stone-600' : 'bg-stone-100 text-stone-700'
-              }`}>
+              <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-muted/60 text-muted-foreground border border-border">
                 {person.type}
               </span>
             ),
@@ -347,7 +346,7 @@ export function PE01PeopleDirectory({ onPersonClick, onCreatePerson, onBulkActio
             availability: (
               <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium rounded-full ${getAvailabilityStyle(person.availability)}`}>
                 <span className={`w-1.5 h-1.5 rounded-full ${
-                  person.availability === 'Available' ? 'bg-emerald-500' : person.availability === 'Busy' ? 'bg-amber-500' : 'bg-stone-400'
+                  person.availability === 'Available' ? 'bg-emerald-500' : person.availability === 'Busy' ? 'bg-amber-500' : 'bg-muted-foreground'
                 }`} />
                 {person.availability}
               </span>
@@ -355,12 +354,12 @@ export function PE01PeopleDirectory({ onPersonClick, onCreatePerson, onBulkActio
             skills: (
               <div className="flex gap-1 flex-wrap">
                 {person.skills.slice(0, 2).map((skill, idx) => (
-                  <span key={idx} className="inline-flex px-2 py-0.5 text-xs rounded-full bg-stone-100 text-stone-700">
+                  <span key={idx} className="inline-flex px-2 py-0.5 text-xs rounded-full bg-muted/60 text-foreground border border-border">
                     {skill}
                   </span>
                 ))}
                 {person.skills.length > 2 && (
-                  <span className="inline-flex px-2 py-0.5 text-xs rounded-full bg-stone-100 text-stone-700">
+                  <span className="inline-flex px-2 py-0.5 text-xs rounded-full bg-muted/60 text-foreground border border-border">
                     +{person.skills.length - 2}
                   </span>
                 )}

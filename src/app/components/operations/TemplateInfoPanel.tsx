@@ -12,8 +12,9 @@ export function TemplateInfoPanel({ templateName, features }: TemplateInfoPanelP
   if (!isVisible) {
     return (
       <button
+        type="button"
         onClick={() => setIsVisible(true)}
-        className="fixed bottom-4 right-4 z-40 p-3 bg-stone-1000 text-white rounded-full shadow-lg hover:bg-stone-700 transition-colors"
+        className="fixed bottom-4 right-4 z-40 p-3 bg-primary text-primary-foreground rounded-full shadow-lg hover:opacity-95 transition-[opacity]"
         title="Show template info"
       >
         <Info className="w-5 h-5" />
@@ -22,32 +23,33 @@ export function TemplateInfoPanel({ templateName, features }: TemplateInfoPanelP
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-40 w-72 bg-white rounded-lg border border-stone-200 shadow-xl">
-      <div className="p-4 border-b border-stone-200 flex items-center justify-between">
+    <div className="fixed bottom-4 right-4 z-40 w-72 hub-modal-solid rounded-lg shadow-xl">
+      <div className="p-4 border-b border-border flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-stone-100 flex items-center justify-center">
-            <Info className="w-4 h-4 text-stone-600" />
+          <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
+            <Info className="w-4 h-4 text-muted-foreground" />
           </div>
           <div>
-            <h3 className="font-semibold text-stone-800 text-sm">Template Info</h3>
-            <p className="text-xs text-stone-500">{templateName}</p>
+            <h3 className="font-semibold text-foreground text-sm">Template info</h3>
+            <p className="text-xs text-muted-foreground">{templateName}</p>
           </div>
         </div>
         <button
+          type="button"
           onClick={() => setIsVisible(false)}
-          className="p-1 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded"
+          className="p-1 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
         >
           <X className="w-4 h-4" />
         </button>
       </div>
       
       <div className="p-4">
-        <p className="text-xs font-medium text-stone-600 mb-2">Active Features:</p>
+        <p className="text-xs font-medium text-muted-foreground mb-2">Active features</p>
         <div className="space-y-1.5">
           {features.map((feature, idx) => (
             <div key={idx} className="flex items-start gap-2">
               <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
-              <span className="text-xs text-stone-700">{feature}</span>
+              <span className="text-xs text-foreground">{feature}</span>
             </div>
           ))}
         </div>

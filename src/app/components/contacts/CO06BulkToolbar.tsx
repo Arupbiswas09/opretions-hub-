@@ -46,7 +46,7 @@ export function CO06BulkToolbar({ selectedCount, onClose }: CO06BulkToolbarProps
             <span className="text-sm font-medium">Export</span>
           </button>
 
-          <button className="flex items-center gap-2 px-4 py-2 bg-stone-1000 hover:bg-stone-800 rounded-lg transition-colors">
+          <button className="flex items-center gap-2 px-4 py-2 bg-black/25 hover:bg-black/35 rounded-lg transition-colors">
             <Trash2 className="w-4 h-4" />
             <span className="text-sm font-medium">Delete</span>
           </button>

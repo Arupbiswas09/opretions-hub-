@@ -34,6 +34,8 @@ interface UnipileAccount {
 interface UnipileMessage {
   id?: string;
   message_id?: string;
+  /** Unipile: provider-native id; match to chat attendees' provider_id for names */
+  sender_id?: string;
   /** Unipile: true if the connected account sent this message */
   is_sender?: boolean;
   from_me?: boolean;
@@ -59,6 +61,71 @@ interface UnipileChat {
   is_unread?: boolean;
 }
 
+/** Sidebar list: filled after GET /chats/{id}/attendees when the list API omits title/photo */
+interface ChatListEnrichment {
+  displayName: string;
+  avatarUrl: string | null;
+  loaded: boolean;
+}
+
+/** Local-only internal threads (persisted); not Unipile */
+const INTERNAL_LOCAL_ACCOUNT = '__hub_internal__';
+
+interface InternalThread {
+  id: string;
+  peerId: string;
+  peerName: string;
+  peerRole?: string;
+  messages: { id: string; text: string; fromMe: boolean; at: string }[];
+  updatedAt: string;
+}
+
+const INTERNAL_TEAM = [
+  { id: '1', name: 'John Doe', role: 'Senior Project Manager · Operations' },
+  { id: '2', name: 'Jane Smith', role: 'Lead Designer · Design' },
+  { id: '3', name: 'Sarah Johnson', role: 'Senior Designer · Freelance' },
+  { id: '4', name: 'Mike Chen', role: 'Software Engineer · Engineering' },
+  { id: '5', name: 'Priya Patel', role: 'Operations Lead · Operations' },
+] as const;
+
+const INTERNAL_INBOX_STORAGE_KEY = 'hub-internal-inbox-v1';
+
+function seedInternalThreads(): InternalThread[] {
+  return INTERNAL_TEAM.map(p => ({
+    id: `int-${p.id}`,
+    peerId: p.id,
+    peerName: p.name,
+    peerRole: p.role,
+    messages: [],
+    updatedAt: new Date(0).toISOString(),
+  }));
+}
+
+function loadInternalThreadsFromStorage(): InternalThread[] | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem(INTERNAL_INBOX_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as InternalThread[];
+    return Array.isArray(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function internalThreadToChat(t: InternalThread): UnipileChat {
+  const last = t.messages.length ? t.messages[t.messages.length - 1]! : undefined;
+  return {
+    id: t.id,
+    account_id: INTERNAL_LOCAL_ACCOUNT,
+    name: t.peerName,
+    last_message: last
+      ? { text: last.text, timestamp: last.at, from_me: last.fromMe }
+      : undefined,
+    ...(last ? { timestamp: t.updatedAt, updated_at: t.updatedAt } : {}),
+  };
+}
+
 /* ═══════════════════════════════════════════════════════════
    Helpers
 ═══════════════════════════════════════════════════════════ */
@@ -72,6 +139,7 @@ function providerToChannel(type: string): Channel {
 }
 
 function channelFromAccountId(accountId: string, accounts: UnipileAccount[]): Channel {
+  if (accountId === INTERNAL_LOCAL_ACCOUNT) return 'internal';
   const acc = accounts.find(a => a.id === accountId);
   return acc ? providerToChannel(acc.type) : 'unknown';
 }
@@ -109,16 +177,28 @@ function fmtTime(iso: string) {
   return new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 }
 
+/** Unipile chat attendee: is_self is often 0 | 1 */
+function isSelfAttendee(a: any): boolean {
+  return a?.is_self === true || a?.is_self === 1 || a?.is_self === '1' || a?.self === true;
+}
+
 /** Single attendee display name (Unipile shapes vary by provider) */
 function attendeeDisplayName(a: Record<string, unknown> | undefined): string {
   if (!a || typeof a !== 'object') return '';
   const o = a as any;
   if (o.is_self === true || o.self === true) return '';
+  if (o.is_self === 1 || o.is_self === '1') return '';
   const combined = [o.first_name, o.last_name].filter(Boolean).join(' ').trim();
+  const spec = o.specifics && typeof o.specifics === 'object' ? o.specifics : null;
+  const specPush =
+    spec &&
+    (spec.pushname || spec.wa_name || spec.formatted_name) &&
+    String(spec.pushname || spec.wa_name || spec.formatted_name).trim();
   const n =
     o.display_name ||
     o.name ||
     o.full_name ||
+    (specPush as string) ||
     combined ||
     o.phone_number ||
     o.identifier ||
@@ -178,40 +258,91 @@ function chatName(chat: UnipileChat): string {
   return 'Unknown Contact';
 }
 
+/** Image URL from Unipile / WhatsApp / LinkedIn shapes (incl. nested specifics, data URIs) */
+function photoFromRecord(o: any): string | null {
+  if (!o || typeof o !== 'object') return null;
+  const spec = o.specifics && typeof o.specifics === 'object' ? o.specifics : null;
+  const candidates: unknown[] = [
+    o.picture_url,
+    o.avatar_url,
+    o.profile_picture_url,
+    o.photo_url,
+    o.image_url,
+    o.icon_url,
+    typeof o.picture === 'string' ? o.picture : null,
+    typeof o.profile_picture === 'string' ? o.profile_picture : (o.profile_picture && (o.profile_picture as any).url),
+    spec?.picture_url,
+    spec?.avatar_url,
+    spec?.profile_picture_url,
+    typeof spec?.picture === 'string' ? spec.picture : null,
+  ];
+  for (const u of candidates) {
+    if (typeof u === 'string' && (u.startsWith('http') || u.startsWith('data:image'))) return u;
+  }
+  return null;
+}
+
 /** Profile image URL from chat or attendee (when Unipile provides it) */
 function chatAvatarUrl(chat: UnipileChat): string | null {
   const c = chat as any;
-  const tryUrl = (o: any) => o?.picture_url || o?.avatar_url || o?.profile_picture_url || o?.photo_url || o?.picture;
-  const direct = tryUrl(c);
-  if (typeof direct === 'string' && direct.startsWith('http')) return direct;
+  const direct = photoFromRecord(c);
+  if (direct) return direct;
   const attendees = Array.isArray(c.attendees) ? c.attendees : [];
   for (const a of attendees) {
     if (a && (a as any).is_self) continue;
-    const u = tryUrl(a);
-    if (typeof u === 'string' && u.startsWith('http')) return u;
+    const u = photoFromRecord(a);
+    if (u) return u;
   }
   const fa = c.from_attendees;
   if (Array.isArray(fa)) {
     for (const a of fa) {
-      const u = tryUrl(a);
-      if (typeof u === 'string' && u.startsWith('http')) return u;
+      const u = photoFromRecord(a);
+      if (u) return u;
     }
   }
   return null;
 }
 
 function chatSnippet(chat: UnipileChat): string {
-  const t = chat.last_message?.text;
-  if (t && t.trim()) return t.trim();
+  const lm = chat.last_message as any;
+  const t = lm?.text || lm?.body || lm?.content || lm?.message || lm?.snippet || chat.last_message?.text;
+  if (t && String(t).trim()) return String(t).trim();
   // For email, subject is usually separate from name
   const subj = chat.subject;
   if (subj && subj !== chatName(chat)) return subj;
   return 'No messages yet';
 }
 
-function chatTime(chat: UnipileChat): string {
-  return timeAgo(chat.last_message?.timestamp || chat.timestamp || chat.updated_at || '');
+/** Most recent activity time for sorting (newest-first lists) */
+function chatSortTimestampMs(chat: UnipileChat): number {
+  const c = chat as any;
+  const lm = chat.last_message as any;
+  const raw =
+    lm?.timestamp ||
+    lm?.created_at ||
+    lm?.date ||
+    chat.updated_at ||
+    chat.timestamp ||
+    c.modified_at ||
+    c.last_activity_at ||
+    c.created_at ||
+    '';
+  const t = raw ? new Date(raw).getTime() : 0;
+  return Number.isFinite(t) && t > 0 ? t : 0;
 }
+
+function chatTime(chat: UnipileChat): string {
+  const lm = chat.last_message as any;
+  const raw =
+    lm?.timestamp || lm?.created_at || lm?.date || chat.timestamp || chat.updated_at || '';
+  if (!raw) return '';
+  const ms = new Date(raw).getTime();
+  if (!Number.isFinite(ms) || ms <= 0) return '';
+  if (Date.now() - ms > 45 * 365 * 24 * 60 * 60 * 1000) return '';
+  return timeAgo(raw);
+}
+
+const CHATS_CACHE_TTL_MS = 120_000;
 
 /** Initials avatar from a name string */
 function initials(name: string): string {
@@ -247,17 +378,147 @@ function sortMessagesOldestFirst<T>(items: T[]): T[] {
   return [...items].sort((a: any, b: any) => messageTimeMs(a) - messageTimeMs(b));
 }
 
-function displaySenderName(msg: any, contactName: string): string {
+/** Map provider_id / attendee id → display name (from GET /chats/{id}/attendees) */
+function buildSenderLookupFromAttendees(items: any[]): Record<string, string> {
+  const map: Record<string, string> = {};
+  if (!Array.isArray(items)) return map;
+  for (const a of items) {
+    if (!a || typeof a !== 'object') continue;
+    if (isSelfAttendee(a)) continue;
+    const spec = a.specifics && typeof a.specifics === 'object' ? a.specifics : null;
+    const specCombo =
+      spec && (spec.first_name || spec.last_name)
+        ? [spec.first_name, spec.last_name].filter(Boolean).join(' ').trim()
+        : '';
+    const label =
+      (a.name && String(a.name).trim()) ||
+      (a.display_name && String(a.display_name).trim()) ||
+      specCombo ||
+      attendeeDisplayName(a as any) ||
+      '';
+    if (!label) continue;
+    for (const k of [a.provider_id, a.id, a.public_identifier].filter(Boolean).map(String)) {
+      map[k] = label;
+      const low = k.toLowerCase();
+      if (low !== k) map[low] = label;
+    }
+  }
+  return map;
+}
+
+/** When chat list title is unknown but attendees API returns exactly one other person */
+function resolvedTitleFromAttendees(items: any[], chatTitle: string): string {
+  if (chatTitle !== 'Unknown Contact' || !Array.isArray(items)) return '';
+  const others = items.filter((a: any) => a && typeof a === 'object' && !isSelfAttendee(a));
+  const labels: string[] = [];
+  for (const a of others) {
+    const spec = a.specifics && typeof a.specifics === 'object' ? a.specifics : null;
+    const specCombo =
+      spec && (spec.first_name || spec.last_name)
+        ? [spec.first_name, spec.last_name].filter(Boolean).join(' ').trim()
+        : '';
+    const specWa =
+      spec &&
+      (spec.pushname || spec.wa_name || spec.formatted_name) &&
+      String(spec.pushname || spec.wa_name || spec.formatted_name).trim();
+    const label =
+      (a.name && String(a.name).trim()) ||
+      (a.display_name && String(a.display_name).trim()) ||
+      (specWa as string) ||
+      specCombo ||
+      attendeeDisplayName(a as any) ||
+      '';
+    if (label) labels.push(label);
+  }
+  if (labels.length === 1) return labels[0]!;
+  return '';
+}
+
+function attendeePhotoUrl(a: any): string | null {
+  return photoFromRecord(a);
+}
+
+/** Title + first available profile image for conversation list rows (all providers) */
+function listEnrichmentFromAttendees(items: any[]): { displayName: string; avatarUrl: string | null } {
+  if (!Array.isArray(items) || items.length === 0) return { displayName: '', avatarUrl: null };
+  const others = items.filter((a: any) => a && typeof a === 'object' && !isSelfAttendee(a));
+  let avatarUrl: string | null = null;
+  const labels: string[] = [];
+  for (const a of others) {
+    if (!avatarUrl) {
+      const u = attendeePhotoUrl(a);
+      if (u) avatarUrl = u;
+    }
+    const spec = a.specifics && typeof a.specifics === 'object' ? a.specifics : null;
+    const specCombo =
+      spec && (spec.first_name || spec.last_name)
+        ? [spec.first_name, spec.last_name].filter(Boolean).join(' ').trim()
+        : '';
+    const specWa =
+      spec &&
+      (spec.pushname || spec.wa_name || spec.formatted_name) &&
+      String(spec.pushname || spec.wa_name || spec.formatted_name).trim();
+    const label =
+      (a.name && String(a.name).trim()) ||
+      (a.display_name && String(a.display_name).trim()) ||
+      (specWa as string) ||
+      specCombo ||
+      attendeeDisplayName(a as any) ||
+      '';
+    if (label && !labels.includes(label)) labels.push(label);
+  }
+  const displayName = labels.join(', ');
+  return { displayName, avatarUrl };
+}
+
+/** List title is mostly digits / masking — fetch attendees for WhatsApp pushname etc. */
+function looksLikePhoneOrMaskedId(s: string): boolean {
+  const t = s.replace(/[\s.·\-]/g, '');
+  if (t.length < 7) return false;
+  const digitRatio = (t.match(/\d/g) || []).length / t.length;
+  if (digitRatio >= 0.5) return true;
+  return /^\+?\d[\d*]{4,}\d$/.test(t);
+}
+
+function humanizeSenderId(id: string): string {
+  const s = id.trim();
+  if (!s) return '';
+  const wa = s.match(/^(\d+)@s\.whatsapp\.net$/i);
+  if (wa) return `+${wa[1]}`;
+  const at = s.indexOf('@');
+  if (at > 0 && !s.includes(' ')) return s.slice(0, at);
+  return s;
+}
+
+/** Resolve row label: nested sender → attendee map by sender_id → readable id → chat title */
+function resolveMessageSenderLabel(
+  msg: any,
+  chatContactName: string,
+  attendeeByKey: Record<string, string>,
+): string {
   const s = msg.sender;
-  if (!s) return contactName;
-  const combined = [s.first_name, s.last_name].filter(Boolean).join(' ').trim();
-  return (
-    s.name ||
-    s.display_name ||
-    combined ||
-    s.identifier ||
-    contactName
-  );
+  let nested = '';
+  if (s && typeof s === 'object') {
+    nested =
+      (s.name && String(s.name).trim()) ||
+      (s.display_name && String(s.display_name).trim()) ||
+      [s.first_name, s.last_name].filter(Boolean).join(' ').trim() ||
+      (s.identifier && String(s.identifier).trim()) ||
+      '';
+  }
+  if (nested) return nested;
+
+  const sid = msg.sender_id != null ? String(msg.sender_id).trim() : '';
+  if (sid) {
+    if (attendeeByKey[sid]) return attendeeByKey[sid];
+    const low = sid.toLowerCase();
+    if (attendeeByKey[low]) return attendeeByKey[low];
+    const hum = humanizeSenderId(sid);
+    if (hum && attendeeByKey[hum]) return attendeeByKey[hum];
+    return hum || sid;
+  }
+
+  return chatContactName;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -551,23 +812,53 @@ function lastMessageFromMe(lm: { is_sender?: boolean; from_me?: boolean } | unde
   return false;
 }
 
-function ChatRow({ chat, accounts, active, onClick }: {
+function ChatRow({ chat, accounts, active, onClick, enrichment, onRequestEnrichment }: {
   chat: UnipileChat; accounts: UnipileAccount[]; active: boolean; onClick: () => void;
+  /** From GET …/chats/{id}/attendees when list payload omits title/photo */
+  enrichment?: ChatListEnrichment;
+  onRequestEnrichment?: (chat: UnipileChat) => void;
 }) {
+  const rowRef = useRef<HTMLButtonElement>(null);
   const [avatarFailed, setAvatarFailed] = useState(false);
-  useEffect(() => { setAvatarFailed(false); }, [chat.id]);
+  useEffect(() => { setAvatarFailed(false); }, [chat.id, enrichment?.avatarUrl]);
   const channel = channelFromAccountId(chat.account_id, accounts);
   const Icon = CHANNEL_ICON[channel];
   const isUnread = (chat.unread_count || 0) > 0 || chat.is_unread;
-  const name = chatName(chat);
+  const baseName = chatName(chat);
+  const rawListAvatar = chatAvatarUrl(chat);
+  const name = enrichment?.loaded ? (enrichment.displayName || baseName) : baseName;
+  const avatarUrl = (enrichment?.loaded && enrichment.avatarUrl) ? enrichment.avatarUrl : rawListAvatar;
   const snippet = chatSnippet(chat);
-  const avatarUrl = chatAvatarUrl(chat);
   const showImg = avatarUrl && !avatarFailed;
   // Only show subject as subtitle if it differs from the name AND differs from snippet
   const showSubject = chat.subject && chat.subject !== name && chat.subject !== snippet;
 
+  useEffect(() => {
+    if (chat.account_id === INTERNAL_LOCAL_ACCOUNT) return;
+    if (!onRequestEnrichment || enrichment?.loaded) return;
+    const hasAv = !!chatAvatarUrl(chat);
+    const needs =
+      baseName === 'Unknown Contact' ||
+      !hasAv ||
+      (channel === 'whatsapp' && looksLikePhoneOrMaskedId(baseName));
+    if (!needs) return;
+    const el = rowRef.current;
+    if (!el || typeof IntersectionObserver === 'undefined') return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          onRequestEnrichment(chat);
+          io.disconnect();
+        }
+      },
+      { root: null, rootMargin: '160px', threshold: 0.01 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [chat, baseName, channel, enrichment?.loaded, onRequestEnrichment]);
+
   return (
-    <button type="button" onClick={onClick}
+    <button ref={rowRef} type="button" onClick={onClick}
       className={cn('w-full text-left px-4 py-3.5 transition-all border-b focus-visible:outline-none',
         active
           ? 'bg-primary/[0.08] border-l-2 border-l-primary'
@@ -624,11 +915,16 @@ const REPLY_TONES: { id: ReplyTone; label: string; subtitle: string }[] = [
   { id: 'detailed', label: 'Detailed', subtitle: 'Thorough' },
 ];
 
-function ReplyBox({ onSend, sending, messages, chatName: cName, channel }: {
+function ReplyBox({ onSend, sending, messages, chatName: cName, channel, peerLabel, senderLookup }: {
   onSend: (text: string) => Promise<void> | void;
   sending: boolean;
   messages: any[]; chatName?: string; channel?: string;
+  /** Display / AI context name (e.g. resolved from attendees when chat title is unknown) */
+  peerLabel?: string;
+  senderLookup?: Record<string, string>;
 }) {
+  const displayPeer = peerLabel?.trim() || cName || 'Contact';
+  const lookup = senderLookup ?? {};
   const [text, setText] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState('');
@@ -693,7 +989,7 @@ function ReplyBox({ onSend, sending, messages, chatName: cName, channel }: {
     setAiGenerated(false);
     try {
       const msgPayload = messages.slice(-16).map((m: any) => ({
-        sender: m.sender?.name || m.sender?.display_name || cName || 'Contact',
+        sender: resolveMessageSenderLabel(m, displayPeer, lookup),
         text: m.text || m.body || (m as any).content || '',
         timestamp: m.timestamp || m.created_at,
         from_me: isSentByMe(m),
@@ -701,7 +997,7 @@ function ReplyBox({ onSend, sending, messages, chatName: cName, channel }: {
       const res = await fetch('/api/ai/auto-reply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: msgPayload, chat_name: cName, channel, tone }),
+        body: JSON.stringify({ messages: msgPayload, chat_name: displayPeer, channel, tone }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to generate reply');
@@ -927,12 +1223,15 @@ function ChatDetail({ chat, accounts, onBack, onSend, sending }: {
   const [summaryThreadCount, setSummaryThreadCount] = useState<number | null>(null);
   const [taskModalOpen, setTaskModalOpen] = useState(false);
   const [issueModalOpen, setIssueModalOpen] = useState(false);
+  const [senderLookup, setSenderLookup] = useState<Record<string, string>>({});
+  const [resolvedHeaderName, setResolvedHeaderName] = useState('');
 
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const channel = channelFromAccountId(chat.account_id, accounts);
   const Icon = CHANNEL_ICON[channel];
   const name = chatName(chat);
+  const displayHeaderName = resolvedHeaderName || name;
 
   const contextSnippet = useMemo(() => {
     return messages
@@ -981,7 +1280,7 @@ function ChatDetail({ chat, accounts, onBack, onSend, sending }: {
       }
 
       const msgPayload = items.map((m: any) => ({
-        sender: m.sender?.name || m.sender?.display_name || name || 'Contact',
+        sender: resolveMessageSenderLabel(m, displayHeaderName, senderLookup),
         text: m.text || m.body || (m as any).content || '',
         timestamp: m.timestamp || m.created_at,
         from_me: isSentByMe(m),
@@ -992,7 +1291,7 @@ function ChatDetail({ chat, accounts, onBack, onSend, sending }: {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           messages: msgPayload,
-          chat_name: name,
+          chat_name: displayHeaderName,
           channel,
         }),
       });
@@ -1005,7 +1304,7 @@ function ChatDetail({ chat, accounts, onBack, onSend, sending }: {
     } finally {
       setSummaryLoading(false);
     }
-  }, [chat.id, name, channel]);
+  }, [chat.id, displayHeaderName, channel, senderLookup]);
 
   const copySummary = () => {
     navigator.clipboard.writeText(summaryText);
@@ -1032,6 +1331,27 @@ function ChatDetail({ chat, accounts, onBack, onSend, sending }: {
     setSummaryThreadCount(null);
   }, [chat.id]);
 
+  useEffect(() => {
+    setSenderLookup({});
+    setResolvedHeaderName('');
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/unipile/chat-attendees?chat_id=${encodeURIComponent(chat.id)}`);
+        const data = await res.json();
+        if (cancelled) return;
+        const items = Array.isArray(data) ? data : (data.items || data.data || data.attendees || []);
+        if (!Array.isArray(items)) return;
+        setSenderLookup(buildSenderLookupFromAttendees(items));
+        const title = resolvedTitleFromAttendees(items, name);
+        if (title) setResolvedHeaderName(title);
+      } catch {
+        if (!cancelled) setSenderLookup({});
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [chat.id, name]);
+
   return (
     <div className="flex flex-col h-full min-h-0">
       {/* Header */}
@@ -1043,7 +1363,7 @@ function ChatDetail({ chat, accounts, onBack, onSend, sending }: {
             </button>
           )}
           <Icon className="h-4 w-4 shrink-0" style={{ color: CHANNEL_COLOR[channel] }} />
-          <h2 className="text-[13px] font-semibold truncate flex-1" style={{ color: 'var(--foreground)' }}>{name}</h2>
+          <h2 className="text-[13px] font-semibold truncate flex-1" style={{ color: 'var(--foreground)' }}>{displayHeaderName}</h2>
           {chat.unread_count ? (
             <span className="rounded-full bg-blue-600 px-2 py-0.5 text-[10px] font-bold text-white">{chat.unread_count} unread</span>
           ) : null}
@@ -1189,10 +1509,10 @@ function ChatDetail({ chat, accounts, onBack, onSend, sending }: {
         )}
         {messages.map((msg, idx) => {
           const fromMe = isSentByMe(msg);
-          const peerName = displaySenderName(msg, name);
+          const peerName = resolveMessageSenderLabel(msg, displayHeaderName, senderLookup);
           const senderName = fromMe ? 'You' : peerName;
           const text = msg.text || msg.body || (msg as any).content || '';
-          const initialSrc = peerName !== 'Unknown Contact' ? peerName : name;
+          const initialSrc = peerName !== 'Unknown Contact' ? peerName : displayHeaderName;
           return (
             <div key={messageStableId(msg, idx)} className={cn('flex gap-2.5', fromMe ? 'justify-end' : 'justify-start')}>
               {!fromMe && (
@@ -1278,14 +1598,14 @@ function ChatDetail({ chat, accounts, onBack, onSend, sending }: {
       <CommunicationCreateTaskModal
         open={taskModalOpen}
         onClose={() => setTaskModalOpen(false)}
-        contactName={name}
+        contactName={displayHeaderName}
         chatId={chat.id}
         snippet={contextSnippet}
       />
       <CommunicationCreateIssueModal
         open={issueModalOpen}
         onClose={() => setIssueModalOpen(false)}
-        contactName={name}
+        contactName={displayHeaderName}
         chatId={chat.id}
         snippet={contextSnippet}
       />
@@ -1298,6 +1618,8 @@ function ChatDetail({ chat, accounts, onBack, onSend, sending }: {
         sending={sending}
         messages={messages}
         chatName={name}
+        peerLabel={displayHeaderName}
+        senderLookup={senderLookup}
         channel={channel}
       />
     </div>
@@ -1312,6 +1634,351 @@ function EmptyDetail() {
     <div className="flex flex-1 flex-col items-center justify-center gap-3">
       <MessageSquare className="h-10 w-10" style={{ color: 'var(--muted-foreground)' }} />
       <p className="text-[13px]" style={{ color: 'var(--muted-foreground)' }}>Select a conversation to read</p>
+    </div>
+  );
+}
+
+function mergeInternalThreads(saved: InternalThread[]): InternalThread[] {
+  const map = new Map(saved.map(t => [t.id, t]));
+  return INTERNAL_TEAM.map(p => {
+    const id = `int-${p.id}`;
+    return (
+      map.get(id) ?? {
+        id,
+        peerId: p.id,
+        peerName: p.name,
+        peerRole: p.role,
+        messages: [],
+        updatedAt: new Date(0).toISOString(),
+      }
+    );
+  });
+}
+
+/** Internal team DM — feature parity with Unipile detail (AI summary, tasks, issues, smart reply) */
+function InternalChatDetail({
+  thread,
+  onBack,
+  onSend,
+  sending,
+}: {
+  thread: InternalThread;
+  onBack?: () => void;
+  onSend: (text: string) => Promise<void>;
+  sending: boolean;
+}) {
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const Icon = CHANNEL_ICON.internal;
+
+  const [showSummary, setShowSummary] = useState(false);
+  const [summaryText, setSummaryText] = useState('');
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [summaryError, setSummaryError] = useState('');
+  const [summaryCopied, setSummaryCopied] = useState(false);
+  const [summaryThreadCount, setSummaryThreadCount] = useState<number | null>(null);
+  const [taskModalOpen, setTaskModalOpen] = useState(false);
+  const [issueModalOpen, setIssueModalOpen] = useState(false);
+
+  const replyMessages = useMemo(
+    () =>
+      thread.messages.map(m => ({
+        text: m.text,
+        body: m.text,
+        from_me: m.fromMe,
+        is_sender: m.fromMe,
+        timestamp: m.at,
+        created_at: m.at,
+      })),
+    [thread.messages],
+  );
+
+  const contextSnippet = useMemo(() => {
+    return thread.messages
+      .slice(-8)
+      .map(m => m.text.trim())
+      .filter(Boolean)
+      .join('\n')
+      .slice(0, 1200);
+  }, [thread.messages]);
+
+  const fetchSummary = useCallback(async () => {
+    setSummaryLoading(true);
+    setSummaryError('');
+    setSummaryText('');
+    setSummaryThreadCount(null);
+    try {
+      const sorted = [...thread.messages].sort(
+        (a, b) => new Date(a.at).getTime() - new Date(b.at).getTime(),
+      );
+      if (sorted.length === 0) {
+        setSummaryError('No messages in this chat yet.');
+        return;
+      }
+      const msgPayload = sorted.map(m => ({
+        sender: m.fromMe ? 'You' : thread.peerName,
+        text: m.text,
+        timestamp: m.at,
+        from_me: m.fromMe,
+      }));
+      const resAi = await fetch('/api/ai/summarize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: msgPayload,
+          chat_name: thread.peerName,
+          channel: 'internal',
+        }),
+      });
+      const out = await resAi.json();
+      if (!resAi.ok) throw new Error(out.error || 'Summarization failed');
+      setSummaryText(out.summary || 'No summary generated.');
+      setSummaryThreadCount(typeof out.message_count === 'number' ? out.message_count : sorted.length);
+    } catch (e: unknown) {
+      setSummaryError(e instanceof Error ? e.message : 'Summarization failed');
+    } finally {
+      setSummaryLoading(false);
+    }
+  }, [thread.messages, thread.peerName]);
+
+  const copySummary = () => {
+    navigator.clipboard.writeText(summaryText);
+    setSummaryCopied(true);
+    setTimeout(() => setSummaryCopied(false), 2000);
+  };
+
+  const handleToggleSummary = () => {
+    if (!showSummary) {
+      setShowSummary(true);
+      if (!summaryText && !summaryLoading) void fetchSummary();
+    } else {
+      setShowSummary(false);
+    }
+  };
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [thread.messages.length]);
+
+  useEffect(() => {
+    setSummaryText('');
+    setSummaryError('');
+    setShowSummary(false);
+    setSummaryThreadCount(null);
+  }, [thread.id]);
+
+  return (
+    <div className="flex flex-col h-full min-h-0">
+      <div className="shrink-0 px-4 py-3" style={{ borderBottom: '1px solid var(--border)' }}>
+        <div className="flex items-center gap-2">
+          {onBack && (
+            <button type="button" onClick={onBack} className="hub-touch-target shrink-0 rounded-lg lg:hidden" style={{ color: 'var(--muted-foreground)' }} aria-label="Back">
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+          )}
+          <Icon className="h-4 w-4 shrink-0" style={{ color: CHANNEL_COLOR.internal }} />
+          <div className="min-w-0 flex-1">
+            <h2 className="text-[13px] font-semibold truncate" style={{ color: 'var(--foreground)' }}>{thread.peerName}</h2>
+            {thread.peerRole ? (
+              <p className="text-[10px] truncate mt-0.5" style={{ color: 'var(--muted-foreground)' }}>{thread.peerRole}</p>
+            ) : null}
+          </div>
+        </div>
+      </div>
+
+      <AnimatePresence>
+        {showSummary && (
+          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
+            className="shrink-0 mx-4 mt-3">
+            <div className="rounded-xl overflow-hidden" style={{
+              background: 'linear-gradient(135deg, color-mix(in srgb, var(--primary) 6%, var(--background)), color-mix(in srgb, #a855f7 4%, var(--background)))',
+              border: '1px solid color-mix(in srgb, var(--primary) 20%, var(--border))',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.06)',
+            }}>
+              <div className="flex items-center gap-2 px-3 py-2" style={{ borderBottom: '1px solid color-mix(in srgb, var(--primary) 10%, var(--border))' }}>
+                <div className="flex items-center justify-center h-5 w-5 rounded-md" style={{ background: 'linear-gradient(135deg, #a855f7, #6366f1)' }}>
+                  <Sparkles className="h-3 w-3 text-white" />
+                </div>
+                <div className="min-w-0 flex flex-col gap-0.5">
+                  <span className="text-[11px] font-semibold" style={{ color: 'var(--foreground)' }}>AI Summary</span>
+                  {summaryThreadCount != null && (
+                    <span className="text-[9px] font-medium truncate" style={{ color: 'var(--muted-foreground)' }}>
+                      Thread · {summaryThreadCount} message{summaryThreadCount !== 1 ? 's' : ''}
+                    </span>
+                  )}
+                </div>
+                <span className="text-[9px] px-1.5 py-0.5 rounded-full font-medium shrink-0" style={{
+                  background: 'color-mix(in srgb, var(--primary) 12%, transparent)',
+                  color: 'var(--primary)',
+                }}>Gemma 4</span>
+                <div className="flex-1" />
+                {summaryText && (
+                  <>
+                    <button type="button" onClick={copySummary} title="Copy summary"
+                      className="rounded p-1 hover:bg-white/10 transition-colors" style={{ color: 'var(--muted-foreground)' }}>
+                      {summaryCopied ? <Check className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3" />}
+                    </button>
+                    <button type="button" onClick={() => void fetchSummary()} title="Regenerate summary" disabled={summaryLoading}
+                      className="rounded p-1 hover:bg-white/10 transition-colors disabled:opacity-40" style={{ color: 'var(--muted-foreground)' }}>
+                      <RotateCcw className={cn('h-3 w-3', summaryLoading && 'animate-spin')} />
+                    </button>
+                  </>
+                )}
+                <button type="button" onClick={() => setShowSummary(false)} className="rounded p-1 hover:bg-white/10 transition-colors" style={{ color: 'var(--muted-foreground)' }}>
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+
+              <div className="px-3.5 py-3 min-h-[56px]">
+                {summaryLoading && (
+                  <div className="space-y-2.5">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Sparkles className="h-3 w-3" style={{ color: '#a855f7' }} />
+                      <span className="text-[10px] font-medium" style={{ color: 'var(--muted-foreground)' }}>Summarizing…</span>
+                    </div>
+                    {[100, 92, 85, 60].map((w, i) => (
+                      <div key={i} className="rounded-md overflow-hidden" style={{
+                        width: `${w}%`, height: '8px',
+                        background: 'color-mix(in srgb, var(--foreground) 6%, var(--background))',
+                      }} />
+                    ))}
+                  </div>
+                )}
+                {summaryError && (
+                  <div className="flex items-center gap-2.5 py-1">
+                    <AlertCircle className="h-4 w-4 text-red-500 shrink-0" />
+                    <span className="text-[11px] flex-1 font-medium" style={{ color: '#ef4444' }}>{summaryError}</span>
+                    <button type="button" onClick={() => void fetchSummary()} className="text-[10px] font-semibold px-2.5 py-1 rounded-lg hover:bg-red-500/10 shrink-0" style={{ color: '#ef4444', border: '1px solid color-mix(in srgb, #ef4444 25%, transparent)' }}>Retry</button>
+                  </div>
+                )}
+                {!summaryLoading && !summaryError && summaryText && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="text-[11px] leading-[1.7] whitespace-pre-wrap"
+                    style={{ color: 'var(--foreground)' }}>
+                    {summaryText}
+                  </motion.div>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 min-h-0">
+        {thread.messages.length === 0 && (
+          <p className="text-center text-[12px] py-8 leading-relaxed max-w-xs mx-auto" style={{ color: 'var(--muted-foreground)' }}>
+            Team-only chat — not synced to WhatsApp, email, or LinkedIn. Send a message to start.
+          </p>
+        )}
+        {thread.messages.map(m => {
+          const fromMe = m.fromMe;
+          return (
+            <div key={m.id} className={cn('flex gap-2.5', fromMe ? 'justify-end' : 'justify-start')}>
+              {!fromMe && (
+                <div className="shrink-0 h-7 w-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold mt-1"
+                  style={{ background: CHANNEL_GRADIENT.internal }}>
+                  {initials(thread.peerName)}
+                </div>
+              )}
+              <div className={cn('flex flex-col gap-1', fromMe ? 'items-end max-w-[72%]' : 'items-start max-w-[72%]')}>
+                <div className={cn('flex items-center gap-1.5', fromMe ? 'flex-row-reverse' : 'flex-row')}>
+                  <span className="text-[11px] font-semibold" style={{ color: 'var(--foreground)' }}>{fromMe ? 'You' : thread.peerName}</span>
+                  <span className="text-[10px]" style={{ color: 'var(--muted-foreground)' }}>{fmtTime(m.at)}</span>
+                </div>
+                <div
+                  className={cn('rounded-2xl px-4 py-2.5 text-[13px] leading-relaxed whitespace-pre-wrap break-words shadow-sm', fromMe ? 'rounded-tr-sm' : 'rounded-tl-sm')}
+                  style={fromMe
+                    ? { background: 'var(--primary)', color: 'var(--primary-foreground)' }
+                    : { background: 'var(--secondary)', color: 'var(--foreground)', border: '1px solid var(--border)' }}>
+                  {m.text}
+                </div>
+              </div>
+              {fromMe && (
+                <div className="shrink-0 h-7 w-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold mt-1"
+                  style={{ background: 'linear-gradient(135deg,var(--primary),color-mix(in srgb,var(--primary) 70%,#000))' }}>
+                  Me
+                </div>
+              )}
+            </div>
+          );
+        })}
+        <div ref={bottomRef} />
+      </div>
+
+      <div
+        className="shrink-0 px-4 py-2.5 flex flex-wrap items-center justify-between gap-3"
+        style={{
+          borderTop: '1px solid color-mix(in srgb, var(--border) 90%, transparent)',
+          background: 'linear-gradient(0deg, color-mix(in srgb, var(--secondary) 35%, transparent), transparent)',
+        }}>
+        <div className="flex flex-wrap items-center gap-2">
+          <button type="button" onClick={handleToggleSummary}
+            disabled={summaryLoading}
+            className={cn(
+              'flex items-center gap-1.5 rounded-[10px] border px-3 py-2 text-[12px] font-semibold tracking-tight transition-all disabled:opacity-40',
+              showSummary
+                ? 'bg-purple-500/15 border-purple-500/35 text-purple-600 dark:text-purple-300'
+                : 'hover:bg-secondary/80',
+            )}
+            style={!showSummary ? {
+              borderColor: 'color-mix(in srgb, #a855f7 28%, var(--border))',
+              color: 'var(--foreground)',
+            } : {}}>
+            {summaryLoading
+              ? <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" style={{ color: '#a855f7' }} />
+              : <Sparkles className="h-3.5 w-3.5 shrink-0" style={{ color: '#a855f7' }} />}
+            AI Summary
+          </button>
+          <BonsaiButton size="sm" variant="outline" className="rounded-[10px] gap-1.5 font-medium">
+            <LinkIcon className="h-3.5 w-3.5" />Link to Record
+          </BonsaiButton>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setTaskModalOpen(true)}
+            className="flex items-center gap-1.5 rounded-[10px] border px-3 py-2 text-[12px] font-semibold tracking-tight transition-colors hover:bg-secondary/90"
+            style={{ borderColor: 'var(--border)', color: 'var(--foreground)' }}>
+            <ListTodo className="h-3.5 w-3.5 shrink-0 opacity-80" />
+            Create task
+          </button>
+          <button
+            type="button"
+            onClick={() => setIssueModalOpen(true)}
+            className="flex items-center gap-1.5 rounded-[10px] border px-3 py-2 text-[12px] font-semibold tracking-tight transition-colors hover:bg-secondary/90"
+            style={{ borderColor: 'var(--border)', color: 'var(--foreground)' }}>
+            <Bug className="h-3.5 w-3.5 shrink-0 opacity-80" />
+            Create issue
+          </button>
+        </div>
+      </div>
+
+      <CommunicationCreateTaskModal
+        open={taskModalOpen}
+        onClose={() => setTaskModalOpen(false)}
+        contactName={thread.peerName}
+        chatId={`internal:${thread.id}`}
+        snippet={contextSnippet}
+      />
+      <CommunicationCreateIssueModal
+        open={issueModalOpen}
+        onClose={() => setIssueModalOpen(false)}
+        contactName={thread.peerName}
+        chatId={`internal:${thread.id}`}
+        snippet={contextSnippet}
+      />
+
+      <ReplyBox
+        onSend={onSend}
+        sending={sending}
+        messages={replyMessages}
+        chatName={thread.peerName}
+        peerLabel={thread.peerName}
+        senderLookup={{}}
+        channel="internal"
+      />
     </div>
   );
 }
@@ -1334,6 +2001,10 @@ function CommunicationInner() {
   const [chats, setChats] = useState<UnipileChat[]>([]);
   const [chatsLoading, setChatsLoading] = useState(false);
   const [chatsError, setChatsError] = useState('');
+  /** Sidebar: names/avatars from attendees when list API is sparse */
+  const [chatEnrichment, setChatEnrichment] = useState<Record<string, ChatListEnrichment>>({});
+  const listEnrichLoadedRef = useRef(new Set<string>());
+  const listEnrichInFlightRef = useRef(new Set<string>());
 
   // Selected chat + send
   const [selectedChat, setSelectedChat] = useState<UnipileChat | null>(null);
@@ -1344,14 +2015,10 @@ function CommunicationInner() {
   const [search, setSearch] = useState('');
   const [channelFilter, setChannelFilter] = useState('all');
 
-  // Detect redirect from Unipile hosted auth
-  useEffect(() => {
-    const connected = searchParams?.get('connected');
-    if (connected) {
-      fetchAccounts();
-      fetchChats();
-    }
-  }, [searchParams]);
+  const [internalThreads, setInternalThreads] = useState<InternalThread[]>(() => seedInternalThreads());
+  const internalHydratedRef = useRef(false);
+
+  const chatsCacheRef = useRef(new Map<string, { items: UnipileChat[]; at: number }>());
 
   // On mobile navigating back to list
   useEffect(() => { if (isLg) setMobileDetail(false); }, [isLg]);
@@ -1371,8 +2038,40 @@ function CommunicationInner() {
     }
   }, []);
 
-  const fetchChats = useCallback(async (accountId?: string) => {
-    setChatsLoading(true); setChatsError('');
+  const fetchChats = useCallback(async (accountId?: string, opts?: { force?: boolean; background?: boolean }) => {
+    const key = !accountId || accountId === 'all' ? 'all' : accountId;
+
+    if (opts?.force) {
+      chatsCacheRef.current.delete(key);
+      setChatEnrichment({});
+      listEnrichLoadedRef.current.clear();
+      listEnrichInFlightRef.current.clear();
+    }
+
+    const cached = chatsCacheRef.current.get(key);
+    const stale = !cached || Date.now() - cached.at >= CHATS_CACHE_TTL_MS;
+
+    if (!opts?.background) {
+      if (cached?.items?.length) {
+        setChats(cached.items);
+        setChatsError('');
+      }
+
+      if (cached?.items?.length && !opts?.force && !stale) {
+        setChatsLoading(false);
+        return;
+      }
+
+      if (cached?.items?.length && !opts?.force && stale) {
+        setChatsLoading(false);
+        void fetchChats(accountId, { background: true });
+        return;
+      }
+
+      setChatsLoading(true);
+      setChatsError('');
+    }
+
     try {
       const params = new URLSearchParams({ fetch_all: '1' });
       if (accountId && accountId !== 'all') params.set('account_id', accountId);
@@ -1384,13 +2083,84 @@ function CommunicationInner() {
         throw new Error(msg || 'Failed to load chats');
       }
       const items: UnipileChat[] = Array.isArray(data) ? data : (data.items || data.chats || []);
+      chatsCacheRef.current.set(key, { items, at: Date.now() });
       setChats(items);
+      if (!opts?.background) setChatsError('');
     } catch (e: any) {
-      setChatsError(e.message);
+      if (!opts?.background) setChatsError(e.message);
     } finally {
-      setChatsLoading(false);
+      if (!opts?.background) setChatsLoading(false);
     }
   }, []);
+
+  // After Unipile OAuth redirect
+  useEffect(() => {
+    const connected = searchParams?.get('connected');
+    if (!connected) return;
+    fetchAccounts();
+    fetchChats(undefined, { force: true });
+  }, [searchParams, fetchAccounts, fetchChats]);
+
+  useEffect(() => {
+    if (internalHydratedRef.current) return;
+    internalHydratedRef.current = true;
+    const saved = loadInternalThreadsFromStorage();
+    if (saved?.length) setInternalThreads(mergeInternalThreads(saved));
+  }, []);
+
+  useEffect(() => {
+    if (!internalThreads.length || typeof window === 'undefined') return;
+    try {
+      localStorage.setItem(INTERNAL_INBOX_STORAGE_KEY, JSON.stringify(internalThreads));
+    } catch {
+      /* ignore quota */
+    }
+  }, [internalThreads]);
+
+  const requestChatListEnrichment = useCallback((chat: UnipileChat) => {
+    if (chat.account_id === INTERNAL_LOCAL_ACCOUNT) return;
+    const id = chat.id;
+    if (listEnrichLoadedRef.current.has(id) || listEnrichInFlightRef.current.has(id)) return;
+    const baseName = chatName(chat);
+    const hasAvatar = !!chatAvatarUrl(chat);
+    const accChannel = channelFromAccountId(chat.account_id, accounts);
+    const needBetterName =
+      baseName === 'Unknown Contact' ||
+      (accChannel === 'whatsapp' && looksLikePhoneOrMaskedId(baseName));
+    if (!needBetterName && hasAvatar) {
+      listEnrichLoadedRef.current.add(id);
+      return;
+    }
+    listEnrichInFlightRef.current.add(id);
+    fetch(`/api/unipile/chat-attendees?chat_id=${encodeURIComponent(id)}`)
+      .then(async res => {
+        const data = await res.json();
+        if (!res.ok) throw new Error('attendees');
+        const items = Array.isArray(data) ? data : (data.items || data.data || data.attendees || []);
+        return listEnrichmentFromAttendees(items);
+      })
+      .then(({ displayName, avatarUrl }) => {
+        listEnrichLoadedRef.current.add(id);
+        setChatEnrichment(prev => ({
+          ...prev,
+          [id]: {
+            displayName: displayName || baseName,
+            avatarUrl,
+            loaded: true,
+          },
+        }));
+      })
+      .catch(() => {
+        listEnrichLoadedRef.current.add(id);
+        setChatEnrichment(prev => ({
+          ...prev,
+          [id]: { displayName: baseName, avatarUrl: null, loaded: true },
+        }));
+      })
+      .finally(() => {
+        listEnrichInFlightRef.current.delete(id);
+      });
+  }, [accounts]);
 
   useEffect(() => { fetchAccounts(); }, [fetchAccounts]);
   useEffect(() => {
@@ -1430,6 +2200,34 @@ function CommunicationInner() {
 
   const handleSend = async (text: string) => {
     if (!selectedChat) return;
+    if (selectedChat.account_id === INTERNAL_LOCAL_ACCOUNT) {
+      setSending(true);
+      try {
+        const tid = selectedChat.id;
+        const now = new Date().toISOString();
+        const msgId = `im-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+        setInternalThreads(prev =>
+          prev.map(t =>
+            t.id !== tid
+              ? t
+              : { ...t, messages: [...t.messages, { id: msgId, text, fromMe: true, at: now }], updatedAt: now },
+          ),
+        );
+        setSelectedChat(c =>
+          c && c.id === tid
+            ? {
+              ...c,
+              last_message: { text, from_me: true, timestamp: now },
+              updated_at: now,
+              timestamp: now,
+            }
+            : c,
+        );
+      } finally {
+        setSending(false);
+      }
+      return;
+    }
     setSending(true);
     try {
       const res = await fetch('/api/unipile/send', {
@@ -1441,7 +2239,8 @@ function CommunicationInner() {
         const errMsg = typeof d.error === 'string' ? d.error : (d.error?.detail || d.error?.title || JSON.stringify(d.error || d) || 'Send failed');
         throw new Error(errMsg);
       }
-      setSelectedChat(c => c ? { ...c, last_message: { text, from_me: true, timestamp: new Date().toISOString() } } : c);
+      const ts = new Date().toISOString();
+      setSelectedChat(c => c ? { ...c, last_message: { text, from_me: true, timestamp: ts }, updated_at: ts, timestamp: ts } : c);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Send failed';
       alert(`Send error: ${msg}`);
@@ -1451,23 +2250,51 @@ function CommunicationInner() {
     }
   };
 
+  const internalChatsAsUnipile = useMemo(
+    () => internalThreads.map(internalThreadToChat),
+    [internalThreads],
+  );
+
   // Filtered chats
   const filteredChats = useMemo(() => {
-    return chats.filter(chat => {
-      if (channelFilter !== 'all') {
+    const rowLabel = (c: UnipileChat) => {
+      const e = chatEnrichment[c.id];
+      const base = chatName(c);
+      return e?.loaded ? (e.displayName || base) : base;
+    };
+
+    const basePool: UnipileChat[] =
+      channelFilter === 'internal'
+        ? [
+          ...internalChatsAsUnipile,
+          ...chats.filter(c => channelFromAccountId(c.account_id, accounts) === 'internal'),
+        ]
+        : chats;
+
+    return basePool.filter(chat => {
+      if (channelFilter !== 'all' && channelFilter !== 'internal') {
         const ch = channelFromAccountId(chat.account_id, accounts);
         if (ch !== channelFilter) return false;
       }
       if (search) {
         const s = search.toLowerCase();
-        const name = chatName(chat).toLowerCase();
+        const name = rowLabel(chat).toLowerCase();
         const snip = chatSnippet(chat).toLowerCase();
         const subj = (chat.subject || '').toLowerCase();
         if (!name.includes(s) && !snip.includes(s) && !subj.includes(s)) return false;
       }
       return true;
     });
-  }, [chats, channelFilter, search, accounts]);
+  }, [chats, channelFilter, search, accounts, chatEnrichment, internalChatsAsUnipile]);
+
+  const sortedFilteredChats = useMemo(() => {
+    return [...filteredChats].sort((a, b) => {
+      const tb = chatSortTimestampMs(b);
+      const ta = chatSortTimestampMs(a);
+      if (tb !== ta) return tb - ta;
+      return String(b.id).localeCompare(String(a.id));
+    });
+  }, [filteredChats]);
 
   const showList = isLg || !mobileDetail;
   const showDetail = isLg || mobileDetail;
@@ -1498,7 +2325,7 @@ function CommunicationInner() {
             selectedId={selectedAccountId}
             onSelect={handleAccountSelect}
             onConnect={handleConnect}
-            onRefresh={() => { fetchAccounts(); fetchChats(selectedAccountId); }}
+            onRefresh={() => { fetchAccounts(); fetchChats(selectedAccountId, { force: true }); }}
             connecting={connecting}
           />
           {/* Search + channel segment (account tabs above already scope inbox) */}
@@ -1526,7 +2353,7 @@ function CommunicationInner() {
             <div className="flex flex-wrap items-center gap-2 sm:justify-end">
               <ChannelSegmented value={channelFilter} onChange={setChannelFilter} />
               <span className="text-[11px] tabular-nums whitespace-nowrap px-1" style={{ color: 'var(--muted-foreground)' }}>
-                {filteredChats.length} thread{filteredChats.length !== 1 ? 's' : ''}
+                {sortedFilteredChats.length} thread{sortedFilteredChats.length !== 1 ? 's' : ''}
               </span>
             </div>
           </div>
@@ -1580,7 +2407,7 @@ function CommunicationInner() {
                   </div>
                 )}
 
-                {!chatsLoading && !chatsError && filteredChats.length === 0 && (
+                {!chatsLoading && !chatsError && sortedFilteredChats.length === 0 && (
                   <div className="flex flex-col items-center justify-center py-16 gap-3 px-8 text-center">
                     <MessageSquare className="h-8 w-8" style={{ color: 'var(--muted-foreground)' }} />
                     <p className="text-[13px] font-medium" style={{ color: 'var(--foreground)' }}>No conversations yet</p>
@@ -1590,9 +2417,16 @@ function CommunicationInner() {
                   </div>
                 )}
 
-                {filteredChats.map(chat => (
-                  <ChatRow key={chat.id} chat={chat} accounts={accounts}
-                    active={selectedChat?.id === chat.id} onClick={() => handleSelectChat(chat)} />
+                {sortedFilteredChats.map(chat => (
+                  <ChatRow
+                    key={chat.id}
+                    chat={chat}
+                    accounts={accounts}
+                    active={selectedChat?.id === chat.id}
+                    onClick={() => handleSelectChat(chat)}
+                    enrichment={chatEnrichment[chat.id]}
+                    onRequestEnrichment={requestChatListEnrichment}
+                  />
                 ))}
               </div>
             </div>
@@ -1605,13 +2439,30 @@ function CommunicationInner() {
                 {selectedChat ? (
                   <motion.div key={selectedChat.id} className="flex flex-col flex-1 min-h-0"
                     initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
-                    <ChatDetail
-                      chat={selectedChat}
-                      accounts={accounts}
-                      onBack={!isLg ? () => setMobileDetail(false) : undefined}
-                      onSend={handleSend}
-                      sending={sending}
-                    />
+                    {selectedChat.account_id === INTERNAL_LOCAL_ACCOUNT ? (
+                      <InternalChatDetail
+                        thread={
+                          internalThreads.find(t => t.id === selectedChat.id) ?? {
+                            id: selectedChat.id,
+                            peerId: '',
+                            peerName: chatName(selectedChat),
+                            messages: [],
+                            updatedAt: new Date().toISOString(),
+                          }
+                        }
+                        onBack={!isLg ? () => setMobileDetail(false) : undefined}
+                        onSend={handleSend}
+                        sending={sending}
+                      />
+                    ) : (
+                      <ChatDetail
+                        chat={selectedChat}
+                        accounts={accounts}
+                        onBack={!isLg ? () => setMobileDetail(false) : undefined}
+                        onSend={handleSend}
+                        sending={sending}
+                      />
+                    )}
                   </motion.div>
                 ) : (
                   <motion.div key="empty" className="flex flex-1 flex-col" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>

@@ -22,25 +22,26 @@ export function CL09DeactivateUserDialog({ isOpen, onClose, onConfirm, user }: C
     <>
       {/* Overlay */}
       <div 
-        className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 hub-modal-overlay"
         onClick={onClose}
       >
         {/* Dialog */}
         <div 
-          className="bg-white rounded-lg shadow-2xl w-full max-w-md"
+          className="hub-modal-solid rounded-lg shadow-2xl w-full max-w-md"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="px-6 py-4 border-b border-stone-200 flex items-center justify-between">
+          <div className="px-6 py-4 border-b border-border flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center">
-                <AlertTriangle className="w-5 h-5 text-stone-700" />
+              <div className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center border border-destructive/20">
+                <AlertTriangle className="w-5 h-5 text-destructive" />
               </div>
-              <h2 className="text-xl font-semibold text-stone-800">Deactivate Portal User</h2>
+              <h2 className="text-xl font-semibold text-foreground">Deactivate portal user</h2>
             </div>
             <button
+              type="button"
               onClick={onClose}
-              className="p-2 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-lg"
+              className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -48,28 +49,28 @@ export function CL09DeactivateUserDialog({ isOpen, onClose, onConfirm, user }: C
 
           {/* Content */}
           <div className="p-6 space-y-4">
-            <p className="text-sm text-stone-700">
+            <p className="text-sm text-muted-foreground">
               Are you sure you want to deactivate portal access for <strong>{user.name}</strong>?
             </p>
 
-            <div className="p-4 bg-stone-50 rounded-lg">
+            <div className="p-4 bg-muted/40 border border-border rounded-lg">
               <div className="space-y-2">
                 <div>
-                  <p className="text-xs text-stone-600">User</p>
-                  <p className="text-sm font-medium text-stone-800">{user.name}</p>
+                  <p className="text-xs text-muted-foreground">User</p>
+                  <p className="text-sm font-medium text-foreground">{user.name}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-stone-600">Email</p>
-                  <p className="text-sm font-medium text-stone-800">{user.email}</p>
+                  <p className="text-xs text-muted-foreground">Email</p>
+                  <p className="text-sm font-medium text-foreground">{user.email}</p>
                 </div>
               </div>
             </div>
 
-            <div className="p-4 bg-stone-100 border border-stone-200 rounded-lg">
-              <p className="text-xs text-stone-700">
-                <strong>⚠️ This action will:</strong>
+            <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+              <p className="text-xs text-foreground">
+                <strong>This action will:</strong>
               </p>
-              <ul className="mt-2 space-y-1 text-xs text-stone-700">
+              <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
                 <li className="flex items-start gap-2">
                   <span className="mt-1">•</span>
                   <span>Immediately revoke their portal access</span>
@@ -89,14 +90,14 @@ export function CL09DeactivateUserDialog({ isOpen, onClose, onConfirm, user }: C
               </ul>
             </div>
 
-            <p className="text-xs text-stone-600">
+            <p className="text-xs text-muted-foreground">
               You can reactivate this user at any time by editing their account settings.
             </p>
           </div>
 
           {/* Actions */}
-          <div className="px-6 py-4 border-t border-stone-200 flex items-center justify-end gap-3">
-            <BonsaiButton variant="ghost" onClick={onClose}>
+          <div className="px-6 py-4 border-t border-border flex items-center justify-end gap-3">
+            <BonsaiButton variant="ghost" onClick={onClose} type="button">
               Cancel
             </BonsaiButton>
             <BonsaiButton 
@@ -105,6 +106,7 @@ export function CL09DeactivateUserDialog({ isOpen, onClose, onConfirm, user }: C
                 onConfirm(user.id);
                 onClose();
               }}
+              type="button"
             >
               Deactivate User
             </BonsaiButton>

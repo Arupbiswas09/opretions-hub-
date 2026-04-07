@@ -9,23 +9,23 @@ const statusPillVariants = cva(
     variants: {
       status: {
         draft:
-          'bg-muted/80 text-muted-foreground border-border dark:bg-white/[0.06] dark:border-white/[0.08]',
+          'bg-muted/80 text-muted-foreground border-border',
         active:
-          'bg-primary/10 text-primary border-primary/20 dark:bg-white/[0.10] dark:text-foreground dark:border-white/[0.12]',
+          'bg-primary/10 text-primary border-primary/20',
         completed:
-          'bg-emerald-500/10 text-emerald-800 border-emerald-500/25 dark:bg-emerald-500/15 dark:text-emerald-300 dark:border-emerald-500/25',
+          'bg-emerald-500/10 text-emerald-600 border-emerald-500/25',
         pending:
-          'bg-amber-500/10 text-amber-800 border-amber-500/25 dark:bg-amber-500/12 dark:text-amber-200 dark:border-amber-500/20',
+          'bg-amber-500/10 text-amber-600 border-amber-500/25',
         cancelled:
-          'bg-muted/60 text-muted-foreground line-through border-border dark:bg-white/[0.05]',
+          'bg-muted/60 text-muted-foreground line-through border-border',
         overdue:
-          'bg-red-500/10 text-red-700 border-red-500/25 font-semibold dark:bg-red-500/15 dark:text-red-300 dark:border-red-500/25',
+          'bg-destructive/10 text-destructive border-destructive/25 font-semibold',
         inProgress:
-          'bg-primary/10 text-primary border-primary/20 dark:bg-sky-500/15 dark:text-sky-200 dark:border-sky-500/25',
+          'bg-primary/10 text-primary border-primary/20',
         archived:
-          'bg-muted/60 text-muted-foreground border-border dark:bg-white/[0.05]',
+          'bg-muted/60 text-muted-foreground border-border',
         inactive:
-          'bg-muted/60 text-muted-foreground border-border dark:bg-white/[0.05]',
+          'bg-muted/60 text-muted-foreground border-border',
       },
     },
     defaultVariants: {
@@ -42,13 +42,13 @@ interface BonsaiStatusPillProps extends VariantProps<typeof statusPillVariants> 
 
 export function BonsaiStatusPill({ status, label, className, dot = true }: BonsaiStatusPillProps) {
   const dotColors: Record<string, string> = {
-    draft: 'bg-muted-foreground/50 dark:bg-stone-400',
-    active: 'bg-primary dark:bg-emerald-400',
-    completed: 'bg-emerald-600 dark:bg-emerald-400',
-    pending: 'bg-amber-500 dark:bg-amber-400',
+    draft: 'bg-muted-foreground/50',
+    active: 'bg-primary',
+    completed: 'bg-emerald-500',
+    pending: 'bg-amber-500',
     cancelled: 'bg-muted-foreground/40',
-    overdue: 'bg-red-500',
-    inProgress: 'bg-primary dark:bg-sky-400',
+    overdue: 'bg-destructive',
+    inProgress: 'bg-primary',
     inactive: 'bg-muted-foreground/40',
     archived: 'bg-muted-foreground/40',
   };

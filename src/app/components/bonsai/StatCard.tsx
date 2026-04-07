@@ -68,15 +68,15 @@ export function StatCard({
               {trendUp !== undefined && (
                 trendUp
                   ? <TrendingUp className="w-3 h-3 flex-shrink-0 text-emerald-500 dark:text-emerald-400" />
-                  : <TrendingDown className="w-3 h-3 flex-shrink-0 text-stone-400 dark:text-stone-500" />
+                  : <TrendingDown className="w-3 h-3 flex-shrink-0 text-muted-foreground" />
               )}
-              <span className={`text-[11px] font-medium ${trendUp ? 'text-stone-700 dark:text-stone-200' : 'text-stone-400 dark:text-stone-500'}`}>
+              <span className={`text-[11px] font-medium ${trendUp ? 'text-foreground' : 'text-muted-foreground'}`}>
                 {trend}
               </span>
             </>
           )}
           {sublabel && (
-            <span className="text-[11px] text-stone-400 dark:text-stone-500">
+            <span className="text-[11px] text-muted-foreground">
               {sublabel}
             </span>
           )}

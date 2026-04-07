@@ -39,38 +39,39 @@ export function CO05LinkClientModal({ isOpen, onClose, onLink }: CO05LinkClientM
     <>
       {/* Overlay */}
       <div 
-        className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 hub-modal-overlay"
         onClick={onClose}
       >
         {/* Modal */}
         <div 
-          className="bg-white rounded-lg shadow-2xl w-full max-w-2xl"
+          className="hub-modal-solid rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="px-6 py-4 border-b border-stone-200 flex items-center justify-between">
+          <div className="px-6 py-4 border-b border-border flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-semibold text-stone-800">Link Contact to Client</h2>
-              <p className="text-sm text-stone-500">Select a client to associate with this contact</p>
+              <h2 className="text-xl font-semibold text-foreground">Link contact to client</h2>
+              <p className="text-sm text-muted-foreground">Select a client to associate with this contact</p>
             </div>
             <button
+              type="button"
               onClick={onClose}
-              className="p-2 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-lg"
+              className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
           {/* Search */}
-          <div className="p-6 border-b border-stone-200">
+          <div className="p-6 border-b border-border">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search clients by name or industry..."
-                className="w-full pl-10 pr-4 py-2 bg-white border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                className="hub-field pl-10 pr-4 py-2 text-sm text-foreground placeholder:text-muted-foreground"
               />
             </div>
           </div>
@@ -86,43 +87,45 @@ export function CO05LinkClientModal({ isOpen, onClose, onLink }: CO05LinkClientM
                     className={`w-full flex items-center justify-between p-4 rounded-lg border-2 transition-all ${
                       selectedClient === client.id
                         ? 'border-primary bg-primary/5'
-                        : 'border-stone-200 hover:border-primary/50'
+                        : 'border-border hover:border-primary/50'
                     }`}
                   >
                     <div className="text-left">
-                      <p className="font-medium text-stone-800">{client.name}</p>
-                      <p className="text-sm text-stone-600">{client.industry}</p>
+                      <p className="font-medium text-foreground">{client.name}</p>
+                      <p className="text-sm text-muted-foreground">{client.industry}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs text-stone-500">{client.contacts} contacts</p>
+                      <p className="text-xs text-muted-foreground">{client.contacts} contacts</p>
                     </div>
                   </button>
                 ))
               ) : (
                 <div className="text-center py-8">
-                  <p className="text-stone-600">No clients found</p>
-                  <p className="text-sm text-stone-500 mt-1">Try adjusting your search</p>
+                  <p className="text-muted-foreground">No clients found</p>
+                  <p className="text-sm text-muted-foreground mt-1">Try adjusting your search</p>
                 </div>
               )}
             </div>
           </div>
 
           {/* Actions */}
-          <div className="px-6 py-4 border-t border-stone-200 flex items-center justify-between">
+          <div className="px-6 py-4 border-t border-border flex items-center justify-between">
             <button
+              type="button"
               onClick={onClose}
               className="text-sm text-primary hover:underline"
             >
               + Create new client
             </button>
             <div className="flex items-center gap-3">
-              <BonsaiButton variant="ghost" onClick={onClose}>
+              <BonsaiButton variant="ghost" onClick={onClose} type="button">
                 Cancel
               </BonsaiButton>
               <BonsaiButton 
                 variant="primary" 
                 onClick={handleLink}
                 disabled={!selectedClient}
+                type="button"
               >
                 Link Client
               </BonsaiButton>

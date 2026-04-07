@@ -28,11 +28,14 @@ export function T03GridPage({ title, subtitle }: T03GridPageProps) {
         subtitle={subtitle || `Browse and manage your ${title.toLowerCase()}`}
         actions={
           <>
-            <div className="flex items-center gap-1 bg-white border border-stone-200 rounded-lg p-1">
-              <button className="p-1.5 bg-primary/10 text-primary rounded">
+            <div className="flex items-center gap-1 hub-surface rounded-lg p-1">
+              <button type="button" className="p-1.5 bg-primary/10 text-primary rounded">
                 <Grid3x3 className="w-4 h-4" />
               </button>
-              <button className="p-1.5 text-stone-600 hover:bg-stone-100 rounded">
+              <button
+                type="button"
+                className="p-1.5 text-muted-foreground hover:bg-[var(--row-hover-bg)] rounded"
+              >
                 <List className="w-4 h-4" />
               </button>
             </div>
@@ -46,24 +49,18 @@ export function T03GridPage({ title, subtitle }: T03GridPageProps) {
         }
       />
 
-      {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white rounded-lg border border-stone-200 p-4">
-          <p className="text-sm text-stone-600">Total Items</p>
-          <p className="text-2xl font-semibold text-stone-800 mt-1">{cards.length}</p>
-        </div>
-        <div className="bg-white rounded-lg border border-stone-200 p-4">
-          <p className="text-sm text-stone-600">Active</p>
-          <p className="text-2xl font-semibold text-stone-800 mt-1">4</p>
-        </div>
-        <div className="bg-white rounded-lg border border-stone-200 p-4">
-          <p className="text-sm text-stone-600">Pending</p>
-          <p className="text-2xl font-semibold text-stone-800 mt-1">4</p>
-        </div>
-        <div className="bg-white rounded-lg border border-stone-200 p-4">
-          <p className="text-sm text-stone-600">Completed</p>
-          <p className="text-2xl font-semibold text-stone-800 mt-1">4</p>
-        </div>
+        {[
+          { label: 'Total Items', value: cards.length },
+          { label: 'Active', value: 4 },
+          { label: 'Pending', value: 4 },
+          { label: 'Completed', value: 4 },
+        ].map((s) => (
+          <div key={s.label} className="hub-surface hub-surface-elevated rounded-lg p-4">
+            <p className="text-sm text-muted-foreground">{s.label}</p>
+            <p className="text-2xl font-semibold text-foreground mt-1">{s.value}</p>
+          </div>
+        ))}
       </div>
 
       {/* Search and Filters */}
@@ -72,16 +69,16 @@ export function T03GridPage({ title, subtitle }: T03GridPageProps) {
           <input
             type="text"
             placeholder="Search items..."
-            className="w-full px-4 py-2 bg-white border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+            className="hub-field px-4 py-2 text-sm text-foreground placeholder:text-muted-foreground"
           />
         </div>
-        <select className="px-4 py-2 bg-white border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+        <select className="hub-field px-4 py-2 text-sm bg-background text-foreground">
           <option>All Categories</option>
           <option>Category A</option>
           <option>Category B</option>
           <option>Category C</option>
         </select>
-        <select className="px-4 py-2 bg-white border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+        <select className="hub-field px-4 py-2 text-sm bg-background text-foreground">
           <option>All Status</option>
           <option>Active</option>
           <option>Pending</option>

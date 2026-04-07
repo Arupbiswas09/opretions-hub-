@@ -31,10 +31,10 @@ export function BonsaiGridCards({ cards, onCardClick, columns = 3, className }: 
         <div
           key={card.id}
           onClick={() => onCardClick?.(card)}
-          className="bg-white rounded-lg border border-stone-200 hover:border-stone-300 hover:shadow-sm transition-all cursor-pointer overflow-hidden"
+          className="hub-surface rounded-lg hover:shadow-sm transition-all cursor-pointer overflow-hidden"
         >
           {card.image && (
-            <div className="w-full h-40 bg-stone-100 overflow-hidden">
+            <div className="w-full h-40 bg-muted overflow-hidden">
               <img src={card.image} alt={card.title} className="w-full h-full object-cover" />
             </div>
           )}
@@ -42,12 +42,12 @@ export function BonsaiGridCards({ cards, onCardClick, columns = 3, className }: 
           <div className="p-4">
             <div className="flex items-start justify-between mb-2">
               <div className="flex-1">
-                <h3 className="font-medium text-stone-800 text-sm mb-1">{card.title}</h3>
+                <h3 className="font-medium text-foreground text-sm mb-1">{card.title}</h3>
                 {card.subtitle && (
-                  <p className="text-xs text-stone-500">{card.subtitle}</p>
+                  <p className="text-xs text-muted-foreground">{card.subtitle}</p>
                 )}
               </div>
-              <button className="p-1 text-stone-400 hover:text-stone-600 rounded">
+              <button type="button" className="p-1 text-muted-foreground hover:text-foreground rounded transition-colors">
                 <MoreVertical className="w-4 h-4" />
               </button>
             </div>
@@ -61,7 +61,7 @@ export function BonsaiGridCards({ cards, onCardClick, columns = 3, className }: 
             )}
 
             {card.meta && card.meta.length > 0 && (
-              <div className="flex items-center gap-3 text-xs text-stone-500 border-t border-stone-100 pt-3">
+              <div className="flex items-center gap-3 text-xs text-muted-foreground border-t border-border pt-3">
                 {card.meta.map((item, index) => (
                   <span key={index}>{item}</span>
                 ))}

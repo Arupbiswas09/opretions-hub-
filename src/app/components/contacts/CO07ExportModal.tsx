@@ -31,23 +31,24 @@ export function CO07ExportModal({ isOpen, onClose, onExport, contactName }: CO07
     <>
       {/* Overlay */}
       <div 
-        className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 hub-modal-overlay"
         onClick={onClose}
       >
         {/* Modal */}
         <div 
-          className="bg-white rounded-lg shadow-2xl w-full max-w-lg"
+          className="hub-modal-solid rounded-lg shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="px-6 py-4 border-b border-stone-200 flex items-center justify-between">
+          <div className="px-6 py-4 border-b border-border flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-semibold text-stone-800">Export Contact Data</h2>
-              <p className="text-sm text-stone-500">{contactName}</p>
+              <h2 className="text-xl font-semibold text-foreground">Export contact data</h2>
+              <p className="text-sm text-muted-foreground">{contactName}</p>
             </div>
             <button
+              type="button"
               onClick={onClose}
-              className="p-2 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-lg"
+              className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -56,14 +57,14 @@ export function CO07ExportModal({ isOpen, onClose, onExport, contactName }: CO07
           {/* Content */}
           <div className="p-6 space-y-6">
             {/* GDPR Notice */}
-            <div className="p-4 bg-stone-100 border border-stone-200 rounded-lg">
+            <div className="p-4 bg-primary/10 border border-primary/20 rounded-lg">
               <div className="flex items-start gap-3">
-                <Download className="w-5 h-5 text-stone-600 mt-0.5" />
+                <Download className="w-5 h-5 text-primary mt-0.5" />
                 <div>
-                  <p className="text-sm font-medium text-stone-800 mb-1">
+                  <p className="text-sm font-medium text-foreground mb-1">
                     GDPR Data Export Request
                   </p>
-                  <p className="text-xs text-stone-600">
+                  <p className="text-xs text-muted-foreground">
                     This export fulfills the data subject's right to data portability under Article 20 GDPR. 
                     The exported data will be in a structured, commonly used, and machine-readable format.
                   </p>
@@ -73,37 +74,39 @@ export function CO07ExportModal({ isOpen, onClose, onExport, contactName }: CO07
 
             {/* Format Selection */}
             <div>
-              <label className="block text-sm font-medium text-stone-700 mb-3">
+              <label className="block text-sm font-medium text-foreground mb-3">
                 Export Format
               </label>
               <div className="grid grid-cols-2 gap-3">
                 <button
+                  type="button"
                   onClick={() => setFormat('json')}
                   className={`flex items-center gap-3 p-4 rounded-lg border-2 transition-all ${
                     format === 'json'
                       ? 'border-primary bg-primary/5'
-                      : 'border-stone-200 hover:border-primary/50'
+                      : 'border-border hover:border-primary/50'
                   }`}
                 >
-                  <FileJson className="w-6 h-6 text-stone-600" />
+                  <FileJson className="w-6 h-6 text-muted-foreground" />
                   <div className="text-left">
-                    <p className="font-medium text-stone-800">JSON</p>
-                    <p className="text-xs text-stone-500">Machine-readable</p>
+                    <p className="font-medium text-foreground">JSON</p>
+                    <p className="text-xs text-muted-foreground">Machine-readable</p>
                   </div>
                 </button>
 
                 <button
+                  type="button"
                   onClick={() => setFormat('csv')}
                   className={`flex items-center gap-3 p-4 rounded-lg border-2 transition-all ${
                     format === 'csv'
                       ? 'border-primary bg-primary/5'
-                      : 'border-stone-200 hover:border-primary/50'
+                      : 'border-border hover:border-primary/50'
                   }`}
                 >
-                  <FileSpreadsheet className="w-6 h-6 text-stone-600" />
+                  <FileSpreadsheet className="w-6 h-6 text-muted-foreground" />
                   <div className="text-left">
-                    <p className="font-medium text-stone-800">CSV</p>
-                    <p className="text-xs text-stone-500">Spreadsheet format</p>
+                    <p className="font-medium text-foreground">CSV</p>
+                    <p className="text-xs text-muted-foreground">Spreadsheet format</p>
                   </div>
                 </button>
               </div>
@@ -111,97 +114,97 @@ export function CO07ExportModal({ isOpen, onClose, onExport, contactName }: CO07
 
             {/* Include Options */}
             <div>
-              <label className="block text-sm font-medium text-stone-700 mb-3">
+              <label className="block text-sm font-medium text-foreground mb-3">
                 Data to Include
               </label>
               <div className="space-y-2">
-                <label className="flex items-center gap-2 cursor-pointer p-3 rounded-lg hover:bg-stone-50">
+                <label className="flex items-center gap-2 cursor-pointer p-3 rounded-lg hover:bg-muted transition-colors">
                   <input
                     type="checkbox"
                     checked={includeOptions.contactInfo}
                     onChange={(e) => setIncludeOptions({ ...includeOptions, contactInfo: e.target.checked })}
-                    className="w-4 h-4 rounded border-stone-300 text-primary focus:ring-2 focus:ring-primary/20"
+                    className="w-4 h-4 rounded border-border text-primary focus:ring-2 focus:ring-ring/30"
                   />
                   <div className="flex-1">
-                    <span className="text-sm font-medium text-stone-700">Contact Information</span>
-                    <p className="text-xs text-stone-500">Name, email, phone, address</p>
+                    <span className="text-sm font-medium text-foreground">Contact information</span>
+                    <p className="text-xs text-muted-foreground">Name, email, phone, address</p>
                   </div>
                 </label>
 
-                <label className="flex items-center gap-2 cursor-pointer p-3 rounded-lg hover:bg-stone-50">
+                <label className="flex items-center gap-2 cursor-pointer p-3 rounded-lg hover:bg-muted transition-colors">
                   <input
                     type="checkbox"
                     checked={includeOptions.activityHistory}
                     onChange={(e) => setIncludeOptions({ ...includeOptions, activityHistory: e.target.checked })}
-                    className="w-4 h-4 rounded border-stone-300 text-primary focus:ring-2 focus:ring-primary/20"
+                    className="w-4 h-4 rounded border-border text-primary focus:ring-2 focus:ring-ring/30"
                   />
                   <div className="flex-1">
-                    <span className="text-sm font-medium text-stone-700">Activity History</span>
-                    <p className="text-xs text-stone-500">Notes, emails, calls, meetings</p>
+                    <span className="text-sm font-medium text-foreground">Activity history</span>
+                    <p className="text-xs text-muted-foreground">Notes, emails, calls, meetings</p>
                   </div>
                 </label>
 
-                <label className="flex items-center gap-2 cursor-pointer p-3 rounded-lg hover:bg-stone-50">
+                <label className="flex items-center gap-2 cursor-pointer p-3 rounded-lg hover:bg-muted transition-colors">
                   <input
                     type="checkbox"
                     checked={includeOptions.documents}
                     onChange={(e) => setIncludeOptions({ ...includeOptions, documents: e.target.checked })}
-                    className="w-4 h-4 rounded border-stone-300 text-primary focus:ring-2 focus:ring-primary/20"
+                    className="w-4 h-4 rounded border-border text-primary focus:ring-2 focus:ring-ring/30"
                   />
                   <div className="flex-1">
-                    <span className="text-sm font-medium text-stone-700">Documents</span>
-                    <p className="text-xs text-stone-500">Uploaded files and attachments</p>
+                    <span className="text-sm font-medium text-foreground">Documents</span>
+                    <p className="text-xs text-muted-foreground">Uploaded files and attachments</p>
                   </div>
                 </label>
 
-                <label className="flex items-center gap-2 cursor-pointer p-3 rounded-lg hover:bg-stone-50">
+                <label className="flex items-center gap-2 cursor-pointer p-3 rounded-lg hover:bg-muted transition-colors">
                   <input
                     type="checkbox"
                     checked={includeOptions.consentRecords}
                     onChange={(e) => setIncludeOptions({ ...includeOptions, consentRecords: e.target.checked })}
-                    className="w-4 h-4 rounded border-stone-300 text-primary focus:ring-2 focus:ring-primary/20"
+                    className="w-4 h-4 rounded border-border text-primary focus:ring-2 focus:ring-ring/30"
                   />
                   <div className="flex-1">
-                    <span className="text-sm font-medium text-stone-700">Consent Records</span>
-                    <p className="text-xs text-stone-500">Consent history and preferences</p>
+                    <span className="text-sm font-medium text-foreground">Consent records</span>
+                    <p className="text-xs text-muted-foreground">Consent history and preferences</p>
                   </div>
                 </label>
 
-                <label className="flex items-center gap-2 cursor-pointer p-3 rounded-lg hover:bg-stone-50">
+                <label className="flex items-center gap-2 cursor-pointer p-3 rounded-lg hover:bg-muted transition-colors">
                   <input
                     type="checkbox"
                     checked={includeOptions.gdprData}
                     onChange={(e) => setIncludeOptions({ ...includeOptions, gdprData: e.target.checked })}
-                    className="w-4 h-4 rounded border-stone-300 text-primary focus:ring-2 focus:ring-primary/20"
+                    className="w-4 h-4 rounded border-border text-primary focus:ring-2 focus:ring-ring/30"
                   />
                   <div className="flex-1">
-                    <span className="text-sm font-medium text-stone-700">GDPR Metadata</span>
-                    <p className="text-xs text-stone-500">Processing basis, retention info</p>
+                    <span className="text-sm font-medium text-foreground">GDPR metadata</span>
+                    <p className="text-xs text-muted-foreground">Processing basis, retention info</p>
                   </div>
                 </label>
 
-                <label className="flex items-center gap-2 cursor-pointer p-3 rounded-lg hover:bg-stone-50">
+                <label className="flex items-center gap-2 cursor-pointer p-3 rounded-lg hover:bg-muted transition-colors">
                   <input
                     type="checkbox"
                     checked={includeOptions.relatedRecords}
                     onChange={(e) => setIncludeOptions({ ...includeOptions, relatedRecords: e.target.checked })}
-                    className="w-4 h-4 rounded border-stone-300 text-primary focus:ring-2 focus:ring-primary/20"
+                    className="w-4 h-4 rounded border-border text-primary focus:ring-2 focus:ring-ring/30"
                   />
                   <div className="flex-1">
-                    <span className="text-sm font-medium text-stone-700">Related Records</span>
-                    <p className="text-xs text-stone-500">Deals, projects, invoices</p>
+                    <span className="text-sm font-medium text-foreground">Related records</span>
+                    <p className="text-xs text-muted-foreground">Deals, projects, invoices</p>
                   </div>
                 </label>
               </div>
             </div>
 
             {/* Summary */}
-            <div className="p-4 bg-stone-50 rounded-lg">
+            <div className="p-4 bg-muted/25 border border-border rounded-lg">
               <div className="flex items-start gap-3">
-                <CheckCircle2 className="w-5 h-5 text-stone-600 mt-0.5" />
+                <CheckCircle2 className="w-5 h-5 text-muted-foreground mt-0.5" />
                 <div>
-                  <p className="text-sm font-medium text-stone-800 mb-1">Export Summary</p>
-                  <p className="text-xs text-stone-600">
+                  <p className="text-sm font-medium text-foreground mb-1">Export summary</p>
+                  <p className="text-xs text-muted-foreground">
                     Format: <strong>{format.toUpperCase()}</strong> • 
                     Sections: <strong>{Object.values(includeOptions).filter(Boolean).length}</strong> • 
                     Compliance: <strong>GDPR Article 20</strong>
@@ -212,11 +215,11 @@ export function CO07ExportModal({ isOpen, onClose, onExport, contactName }: CO07
           </div>
 
           {/* Actions */}
-          <div className="px-6 py-4 border-t border-stone-200 flex items-center justify-end gap-3">
-            <BonsaiButton variant="ghost" onClick={onClose}>
+          <div className="px-6 py-4 border-t border-border flex items-center justify-end gap-3">
+            <BonsaiButton variant="ghost" onClick={onClose} type="button">
               Cancel
             </BonsaiButton>
-            <BonsaiButton variant="primary" icon={<Download />} onClick={handleExport}>
+            <BonsaiButton variant="primary" icon={<Download />} onClick={handleExport} type="button">
               Export Data
             </BonsaiButton>
           </div>

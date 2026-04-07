@@ -64,7 +64,7 @@ function HRISPortal({ currentScreen, onNavigate }: { currentScreen: HRISScreen; 
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto bg-gradient-to-br from-purple-50 to-white">
+      <div className="flex-1 overflow-y-auto bg-background text-foreground">
         {currentScreen === 'profile-requests' && <ProfileChangeRequestsInbox onNavigate={onNavigate} />}
         {currentScreen === 'profile-request-detail' && <ProfileChangeRequestReview onNavigate={onNavigate} />}
         {currentScreen === 'document-requests' && <DocumentRequestsInbox onNavigate={onNavigate} />}
@@ -83,25 +83,25 @@ function ProfileChangeRequestsInbox({ onNavigate }: { onNavigate: (screen: HRISS
 
   return (
     <div className="px-3 py-6 sm:p-8">
-      <h1 className="text-2xl font-semibold text-purple-900 mb-2">Profile Change Requests</h1>
-      <p className="text-sm text-stone-600 mb-6">Review and approve profile changes (GDPR compliance)</p>
+      <h1 className="text-2xl font-semibold text-foreground mb-2">Profile change requests</h1>
+      <p className="text-sm text-muted-foreground mb-6">Review profile updates for compliance.</p>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="bg-white rounded-lg border border-purple-200 p-6">
-          <p className="text-sm text-stone-600 mb-1">Pending Requests</p>
-          <p className="text-3xl font-semibold text-stone-600">2</p>
+        <div className="hub-surface hub-surface-elevated rounded-lg p-6">
+          <p className="text-sm text-muted-foreground mb-1">Pending</p>
+          <p className="text-3xl font-semibold text-primary">2</p>
         </div>
-        <div className="bg-white rounded-lg border border-purple-200 p-6">
-          <p className="text-sm text-stone-600 mb-1">Approved This Month</p>
-          <p className="text-3xl font-semibold text-stone-600">12</p>
+        <div className="hub-surface hub-surface-elevated rounded-lg p-6">
+          <p className="text-sm text-muted-foreground mb-1">Approved this month</p>
+          <p className="text-3xl font-semibold text-foreground">12</p>
         </div>
-        <div className="bg-white rounded-lg border border-purple-200 p-6">
-          <p className="text-sm text-stone-600 mb-1">Rejected This Month</p>
-          <p className="text-3xl font-semibold text-stone-700">1</p>
+        <div className="hub-surface hub-surface-elevated rounded-lg p-6">
+          <p className="text-sm text-muted-foreground mb-1">Rejected this month</p>
+          <p className="text-3xl font-semibold text-foreground">1</p>
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-purple-200">
+      <div className="hub-surface overflow-hidden rounded-lg">
         <EnhancedTable
           columns={[
             { key: 'employee', label: 'Employee/Freelancer', sortable: true },
@@ -112,7 +112,7 @@ function ProfileChangeRequestsInbox({ onNavigate }: { onNavigate: (screen: HRISS
           ]}
           data={requests.map(req => ({
             ...req,
-            changesCount: <span className="font-medium text-purple-900">{req.changesCount} fields</span>,
+            changesCount: <span className="font-medium text-primary">{req.changesCount} fields</span>,
             status: (
               <BonsaiStatusPill
                 status={req.status === 'Approved' ? 'active' : req.status === 'Rejected' ? 'archived' : 'pending'}
@@ -136,16 +136,17 @@ function ProfileChangeRequestReview({ onNavigate }: { onNavigate: (screen: HRISS
   return (
     <div className="px-3 py-6 sm:p-8">
       <button
+        type="button"
         onClick={() => onNavigate('profile-requests')}
-        className="flex items-center gap-2 text-sm text-stone-600 hover:text-purple-900 mb-6"
+        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors"
       >
-        ← Back to Profile Requests
+        ← Back to requests
       </button>
 
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-semibold text-purple-900">Profile Change Request</h1>
-          <p className="text-sm text-stone-600">John Doe (Employee) • Request #PCR-1234 • Submitted 2 hours ago</p>
+          <h1 className="text-2xl font-semibold text-foreground">Profile change request</h1>
+          <p className="text-sm text-muted-foreground">John Doe · #PCR-1234 · 2h ago</p>
         </div>
         <div className="flex items-center gap-3">
           <BonsaiStatusPill status="pending" label="Pending Review" />
@@ -186,68 +187,68 @@ function ProfileChangeRequestReview({ onNavigate }: { onNavigate: (screen: HRISS
 
       <div className="mt-6">
         {activeTab === 'changes' && (
-          <div className="bg-white rounded-lg border border-purple-200 p-6">
-            <h3 className="font-semibold text-purple-900 mb-4">Requested Changes (Compare Old vs New)</h3>
+          <div className="hub-surface rounded-lg p-6">
+            <h3 className="font-semibold text-foreground mb-4">Requested changes</h3>
             <div className="space-y-4">
               {[
                 { field: 'Phone', oldValue: '+1 555-0123', newValue: '+1 555-9999', sensitive: false },
                 { field: 'Street Address', oldValue: '123 Main St', newValue: '456 Oak Ave', sensitive: false },
               ].map((change, i) => (
-                <div key={i} className="p-4 bg-stone-100 rounded-lg border border-purple-200">
+                <div key={i} className="p-4 rounded-lg bg-muted/40 border border-border">
                   <div className="flex items-center justify-between mb-3">
-                    <p className="text-sm font-semibold text-purple-900">{change.field}</p>
+                    <p className="text-sm font-semibold text-foreground">{change.field}</p>
                     {change.sensitive && (
-                      <span className="px-2 py-1 bg-stone-100 text-stone-600 text-xs rounded-full">
-                        Sensitive Field
+                      <span className="px-2 py-1 bg-muted text-muted-foreground text-xs rounded-full">
+                        Sensitive
                       </span>
                     )}
                   </div>
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="p-3 bg-stone-100 border border-red-200 rounded-lg">
-                      <p className="text-xs text-stone-700 font-medium mb-1">Current Value</p>
-                      <p className="text-sm text-red-900 line-through">{change.oldValue}</p>
+                    <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/25">
+                      <p className="text-xs text-muted-foreground font-medium mb-1">Current</p>
+                      <p className="text-sm text-destructive line-through">{change.oldValue}</p>
                     </div>
-                    <div className="p-3 bg-stone-100 border border-stone-200 rounded-lg">
-                      <p className="text-xs text-stone-700 font-medium mb-1">New Value</p>
-                      <p className="text-sm font-medium text-stone-800">{change.newValue}</p>
+                    <div className="p-3 rounded-lg bg-muted/60 border border-border">
+                      <p className="text-xs text-muted-foreground font-medium mb-1">Proposed</p>
+                      <p className="text-sm font-medium text-foreground">{change.newValue}</p>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
 
-            <div className="mt-6 p-4 bg-stone-100 border border-stone-200 rounded-lg">
-              <p className="text-sm text-blue-800">
-                <strong>GDPR Compliance:</strong> Review changes carefully. Sensitive fields require additional verification.
+            <div className="mt-6 p-4 rounded-lg bg-primary/10 border border-primary/20">
+              <p className="text-sm text-foreground">
+                <strong className="text-primary">Compliance:</strong> Verify sensitive fields before approval.
               </p>
             </div>
           </div>
         )}
         {activeTab === 'current' && (
-          <div className="bg-white rounded-lg border border-purple-200 p-6">
-            <h3 className="font-semibold text-purple-900 mb-4">Current Profile Data</h3>
+          <div className="hub-surface rounded-lg p-6">
+            <h3 className="font-semibold text-foreground mb-4">Current profile</h3>
             <div className="grid grid-cols-2 gap-6">
               <div>
-                <p className="text-xs text-stone-600 mb-1">Full Name</p>
-                <p className="text-sm font-medium text-purple-900">John Doe</p>
+                <p className="text-xs text-muted-foreground mb-1">Full name</p>
+                <p className="text-sm font-medium text-foreground">John Doe</p>
               </div>
               <div>
-                <p className="text-xs text-stone-600 mb-1">Email</p>
-                <p className="text-sm font-medium text-purple-900">john.doe@company.com</p>
+                <p className="text-xs text-muted-foreground mb-1">Email</p>
+                <p className="text-sm font-medium text-foreground">john.doe@company.com</p>
               </div>
               <div>
-                <p className="text-xs text-stone-600 mb-1">Phone</p>
-                <p className="text-sm font-medium text-purple-900">+1 555-0123</p>
+                <p className="text-xs text-muted-foreground mb-1">Phone</p>
+                <p className="text-sm font-medium text-foreground">+1 555-0123</p>
               </div>
               <div>
-                <p className="text-xs text-stone-600 mb-1">Address</p>
-                <p className="text-sm font-medium text-purple-900">123 Main St, San Francisco, CA 94105</p>
+                <p className="text-xs text-muted-foreground mb-1">Address</p>
+                <p className="text-sm font-medium text-foreground">123 Main St, San Francisco, CA 94105</p>
               </div>
             </div>
           </div>
         )}
         {activeTab === 'activity' && (
-          <div className="bg-white rounded-lg border border-purple-200 p-6">
+          <div className="hub-surface rounded-lg p-6">
             <BonsaiTimeline
               items={[
                 { id: '1', title: 'Request submitted', description: 'Profile change request created', timestamp: '2 hours ago', user: { name: 'John Doe' } },
@@ -269,21 +270,21 @@ function DocumentRequestsInbox({ onNavigate }: { onNavigate: (screen: HRISScreen
 
   return (
     <div className="px-3 py-6 sm:p-8">
-      <h1 className="text-2xl font-semibold text-purple-900 mb-2">Document Requests</h1>
-      <p className="text-sm text-stone-600 mb-6">Review and process employee document requests</p>
+      <h1 className="text-2xl font-semibold text-foreground mb-2">Document requests</h1>
+      <p className="text-sm text-muted-foreground mb-6">Process verification and tax documents.</p>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <div className="bg-white rounded-lg border border-purple-200 p-6">
-          <p className="text-sm text-stone-600 mb-1">Pending Requests</p>
-          <p className="text-3xl font-semibold text-stone-600">1</p>
+        <div className="hub-surface hub-surface-elevated rounded-lg p-6">
+          <p className="text-sm text-muted-foreground mb-1">Pending</p>
+          <p className="text-3xl font-semibold text-primary">1</p>
         </div>
-        <div className="bg-white rounded-lg border border-purple-200 p-6">
-          <p className="text-sm text-stone-600 mb-1">Completed This Month</p>
-          <p className="text-3xl font-semibold text-stone-600">8</p>
+        <div className="hub-surface hub-surface-elevated rounded-lg p-6">
+          <p className="text-sm text-muted-foreground mb-1">Completed this month</p>
+          <p className="text-3xl font-semibold text-foreground">8</p>
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-purple-200">
+      <div className="hub-surface overflow-hidden rounded-lg">
         <EnhancedTable
           columns={[
             { key: 'employee', label: 'Employee', sortable: true },

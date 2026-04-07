@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { CheckCircle, XCircle, Clock, Filter } from 'lucide-react';
-import { BonsaiButton } from '../bonsai/BonsaiButton';
+import { CheckCircle, XCircle, Filter } from 'lucide-react';
 import { BonsaiStatusPill } from '../bonsai/BonsaiStatusPill';
+import { dashboardFoldRootRelaxedClass, DashboardScrollPanel } from '../dashboard/DashboardFoldLayout';
+import { cn } from '../ui/utils';
 
 interface TimesheetApproval {
   id: string;
@@ -77,133 +78,118 @@ export function PR08ApprovalsInbox({ onApprovalClick }: PR08ApprovalsInboxProps)
     }
   };
 
+  const statClass = 'hub-surface hub-surface-elevated rounded-2xl p-4 sm:p-5';
+
+  const chipClass = (on: boolean) =>
+    cn(
+      'rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors',
+      on
+        ? 'border-transparent bg-primary text-primary-foreground'
+        : 'border-border bg-secondary/60 text-muted-foreground hover:bg-secondary',
+    );
+
   return (
-    <div className="px-3 py-6 sm:p-8">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-semibold text-stone-800">Timesheet Approvals</h1>
-          <p className="text-sm text-stone-500">Review and approve team timesheets</p>
+    <div className={dashboardFoldRootRelaxedClass}>
+      <div>
+        <h1 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">Timesheet Approvals</h1>
+        <p className="mt-0.5 text-[13px] text-muted-foreground">Review team submissions.</p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
+        <div className={statClass}>
+          <p className="text-[13px] text-muted-foreground">Pending</p>
+          <p className="mt-1 text-2xl font-semibold tabular-nums text-foreground">2</p>
+        </div>
+        <div className={statClass}>
+          <p className="text-[13px] text-muted-foreground">Approved (week)</p>
+          <p className="mt-1 text-2xl font-semibold tabular-nums text-foreground">1</p>
+        </div>
+        <div className={statClass}>
+          <p className="text-[13px] text-muted-foreground">Hours in queue</p>
+          <p className="mt-1 text-2xl font-semibold tabular-nums text-primary">80h</p>
+        </div>
+        <div className={statClass}>
+          <p className="text-[13px] text-muted-foreground">Avg. response</p>
+          <p className="mt-1 text-2xl font-semibold tabular-nums text-foreground">1.2d</p>
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white rounded-lg border border-stone-200 p-4">
-          <p className="text-sm text-stone-600">Pending Review</p>
-          <p className="text-2xl font-semibold text-stone-600 mt-1">2</p>
-        </div>
-        <div className="bg-white rounded-lg border border-stone-200 p-4">
-          <p className="text-sm text-stone-600">Approved This Week</p>
-          <p className="text-2xl font-semibold text-stone-600 mt-1">1</p>
-        </div>
-        <div className="bg-white rounded-lg border border-stone-200 p-4">
-          <p className="text-sm text-stone-600">Total Hours Pending</p>
-          <p className="text-2xl font-semibold text-primary mt-1">80h</p>
-        </div>
-        <div className="bg-white rounded-lg border border-stone-200 p-4">
-          <p className="text-sm text-stone-600">Avg Response Time</p>
-          <p className="text-2xl font-semibold text-stone-800 mt-1">1.2d</p>
-        </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <Filter className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+        {(['all', 'pending', 'approved', 'rejected'] as const).map((key) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setFilter(key)}
+            className={chipClass(filter === key)}
+          >
+            {key === 'all' ? 'All' : key.charAt(0).toUpperCase() + key.slice(1)}
+          </button>
+        ))}
       </div>
 
-      {/* Filters */}
-      <div className="flex items-center gap-2 mb-6">
-        <Filter className="w-4 h-4 text-stone-400" />
-        <button
-          onClick={() => setFilter('all')}
-          className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
-            filter === 'all' ? 'bg-primary text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
-          }`}
-        >
-          All
-        </button>
-        <button
-          onClick={() => setFilter('pending')}
-          className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
-            filter === 'pending' ? 'bg-primary text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
-          }`}
-        >
-          Pending
-        </button>
-        <button
-          onClick={() => setFilter('approved')}
-          className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
-            filter === 'approved' ? 'bg-primary text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
-          }`}
-        >
-          Approved
-        </button>
-        <button
-          onClick={() => setFilter('rejected')}
-          className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
-            filter === 'rejected' ? 'bg-primary text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
-          }`}
-        >
-          Rejected
-        </button>
-      </div>
-
-      {/* Approvals List */}
-      <div className="bg-white rounded-lg border border-stone-200">
-        <div className="divide-y divide-stone-200">
+      <DashboardScrollPanel size="lg" className="-mr-0.5 min-h-[240px]">
+        <div className="hub-surface hub-surface-elevated divide-y divide-border overflow-hidden rounded-2xl">
           {filteredApprovals.map((approval) => (
             <button
               key={approval.id}
+              type="button"
               onClick={() => onApprovalClick(approval)}
-              className="w-full p-4 hover:bg-stone-50 transition-colors text-left"
+              className="w-full px-4 py-4 text-left transition-colors hover:bg-[var(--row-hover-bg)] sm:px-5 sm:py-5"
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4 flex-1">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-green-600 flex items-center justify-center">
-                    <span className="text-sm font-semibold text-white">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex min-w-0 items-start gap-3 sm:gap-4">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/80 sm:h-12 sm:w-12">
+                    <span className="text-xs font-semibold text-primary-foreground sm:text-sm">
                       {approval.employee.split(' ').map(n => n[0]).join('')}
                     </span>
                   </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-medium text-stone-800">{approval.employee}</h3>
-                      <span className="text-sm text-stone-500">•</span>
-                      <span className="text-sm text-stone-600">{approval.project}</span>
+                  <div className="min-w-0 flex-1">
+                    <div className="mb-1 flex flex-wrap items-center gap-2">
+                      <h3 className="font-medium text-foreground">{approval.employee}</h3>
+                      <span className="text-muted-foreground">·</span>
+                      <span className="text-[13px] text-muted-foreground">{approval.project}</span>
                       <BonsaiStatusPill
                         status={getStatusColor(approval.status)}
                         label={approval.status}
                       />
                     </div>
-                    <div className="flex items-center gap-3 text-sm text-stone-600">
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[13px] text-muted-foreground">
                       <span>Week of {approval.weekOf}</span>
-                      <span>•</span>
-                      <span>{approval.totalHours} hours</span>
-                      <span>•</span>
+                      <span aria-hidden>·</span>
+                      <span className="tabular-nums">{approval.totalHours}h</span>
+                      <span aria-hidden>·</span>
                       <span>Submitted {approval.submittedDate}</span>
                     </div>
                   </div>
                 </div>
-                {approval.status === 'Submitted' && (
-                  <div className="flex items-center gap-2">
+                {approval.status === 'Submitted' ? (
+                  <div className="flex shrink-0 items-center gap-2 sm:justify-end">
                     <button
+                      type="button"
                       onClick={(e) => {
                         e.stopPropagation();
                         onApprovalClick(approval);
                       }}
-                      className="px-3 py-1.5 text-xs font-medium rounded-lg bg-stone-100 text-stone-700 hover:bg-stone-200 flex items-center gap-1"
+                      className="inline-flex items-center gap-1 rounded-lg border border-border bg-secondary/80 px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-secondary"
                     >
-                      <CheckCircle className="w-3 h-3" />
+                      <CheckCircle className="h-3.5 w-3.5" />
                       Approve
                     </button>
                     <button
+                      type="button"
                       onClick={(e) => {
                         e.stopPropagation();
                         onApprovalClick(approval);
                       }}
-                      className="px-3 py-1.5 text-xs font-medium rounded-lg bg-stone-100 text-stone-700 hover:bg-red-200 flex items-center gap-1"
+                      className="inline-flex items-center gap-1 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-1.5 text-xs font-medium text-destructive transition-colors hover:bg-destructive/15"
                     >
-                      <XCircle className="w-3 h-3" />
+                      <XCircle className="h-3.5 w-3.5" />
                       Reject
                     </button>
                   </div>
-                )}
-                {approval.status !== 'Submitted' && (
-                  <div className="text-2xl font-semibold text-stone-800">
+                ) : (
+                  <div className="shrink-0 text-xl font-semibold tabular-nums text-foreground">
                     {approval.totalHours}h
                   </div>
                 )}
@@ -211,7 +197,7 @@ export function PR08ApprovalsInbox({ onApprovalClick }: PR08ApprovalsInboxProps)
             </button>
           ))}
         </div>
-      </div>
+      </DashboardScrollPanel>
     </div>
   );
 }

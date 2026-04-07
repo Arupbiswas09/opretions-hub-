@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ArrowLeft, CheckCircle, XCircle } from 'lucide-react';
 import { BonsaiButton } from '../bonsai/BonsaiButton';
 import { BonsaiStatusPill } from '../bonsai/BonsaiStatusPill';
+import { dashboardFoldRootRelaxedClass, DashboardScrollPanel } from '../dashboard/DashboardFoldLayout';
 
 interface PR09ApproveRejectTimesheetProps {
   timesheet: any;
@@ -39,135 +40,142 @@ export function PR09ApproveRejectTimesheet({ timesheet, onBack, onApprove, onRej
     setShowRejectConfirm(false);
   };
 
+  const ta =
+    'w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20';
+
   return (
-    <div className="px-3 py-6 sm:p-8">
-      <button onClick={onBack} className="flex items-center gap-2 text-sm text-stone-600 hover:text-stone-800 mb-6">
-        <ArrowLeft className="w-4 h-4" />
-        Back to Approvals
+    <div className={dashboardFoldRootRelaxedClass}>
+      <button
+        type="button"
+        onClick={onBack}
+        className="mb-2 flex items-center gap-2 text-[13px] text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back
       </button>
 
-      {/* Header */}
-      <div className="flex items-start justify-between mb-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-stone-800">Review Timesheet - Week of {timesheet.weekOf}</h1>
-          <p className="text-sm text-stone-500">{timesheet.employee} • Submitted {timesheet.submittedDate}</p>
+          <h1 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+            Week of {timesheet.weekOf}
+          </h1>
+          <p className="mt-0.5 text-[13px] text-muted-foreground">
+            {timesheet.employee} · {timesheet.submittedDate}
+          </p>
         </div>
-        <BonsaiStatusPill status="pending" label="Pending Approval" />
+        <BonsaiStatusPill status="pending" label="Pending" />
       </div>
 
-      {/* Timesheet Details */}
-      <div className="bg-white rounded-lg border border-stone-200 overflow-hidden mb-6">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-stone-50 border-b border-stone-200">
-                <th className="text-left px-4 py-3 text-xs font-semibold text-stone-700">Project</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-stone-700">Task</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold text-stone-700">Mon</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold text-stone-700">Tue</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold text-stone-700">Wed</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold text-stone-700">Thu</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold text-stone-700">Fri</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold text-stone-700">Sat</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold text-stone-700">Sun</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold text-stone-700 bg-stone-100">Total</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-stone-200">
-              {entries.map((entry, idx) => (
-                <tr key={idx}>
-                  <td className="px-4 py-3 text-sm text-stone-800">{entry.project}</td>
-                  <td className="px-4 py-3 text-sm text-stone-700">{entry.task}</td>
-                  <td className="px-4 py-3 text-sm text-center text-stone-700">{entry.mon}h</td>
-                  <td className="px-4 py-3 text-sm text-center text-stone-700">{entry.tue}h</td>
-                  <td className="px-4 py-3 text-sm text-center text-stone-700">{entry.wed}h</td>
-                  <td className="px-4 py-3 text-sm text-center text-stone-700">{entry.thu}h</td>
-                  <td className="px-4 py-3 text-sm text-center text-stone-700">{entry.fri}h</td>
-                  <td className="px-4 py-3 text-sm text-center text-stone-700">{entry.sat}h</td>
-                  <td className="px-4 py-3 text-sm text-center text-stone-700">{entry.sun}h</td>
-                  <td className="px-4 py-3 text-sm text-center font-semibold text-stone-800 bg-stone-50">
-                    {calculateTotal(entry)}h
+      <DashboardScrollPanel size="lg" className="-mr-0.5 min-h-[200px]">
+        <div className="hub-surface hub-surface-elevated mb-4 overflow-hidden rounded-2xl sm:mb-6">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border bg-muted/35">
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground">Project</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground">Task</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-muted-foreground">Mon</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-muted-foreground">Tue</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-muted-foreground">Wed</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-muted-foreground">Thu</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-muted-foreground">Fri</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-muted-foreground">Sat</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-muted-foreground">Sun</th>
+                  <th className="bg-muted/50 px-4 py-3 text-center text-xs font-semibold text-muted-foreground">Total</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {entries.map((entry, idx) => (
+                  <tr key={idx}>
+                    <td className="px-4 py-3 text-sm text-foreground">{entry.project}</td>
+                    <td className="px-4 py-3 text-sm text-muted-foreground">{entry.task}</td>
+                    <td className="px-4 py-3 text-center text-sm tabular-nums text-muted-foreground">{entry.mon}h</td>
+                    <td className="px-4 py-3 text-center text-sm tabular-nums text-muted-foreground">{entry.tue}h</td>
+                    <td className="px-4 py-3 text-center text-sm tabular-nums text-muted-foreground">{entry.wed}h</td>
+                    <td className="px-4 py-3 text-center text-sm tabular-nums text-muted-foreground">{entry.thu}h</td>
+                    <td className="px-4 py-3 text-center text-sm tabular-nums text-muted-foreground">{entry.fri}h</td>
+                    <td className="px-4 py-3 text-center text-sm tabular-nums text-muted-foreground">{entry.sat}h</td>
+                    <td className="px-4 py-3 text-center text-sm tabular-nums text-muted-foreground">{entry.sun}h</td>
+                    <td className="bg-muted/30 px-4 py-3 text-center text-sm font-semibold tabular-nums text-foreground">
+                      {calculateTotal(entry)}h
+                    </td>
+                  </tr>
+                ))}
+                <tr className="bg-muted/40 font-semibold">
+                  <td colSpan={2} className="px-4 py-3 text-sm text-foreground">
+                    Week total
+                  </td>
+                  <td className="px-4 py-3 text-center text-sm tabular-nums">8h</td>
+                  <td className="px-4 py-3 text-center text-sm tabular-nums">8h</td>
+                  <td className="px-4 py-3 text-center text-sm tabular-nums">8h</td>
+                  <td className="px-4 py-3 text-center text-sm tabular-nums">8h</td>
+                  <td className="px-4 py-3 text-center text-sm tabular-nums">5h</td>
+                  <td className="px-4 py-3 text-center text-sm tabular-nums">0h</td>
+                  <td className="px-4 py-3 text-center text-sm tabular-nums">0h</td>
+                  <td className="bg-primary/10 px-4 py-3 text-center text-sm font-bold tabular-nums text-primary">
+                    {timesheet.totalHours}h
                   </td>
                 </tr>
-              ))}
-              <tr className="bg-stone-100 font-semibold">
-                <td colSpan={2} className="px-4 py-3 text-sm text-stone-800">Weekly Total</td>
-                <td className="px-4 py-3 text-sm text-center">8h</td>
-                <td className="px-4 py-3 text-sm text-center">8h</td>
-                <td className="px-4 py-3 text-sm text-center">8h</td>
-                <td className="px-4 py-3 text-sm text-center">8h</td>
-                <td className="px-4 py-3 text-sm text-center">5h</td>
-                <td className="px-4 py-3 text-sm text-center">0h</td>
-                <td className="px-4 py-3 text-sm text-center">0h</td>
-                <td className="px-4 py-3 text-sm text-center font-bold text-primary bg-primary/10">{timesheet.totalHours}h</td>
-              </tr>
-            </tbody>
-          </table>
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      </DashboardScrollPanel>
 
-      {/* Approve Confirmation */}
       {showApproveConfirm && (
-        <div className="bg-stone-100 border-2 border-stone-200 rounded-lg p-6 mb-6">
-          <div className="flex items-start gap-3 mb-4">
-            <CheckCircle className="w-6 h-6 text-stone-600 flex-shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <h3 className="font-semibold text-stone-800 mb-2">Approve Timesheet</h3>
-              <p className="text-sm text-green-800 mb-4">
-                This timesheet will be marked as approved and {timesheet.requiresClientApproval ? 'sent to the client for final approval' : 'moved to billing'}.
+        <div className="mb-6 rounded-2xl border border-border bg-muted/25 p-5 sm:p-6">
+          <div className="mb-4 flex items-start gap-3">
+            <CheckCircle className="mt-0.5 h-6 w-6 shrink-0 text-primary" />
+            <div className="min-w-0 flex-1">
+              <h3 className="mb-2 font-semibold text-foreground">Approve</h3>
+              <p className="mb-4 text-[13px] text-muted-foreground">
+                {timesheet.requiresClientApproval ? 'Forwarded for client sign-off.' : 'Ready for billing.'}
               </p>
-              <label className="block text-sm font-medium text-stone-800 mb-2">
-                Comment (optional)
-              </label>
+              <label className="mb-2 block text-sm font-medium text-foreground">Note</label>
               <textarea
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 rows={3}
-                className="w-full px-3 py-2 bg-white border border-green-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500/20 resize-none"
-                placeholder="Add a comment for the employee..."
+                className={ta}
+                placeholder="Optional"
               />
             </div>
           </div>
-          <div className="flex items-center justify-end gap-3">
+          <div className="flex justify-end gap-3">
             <BonsaiButton variant="ghost" onClick={() => setShowApproveConfirm(false)}>
               Cancel
             </BonsaiButton>
-            <BonsaiButton variant="primary" icon={<CheckCircle />} onClick={handleApprove}>
-              Confirm Approval
+            <BonsaiButton variant="primary" icon={<CheckCircle className="h-4 w-4" />} onClick={handleApprove}>
+              Confirm
             </BonsaiButton>
           </div>
         </div>
       )}
 
-      {/* Reject Confirmation */}
       {showRejectConfirm && (
-        <div className="bg-stone-100 border-2 border-red-200 rounded-lg p-6 mb-6">
-          <div className="flex items-start gap-3 mb-4">
-            <XCircle className="w-6 h-6 text-stone-700 flex-shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <h3 className="font-semibold text-red-900 mb-2">Reject Timesheet</h3>
-              <p className="text-sm text-red-800 mb-4">
-                The timesheet will be returned to {timesheet.employee} with your feedback for corrections.
-              </p>
-              <label className="block text-sm font-medium text-red-900 mb-2">
-                Rejection Reason * <span className="font-normal text-stone-700">(Required)</span>
-              </label>
+        <div className="mb-6 rounded-2xl border border-destructive/25 bg-destructive/5 p-5 sm:p-6">
+          <div className="mb-4 flex items-start gap-3">
+            <XCircle className="mt-0.5 h-6 w-6 shrink-0 text-destructive" />
+            <div className="min-w-0 flex-1">
+              <h3 className="mb-2 font-semibold text-destructive">Reject</h3>
+              <p className="mb-4 text-[13px] text-muted-foreground">Returns to {timesheet.employee}.</p>
+              <label className="mb-2 block text-sm font-medium text-foreground">Reason</label>
               <textarea
                 value={rejectReason}
                 onChange={(e) => setRejectReason(e.target.value)}
                 rows={3}
-                className="w-full px-3 py-2 bg-white border border-red-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 resize-none"
-                placeholder="Please explain what needs to be corrected..."
+                className={`${ta} border-destructive/30`}
+                placeholder="Required"
                 required
               />
             </div>
           </div>
-          <div className="flex items-center justify-end gap-3">
+          <div className="flex justify-end gap-3">
             <BonsaiButton variant="ghost" onClick={() => setShowRejectConfirm(false)}>
               Cancel
             </BonsaiButton>
-            <BonsaiButton variant="destructive" icon={<XCircle />} onClick={handleReject}>
-              Confirm Rejection
+            <BonsaiButton variant="destructive" icon={<XCircle className="h-4 w-4" />} onClick={handleReject}>
+              Confirm
             </BonsaiButton>
           </div>
         </div>
@@ -178,14 +186,14 @@ export function PR09ApproveRejectTimesheet({ timesheet, onBack, onApprove, onRej
         <div className="flex items-center justify-end gap-3">
           <BonsaiButton
             variant="ghost"
-            icon={<XCircle />}
+            icon={<XCircle className="h-4 w-4" />}
             onClick={() => setShowRejectConfirm(true)}
           >
             Reject
           </BonsaiButton>
           <BonsaiButton
             variant="primary"
-            icon={<CheckCircle />}
+            icon={<CheckCircle className="h-4 w-4" />}
             onClick={() => setShowApproveConfirm(true)}
           >
             Approve

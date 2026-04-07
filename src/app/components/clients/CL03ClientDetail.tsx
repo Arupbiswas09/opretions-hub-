@@ -122,16 +122,16 @@ export function CL03ClientDetail({ client, onEdit, onInviteUser, onCreateRequest
           </div>
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-2xl font-semibold text-stone-800">{client.name}</h1>
+              <h1 className="text-2xl font-semibold text-foreground">{client.name}</h1>
               <BonsaiStatusPill
                 status={getStatusColor(client.status)}
                 label={client.status}
               />
-              <span className="inline-flex px-3 py-1 text-xs rounded-full bg-stone-100 text-stone-600">
+              <span className="inline-flex px-3 py-1 text-xs rounded-full bg-muted/60 text-muted-foreground border border-border">
                 {client.industry}
               </span>
             </div>
-            <div className="flex items-center gap-4 text-sm text-stone-600">
+            <div className="flex items-center gap-4 text-sm text-muted-foreground">
               {client.email && (
                 <div className="flex items-center gap-2">
                   <Mail className="w-4 h-4" />
@@ -177,7 +177,7 @@ export function CL03ClientDetail({ client, onEdit, onInviteUser, onCreateRequest
       {client.tags.length > 0 && (
         <div className="flex items-center gap-2 mb-6">
           {client.tags.map((tag, idx) => (
-            <span key={idx} className="inline-flex px-3 py-1 text-xs rounded-full bg-stone-100 text-stone-700">
+            <span key={idx} className="inline-flex px-3 py-1 text-xs rounded-full bg-muted/60 text-foreground border border-border">
               {tag}
             </span>
           ))}
@@ -197,60 +197,61 @@ export function CL03ClientDetail({ client, onEdit, onInviteUser, onCreateRequest
           <div className="space-y-6">
             {/* Key Metrics */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="bg-white rounded-lg border border-stone-200 p-4">
-                <p className="text-xs text-stone-600 mb-1">Total Revenue</p>
+              <div className="hub-surface hub-surface-elevated rounded-lg p-4">
+                <p className="text-xs text-muted-foreground mb-1">Total revenue</p>
                 <p className="text-2xl font-semibold text-primary">$125,000</p>
               </div>
-              <div className="bg-white rounded-lg border border-stone-200 p-4">
-                <p className="text-xs text-stone-600 mb-1">Active Projects</p>
-                <p className="text-2xl font-semibold text-stone-600">2</p>
+              <div className="hub-surface hub-surface-elevated rounded-lg p-4">
+                <p className="text-xs text-muted-foreground mb-1">Active projects</p>
+                <p className="text-2xl font-semibold text-foreground">2</p>
               </div>
-              <div className="bg-white rounded-lg border border-stone-200 p-4">
-                <p className="text-xs text-stone-600 mb-1">Open Requests</p>
-                <p className="text-2xl font-semibold text-stone-600">2</p>
+              <div className="hub-surface hub-surface-elevated rounded-lg p-4">
+                <p className="text-xs text-muted-foreground mb-1">Open requests</p>
+                <p className="text-2xl font-semibold text-foreground">2</p>
               </div>
-              <div className="bg-white rounded-lg border border-stone-200 p-4">
-                <p className="text-xs text-stone-600 mb-1">Portal Users</p>
-                <p className="text-2xl font-semibold text-stone-800">3</p>
+              <div className="hub-surface hub-surface-elevated rounded-lg p-4">
+                <p className="text-xs text-muted-foreground mb-1">Portal users</p>
+                <p className="text-2xl font-semibold text-foreground">3</p>
               </div>
             </div>
 
             {/* Client Details */}
-            <div className="bg-white rounded-lg border border-stone-200 p-6">
-              <h3 className="font-semibold text-stone-800 mb-4">Client Information</h3>
+            <div className="hub-surface rounded-lg p-6">
+              <h3 className="font-semibold text-foreground mb-4">Client information</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <p className="text-xs text-stone-600 mb-1">Company Name</p>
-                  <p className="text-sm text-stone-800">{client.name}</p>
+                  <p className="text-xs text-muted-foreground mb-1">Company name</p>
+                  <p className="text-sm text-foreground">{client.name}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-stone-600 mb-1">Industry</p>
-                  <p className="text-sm text-stone-800">{client.industry}</p>
+                  <p className="text-xs text-muted-foreground mb-1">Industry</p>
+                  <p className="text-sm text-foreground">{client.industry}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-stone-600 mb-1">Status</p>
-                  <p className="text-sm text-stone-800">{client.status}</p>
+                  <p className="text-xs text-muted-foreground mb-1">Status</p>
+                  <p className="text-sm text-foreground">{client.status}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-stone-600 mb-1">Account Owner</p>
-                  <p className="text-sm text-stone-800">{client.owner}</p>
+                  <p className="text-xs text-muted-foreground mb-1">Account owner</p>
+                  <p className="text-sm text-foreground">{client.owner}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-stone-600 mb-1">Client Since</p>
-                  <p className="text-sm text-stone-800">Jan 1, 2024</p>
+                  <p className="text-xs text-muted-foreground mb-1">Client since</p>
+                  <p className="text-sm text-foreground">Jan 1, 2024</p>
                 </div>
                 <div>
-                  <p className="text-xs text-stone-600 mb-1">Payment Terms</p>
-                  <p className="text-sm text-stone-800">Net 30</p>
+                  <p className="text-xs text-muted-foreground mb-1">Payment terms</p>
+                  <p className="text-sm text-foreground">Net 30</p>
                 </div>
               </div>
             </div>
 
             {/* Recent Activity */}
-            <div className="bg-white rounded-lg border border-stone-200 p-6">
+            <div className="hub-surface rounded-lg p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-stone-800">Recent Activity</h3>
+                <h3 className="font-semibold text-foreground">Recent activity</h3>
                 <button
+                  type="button"
                   onClick={() => setActiveTab('activity')}
                   className="text-sm text-primary hover:underline"
                 >
@@ -261,9 +262,9 @@ export function CL03ClientDetail({ client, onEdit, onInviteUser, onCreateRequest
             </div>
 
             {/* Notes */}
-            <div className="bg-white rounded-lg border border-stone-200 p-6">
-              <h3 className="font-semibold text-stone-800 mb-4">Notes</h3>
-              <p className="text-sm text-stone-700 leading-relaxed">
+            <div className="hub-surface rounded-lg p-6">
+              <h3 className="font-semibold text-foreground mb-3">Notes</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
                 Key account. Very responsive and professional to work with. Has expressed interest in 
                 expanding services to include mobile app development. Budget approved for Q1 2026 projects.
               </p>
@@ -274,18 +275,18 @@ export function CL03ClientDetail({ client, onEdit, onInviteUser, onCreateRequest
         {activeTab === 'contacts' && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-stone-800">Client Contacts</h3>
+              <h3 className="font-semibold text-foreground">Client contacts</h3>
               <BonsaiButton size="sm" icon={<Plus />}>Add Contact</BonsaiButton>
             </div>
-            <div className="bg-white rounded-lg border border-stone-200 divide-y divide-stone-200">
+            <div className="hub-surface overflow-hidden rounded-lg divide-y divide-border">
               {contacts.map((contact) => (
-                <div key={contact.id} className="p-4 hover:bg-stone-50 cursor-pointer">
+                <div key={contact.id} className="p-4 hover:bg-[var(--row-hover-bg)] cursor-pointer transition-colors">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium text-stone-800">{contact.name}</p>
-                      <p className="text-sm text-stone-600">{contact.role}</p>
+                      <p className="font-medium text-foreground">{contact.name}</p>
+                      <p className="text-sm text-muted-foreground">{contact.role}</p>
                     </div>
-                    <div className="text-right text-sm text-stone-600">
+                    <div className="text-right text-sm text-muted-foreground">
                       <p>{contact.email}</p>
                       <p>{contact.phone}</p>
                     </div>
@@ -299,16 +300,16 @@ export function CL03ClientDetail({ client, onEdit, onInviteUser, onCreateRequest
         {activeTab === 'projects' && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-stone-800">Client Projects</h3>
+              <h3 className="font-semibold text-foreground">Client projects</h3>
               <BonsaiButton size="sm" icon={<Plus />}>New Project</BonsaiButton>
             </div>
             <div className="space-y-3">
               {projects.map((project) => (
-                <div key={project.id} className="bg-white rounded-lg border border-stone-200 p-4">
+                <div key={project.id} className="hub-surface rounded-lg p-4">
                   <div className="flex items-start justify-between mb-3">
                     <div>
-                      <p className="font-medium text-stone-800">{project.name}</p>
-                      <p className="text-sm text-stone-600">Started {project.startDate}</p>
+                      <p className="font-medium text-foreground">{project.name}</p>
+                      <p className="text-sm text-muted-foreground">Started {project.startDate}</p>
                     </div>
                     <BonsaiStatusPill
                       status={project.status === 'In Progress' ? 'pending' : 'archived'}
@@ -317,18 +318,18 @@ export function CL03ClientDetail({ client, onEdit, onInviteUser, onCreateRequest
                   </div>
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-stone-600">Progress</span>
-                      <span className="font-medium text-stone-800">{project.progress}%</span>
+                      <span className="text-muted-foreground">Progress</span>
+                      <span className="font-medium text-foreground">{project.progress}%</span>
                     </div>
-                    <div className="w-full bg-stone-200 rounded-full h-2">
+                    <div className="w-full bg-muted rounded-full h-2">
                       <div
                         className="bg-primary rounded-full h-2 transition-all"
                         style={{ width: `${project.progress}%` }}
                       />
                     </div>
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-stone-600">Budget</span>
-                      <span className="font-medium text-stone-800">{project.budget}</span>
+                      <span className="text-muted-foreground">Budget</span>
+                      <span className="font-medium text-foreground">{project.budget}</span>
                     </div>
                   </div>
                 </div>
@@ -347,20 +348,20 @@ export function CL03ClientDetail({ client, onEdit, onInviteUser, onCreateRequest
         {activeTab === 'deals' && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-stone-800">Active Deals</h3>
+              <h3 className="font-semibold text-foreground">Active deals</h3>
               <BonsaiButton size="sm" icon={<Plus />}>New Deal</BonsaiButton>
             </div>
             <div className="space-y-3">
               {deals.map((deal) => (
-                <div key={deal.id} className="bg-white rounded-lg border border-stone-200 p-4">
+                <div key={deal.id} className="hub-surface rounded-lg p-4">
                   <div className="flex items-start justify-between mb-2">
                     <div>
-                      <p className="font-medium text-stone-800">{deal.name}</p>
-                      <p className="text-sm text-stone-600">{deal.stage}</p>
+                      <p className="font-medium text-foreground">{deal.name}</p>
+                      <p className="text-sm text-muted-foreground">{deal.stage}</p>
                     </div>
                     <div className="text-right">
                       <p className="font-semibold text-primary">{deal.value}</p>
-                      <p className="text-xs text-stone-600">{deal.probability} Win Probability</p>
+                      <p className="text-xs text-muted-foreground">{deal.probability} win probability</p>
                     </div>
                   </div>
                 </div>
@@ -370,8 +371,8 @@ export function CL03ClientDetail({ client, onEdit, onInviteUser, onCreateRequest
         )}
 
         {activeTab === 'activity' && (
-          <div className="bg-white rounded-lg border border-stone-200 p-6">
-            <h3 className="font-semibold text-stone-800 mb-4">All Activity</h3>
+          <div className="hub-surface rounded-lg p-6">
+            <h3 className="font-semibold text-foreground mb-4">All activity</h3>
             <BonsaiTimeline items={activityItems} />
           </div>
         )}
@@ -379,7 +380,7 @@ export function CL03ClientDetail({ client, onEdit, onInviteUser, onCreateRequest
         {activeTab === 'documents' && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-stone-800">Shared Documents</h3>
+              <h3 className="font-semibold text-foreground">Shared documents</h3>
               <BonsaiButton size="sm">Upload Document</BonsaiButton>
             </div>
             <BonsaiDocumentList
@@ -411,16 +412,16 @@ export function CL03ClientDetail({ client, onEdit, onInviteUser, onCreateRequest
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-semibold text-stone-800">Portal Users</h3>
-                <p className="text-sm text-stone-600">Manage client portal access and permissions</p>
+                <h3 className="font-semibold text-foreground">Portal users</h3>
+                <p className="text-sm text-muted-foreground">Manage client portal access and permissions</p>
               </div>
               <BonsaiButton size="sm" icon={<UserPlus />} onClick={onInviteUser}>
                 Invite User
               </BonsaiButton>
             </div>
 
-            <div className="bg-white rounded-lg border border-stone-200">
-              <div className="divide-y divide-stone-200">
+            <div className="hub-surface overflow-hidden rounded-lg">
+              <div className="divide-y divide-border">
                 {portalUsers.map((user) => (
                   <div key={user.id} className="p-4">
                     <div className="flex items-center justify-between">
@@ -431,14 +432,14 @@ export function CL03ClientDetail({ client, onEdit, onInviteUser, onCreateRequest
                           </span>
                         </div>
                         <div>
-                          <p className="font-medium text-stone-800">{user.name}</p>
-                          <p className="text-sm text-stone-600">{user.email}</p>
+                          <p className="font-medium text-foreground">{user.name}</p>
+                          <p className="text-sm text-muted-foreground">{user.email}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
                         <div className="text-right">
                           <div className="flex items-center gap-2">
-                            <span className="px-2 py-1 text-xs rounded-full bg-stone-100 text-stone-600">
+                            <span className="px-2 py-1 text-xs rounded-full bg-muted/60 text-muted-foreground border border-border">
                               {user.role}
                             </span>
                             <BonsaiStatusPill
@@ -446,9 +447,12 @@ export function CL03ClientDetail({ client, onEdit, onInviteUser, onCreateRequest
                               label={user.status}
                             />
                           </div>
-                          <p className="text-xs text-stone-500 mt-1">Last login: {user.lastLogin}</p>
+                          <p className="text-xs text-muted-foreground mt-1">Last login: {user.lastLogin}</p>
                         </div>
-                        <button className="p-2 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-lg">
+                        <button
+                          type="button"
+                          className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
+                        >
                           <SettingsIcon className="w-4 h-4" />
                         </button>
                       </div>
