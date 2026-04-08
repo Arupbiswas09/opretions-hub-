@@ -32,6 +32,9 @@ function getClient(): Redis | null {
     enableReadyCheck: true,
     lazyConnect: true,
   });
+  _singleton.on('error', () => {
+    /* WRONGPASS etc.: callers use try/catch; this avoids unhandled ioredis error events in serverless logs */
+  });
   return _singleton;
 }
 

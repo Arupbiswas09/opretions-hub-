@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { showPersonaSimulator } from '../lib/UserRoleContext';
 import { motion, AnimatePresence, MotionConfig } from 'motion/react';
 import {
-  Settings, Search, Bell, Plus, Play,
+  Settings, Bell, Plus, Play,
   ChevronRight, ChevronDown, PanelLeftClose, PanelLeft,
   LogOut, User, Sun, Moon, MoreHorizontal, MoreVertical, Globe, Users, Menu,
 } from 'lucide-react';
@@ -20,7 +20,7 @@ import {
   isSidebarLinkActive,
   type HubSidebarItem,
 } from '../lib/hub-sidebar-config';
-import { HUB_EVENTS, dispatchOpenCommandPalette } from '../lib/hub-events';
+import { HUB_EVENTS } from '../lib/hub-events';
 import { NotificationDrawer } from './bonsai/NotificationDrawer';
 import { useTheme } from '../lib/theme';
 import { useUserRole, PERSONAS, type UserPersona } from '../lib/UserRoleContext';
@@ -33,7 +33,6 @@ import {
   CreateTaskDrawer, CreateFormDrawer,
 } from './ui/QuickCreateDrawers';
 import { SettingsDrawer } from './ui/DetailPanels';
-import { GlobalSearchBar } from './hub/GlobalSearchBar';
 import { cn } from './ui/utils';
 
 export { HUB_MODULES, type HubModule };
@@ -338,28 +337,6 @@ export default function HubShell({ children }: { children: React.ReactNode }) {
               </Link>
             </div>
 
-            {/* Search */}
-            {!collapsed && (
-              <div className="px-3 pt-3 pb-1">
-                <button
-                  type="button"
-                  onClick={() => dispatchOpenCommandPalette()}
-                  className="flex items-center gap-2 px-2.5 py-[6px] rounded-lg transition-colors w-full text-left cursor-pointer hover:opacity-95"
-                  style={{
-                    background: 'var(--search-bg)',
-                    border: '1px solid var(--search-border)',
-                  }}
-                >
-                  <Search className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--muted-foreground)' }} />
-                  <span className="text-[12px] flex-1" style={{ color: 'var(--muted-foreground)' }}>Search</span>
-                  <kbd className="text-[9px] font-medium px-1 py-0.5 rounded"
-                    style={{ background: 'var(--glass-bg)', color: 'var(--muted-foreground)', border: '1px solid var(--border)' }}>
-                    ⌘K
-                  </kbd>
-                </button>
-              </div>
-            )}
-
             {/* Navigation — sections respect simulated persona */}
             <nav className="flex-1 px-2 py-1 overflow-y-auto space-y-[1px]">
               {canSection('top') && HUB_SIDEBAR_TOP.map(item =>
@@ -476,8 +453,6 @@ export default function HubShell({ children }: { children: React.ReactNode }) {
                 </div>
               );
             })()}
-
-            {!isPortalView && <GlobalSearchBar />}
 
             {/* Right actions — Bonsai exact: ▶ + 👤 */}
             <div className="flex min-w-0 shrink-0 items-center gap-0.5 sm:gap-1.5">

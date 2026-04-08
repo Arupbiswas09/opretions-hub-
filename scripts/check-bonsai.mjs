@@ -5,7 +5,7 @@
  *   node --env-file=.env.local scripts/check-bonsai.mjs
  *   BONSAI_URL="https://user:pass@host" node scripts/check-bonsai.mjs
  */
-import { Client } from '@elastic/elasticsearch';
+import { Client, WeightedConnectionPool } from '@elastic/elasticsearch';
 import { kMiddlewareEngine } from '@elastic/transport/lib/symbols.js';
 
 function disableElasticsearchProductCheck(c) {
@@ -30,6 +30,8 @@ const client = new Client({
   node,
   tls: { rejectUnauthorized: true },
   requestTimeout: 30_000,
+  serverMode: 'serverless',
+  ConnectionPool: WeightedConnectionPool,
 });
 disableElasticsearchProductCheck(client);
 

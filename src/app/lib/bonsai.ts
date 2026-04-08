@@ -1,4 +1,4 @@
-import { Client } from '@elastic/elasticsearch';
+import { Client, WeightedConnectionPool } from '@elastic/elasticsearch';
 import { kMiddlewareEngine } from '@elastic/transport/lib/symbols';
 
 let client: Client | null | undefined;
@@ -23,10 +23,13 @@ function getClient(): Client | null {
     client = null;
     return null;
   }
+  /** OpenSearch / Bonsai reject ES v9 vendor Content-Type; serverless mode sends application/json. */
   const c = new Client({
     node,
     tls: { rejectUnauthorized: true },
     requestTimeout: 30_000,
+    serverMode: 'serverless',
+    ConnectionPool: WeightedConnectionPool,
   });
   disableElasticsearchProductCheck(c);
   client = c;
