@@ -33,6 +33,7 @@ import {
   CreateTaskDrawer, CreateFormDrawer,
 } from './ui/QuickCreateDrawers';
 import { SettingsDrawer } from './ui/DetailPanels';
+import { GlobalSearchBar } from './hub/GlobalSearchBar';
 import { cn } from './ui/utils';
 
 export { HUB_MODULES, type HubModule };
@@ -402,7 +403,7 @@ export default function HubShell({ children }: { children: React.ReactNode }) {
 
           {/* ── Topbar — Bonsai style: breadcrumb left, actions right ── */}
           <header
-            className="sticky top-0 z-20 flex h-[52px] min-h-[52px] min-w-0 items-center justify-between gap-1 px-2 sm:gap-2 sm:px-4"
+            className="sticky top-0 z-20 flex h-[52px] min-h-[52px] min-w-0 items-center gap-2 px-2 sm:gap-3 sm:px-4"
             style={{
               background: 'var(--topbar-bg)',
               backdropFilter: 'blur(24px) saturate(180%)',
@@ -417,7 +418,7 @@ export default function HubShell({ children }: { children: React.ReactNode }) {
               const subLabel = subSeg ? SUB_ROUTE_LABEL[subSeg] : null;
               const modLabel = mod ? (mod.charAt(0).toUpperCase() + mod.slice(1)) : null;
               return (
-                <div className="flex min-w-0 flex-1 items-center gap-1.5 sm:gap-2 text-[12px] sm:text-[13px]">
+                <div className="flex min-w-0 max-w-[min(100%,14rem)] flex-shrink-0 items-center gap-1.5 sm:max-w-[min(100%,18rem)] sm:gap-2 text-[12px] sm:text-[13px] md:max-w-[min(100%,22rem)]">
                   {!isPortalView && !isLg && (
                     <button
                       type="button"
@@ -435,9 +436,9 @@ export default function HubShell({ children }: { children: React.ReactNode }) {
                   </Link>
                   {!isPortalView && modLabel && mod !== 'dashboard' && (
                     <>
-                      <ChevronRight className="w-3 h-3" style={{ color: 'var(--muted-foreground)' }} />
+                      <ChevronRight className="w-3 h-3 shrink-0" style={{ color: 'var(--muted-foreground)' }} />
                       <Link href={MODULE_DEFAULT_HREF[mod]}
-                        className="font-medium"
+                        className="font-medium truncate"
                         style={{ color: subLabel ? 'var(--muted-foreground)' : 'var(--foreground)' }}>
                         {modLabel}
                       </Link>
@@ -453,6 +454,13 @@ export default function HubShell({ children }: { children: React.ReactNode }) {
                 </div>
               );
             })()}
+
+            {/* Centered hub search (Bonsai-backed, debounced) */}
+            {!isPortalView && (
+              <div className="min-w-0 flex-1 px-0 sm:px-2">
+                <GlobalSearchBar />
+              </div>
+            )}
 
             {/* Right actions — Bonsai exact: ▶ + 👤 */}
             <div className="flex min-w-0 shrink-0 items-center gap-0.5 sm:gap-1.5">
