@@ -1,6 +1,20 @@
 import { Client } from '@elastic/elasticsearch';
+import { kMiddlewareEngine } from '@elastic/transport/lib/symbols';
 
 let client: Client | null | undefined;
+
+/** Bonsai / hosted clusters may not send `x-elastic-product: Elasticsearch`; disable the strict product check. */
+function disableElasticsearchProductCheck(c: Client): void {
+  const engine = (c.transport as unknown as { [sym: symbol]: { middleware: Array<{ name: string; options?: { productCheck: string | null } }> } })[
+    kMiddlewareEngine
+  ];
+  for (const m of engine?.middleware ?? []) {
+    if (m.name === 'product-check' && m.options) {
+      m.options.productCheck = null;
+      break;
+    }
+  }
+}
 
 function getClient(): Client | null {
   if (client !== undefined) return client;
@@ -9,11 +23,13 @@ function getClient(): Client | null {
     client = null;
     return null;
   }
-  client = new Client({
+  const c = new Client({
     node,
     tls: { rejectUnauthorized: true },
     requestTimeout: 30_000,
   });
+  disableElasticsearchProductCheck(c);
+  client = c;
   return client;
 }
 

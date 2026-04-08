@@ -9,7 +9,8 @@
     "start": "next start",
     "db:login": "npx supabase login",
     "db:link": "npx supabase link",
-    "db:push": "npx supabase db push"
+    "db:push": "npx supabase db push",
+    "test:bonsai": "node --env-file=.env.local scripts/check-bonsai.mjs"
   },
   "dependencies": {
     "@elastic/elasticsearch": "^9.3.4",
