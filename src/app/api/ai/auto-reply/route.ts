@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAiModel, getOllamaBaseUrl, ollamaFetch } from '../../../lib/ai-ollama';
+import {
+  getOpenAIClient,
+  getAiModel,
+  isOpenAiConfigured,
+  openAiNotConfiguredResponse,
+  TONE_MAX_TOKENS,
+} from '../../../lib/ai-openai';
 
 /* ═══════════════════════════════════════════════════════════
-   AI Auto-Reply — Ollama (any host via OLLAMA_URL)
+   AI Auto-Reply — OpenAI-compatible endpoint
+   Token-optimized: recent window + rolling summary context
 ═══════════════════════════════════════════════════════════ */
 
 export const maxDuration = 60;
@@ -14,14 +21,6 @@ const TONE_PROMPTS: Record<string, string> = {
   detailed: `You write thorough replies: address each open point, propose next steps, and include brief rationale when helpful.`,
 };
 
-/** Max tokens to generate — concise stays short; detailed gets room to breathe */
-const TONE_NUM_PREDICT: Record<string, number> = {
-  professional: 380,
-  friendly: 340,
-  concise: 140,
-  detailed: 560,
-};
-
 interface MessageInput {
   sender: string;
   text: string;
@@ -29,21 +28,30 @@ interface MessageInput {
   from_me?: boolean;
 }
 
+function normalizeSummary(s: unknown): string {
+  if (!s || typeof s !== 'string') return '';
+  return s.replace(/\s+/g, ' ').trim().slice(0, 900);
+}
+
 export async function POST(req: NextRequest) {
   try {
-    const { messages, chat_name, channel, tone } = await req.json() as {
+    const { messages, chat_name, channel, tone, thread_summary } = await req.json() as {
       messages: MessageInput[];
       chat_name?: string;
       channel?: string;
       tone?: string;
+      thread_summary?: string;
     };
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return NextResponse.json({ error: 'messages array is required' }, { status: 400 });
     }
 
-    const toneKey =
-      tone && TONE_NUM_PREDICT[tone] !== undefined ? tone : 'professional';
+    if (!isOpenAiConfigured()) {
+      return openAiNotConfiguredResponse();
+    }
+
+    const toneKey = tone && TONE_MAX_TOKENS[tone] !== undefined ? tone : 'professional';
     const toneGuide = TONE_PROMPTS[toneKey] || TONE_PROMPTS.professional;
 
     const channelGuide = channel === 'email'
@@ -54,6 +62,8 @@ export async function POST(req: NextRequest) {
       ? 'This is WhatsApp — keep it casual and conversational. Short messages work best.'
       : 'Keep the reply natural for the platform.';
 
+    const summary = normalizeSummary(thread_summary);
+
     const systemPrompt = `You are a smart reply assistant. ${toneGuide}
 
 ${channelGuide}
@@ -63,9 +73,11 @@ RULES:
 - Match the language used in the conversation
 - If the last message asks a question, answer it directly
 - Be authentic — avoid generic corporate speak
-- Keep the reply focused and relevant`;
+- Keep the reply focused and relevant
+- Prefer recent context over old details
+- If needed, ask 1 crisp clarifying question instead of guessing`;
 
-    const recentMessages = messages.slice(-14);
+    const recentMessages = messages.slice(-(toneKey === 'detailed' ? 12 : 9));
     const transcript = recentMessages
       .map((m) => {
         const who = m.from_me ? 'You' : (m.sender || chat_name || 'Contact');
@@ -73,43 +85,28 @@ RULES:
       })
       .join('\n');
 
-    const userPrompt = `Write a reply for this conversation${chat_name ? ` with ${chat_name}` : ''}:\n\n${transcript}`;
+    const userPrompt = `Write a reply for this conversation${chat_name ? ` with ${chat_name}` : ''}.
+${summary ? `\nThread summary (rolling memory): ${summary}\n` : ''}
+Recent messages:
+${transcript}`;
 
     const MODEL = getAiModel();
-    const ollamaRes = await ollamaFetch('/api/chat', {
-      method: 'POST',
-      body: JSON.stringify({
-        model: MODEL,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
-        ],
-        stream: false,
-        keep_alive: '15m',
-        options: {
-          temperature: toneKey === 'concise' ? 0.35 : 0.55,
-          top_p: 0.9,
-          num_predict: TONE_NUM_PREDICT[toneKey],
-          num_ctx: 6144,
-          repeat_penalty: 1.12,
-        },
-        think: false,
-      }),
+    const client = getOpenAIClient();
+
+    const completion = await client.chat.completions.create({
+      model: MODEL,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      max_tokens: TONE_MAX_TOKENS[toneKey],
+      temperature: toneKey === 'concise' ? 0.35 : 0.55,
+      top_p: 0.9,
     });
 
-    if (!ollamaRes.ok) {
-      const errText = await ollamaRes.text();
-      console.error('[AI Auto-Reply] Ollama error:', ollamaRes.status, errText);
-      return NextResponse.json(
-        { error: `AI model error (${ollamaRes.status}). Is Ollama running?`, details: errText },
-        { status: 502 },
-      );
-    }
+    let reply = (completion.choices[0]?.message?.content || '').trim();
 
-    const data = await ollamaRes.json();
-    let reply = (data.message?.content || data.response || '').trim();
-    
-    // Clean up common artifacts
+    // Strip common preamble artifacts
     reply = reply.replace(/^(Reply|Response|Message|Draft|Here'?s?\s*(a|my|the)\s*(reply|response|draft))\s*[:：]\s*/i, '');
     reply = reply.replace(/^["'""]|["'""]$/g, '');
 
@@ -117,19 +114,14 @@ RULES:
       reply,
       model: MODEL,
       tone: toneKey,
-      eval_duration_ms: data.eval_duration ? Math.round(data.eval_duration / 1e6) : undefined,
+      usage: completion.usage,
     });
-  } catch (e: any) {
-    if (e.cause?.code === 'ECONNREFUSED' || e.message?.includes('fetch failed')) {
-      return NextResponse.json(
-        {
-          error: `Cannot reach Ollama at ${getOllamaBaseUrl()}. Set OLLAMA_URL (see DEPLOYMENT.md).`,
-          details: e.message,
-        },
-        { status: 503 },
-      );
-    }
-    console.error('[AI Auto-Reply] Error:', e);
-    return NextResponse.json({ error: e.message }, { status: 500 });
+  } catch (e: unknown) {
+    const err = e as Error & { status?: number; code?: string };
+    console.error('[AI Auto-Reply] Error:', err);
+    return NextResponse.json(
+      { error: err.message || 'AI request failed', code: err.code },
+      { status: err.status || 500 },
+    );
   }
 }

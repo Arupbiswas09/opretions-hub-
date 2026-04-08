@@ -155,7 +155,7 @@ function ProfileChangeRequestReview({ onNavigate }: { onNavigate: (screen: HRISS
             variant="primary" 
             icon={<CheckCircle />}
             onClick={() => {
-              alert('Profile change request approved!\n\nChanges will be applied to master data.\nEmployee notified.');
+              // approved — handled by API
               onNavigate('profile-requests');
             }}
           >
@@ -166,7 +166,7 @@ function ProfileChangeRequestReview({ onNavigate }: { onNavigate: (screen: HRISS
             variant="destructive" 
             icon={<XCircle />}
             onClick={() => {
-              alert('Profile change request rejected!\n\nEmployee notified.');
+              // rejected — handled by API
               onNavigate('profile-requests');
             }}
           >
@@ -301,7 +301,7 @@ function DocumentRequestsInbox({ onNavigate }: { onNavigate: (screen: HRISScreen
               />
             ),
           }))}
-          onRowClick={() => alert('Document request detail view')}
+          onRowClick={() => { /* navigate to document detail */ }}
           searchable
           filterable
         />

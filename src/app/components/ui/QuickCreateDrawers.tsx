@@ -1,660 +1,1238 @@
 'use client';
-import React, { useState } from 'react';
-import {
-  Building2, User, DollarSign, FolderKanban, Clock, FileText,
-  FileSignature, Receipt, Tag, Calendar, Briefcase, Mail, Phone,
-  MapPin, Hash, Globe, Percent, CreditCard, Plus, Check,
-} from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Plus, Check } from 'lucide-react';
 import { SlideDrawer, FormField, GlassInput, GlassTextarea, GlassSelect } from './Overlays';
 import { useToast } from '../bonsai/ToastSystem';
+import { dispatchDataInvalidation } from '../../lib/hub-events';
 
 /* ══════════════════════════════════════════════════════════════════════
-   QUICK-CREATE DRAWERS
-   Each drawer is a self-contained creation form opened from:
-   - Quick Add (+) menu in top bar
-   - "New X" buttons on list pages
-   ══════════════════════════════════════════════════════════════════════ */
+   QUICK-CREATE DRAWERS — wired to /api/* (Supabase + cache + Bonsai sync)
+══════════════════════════════════════════════════════════════════════ */
 
-/* ── Helper: Save button footer (+ product feedback per doc: toasts on create) ── */
+type QuickOpts = {
+  clients: { id: string; name: string }[];
+  projects: { id: string; name: string }[];
+  profiles: { id: string; display_name: string }[];
+  deals: { id: string; title: string }[];
+};
+
+function useQuickOptions(open: boolean) {
+  const [data, setData] = useState<QuickOpts | null>(null);
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    fetch('/api/hub/quick-options', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((j) => {
+        if (!cancelled) setData(j);
+      })
+      .catch(() => {
+        if (!cancelled) setData({ clients: [], projects: [], profiles: [], deals: [] });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open]);
+  return data;
+}
+
+async function postJson<T>(url: string, body: unknown): Promise<{ ok: boolean; data?: T; error?: string }> {
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(body),
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) return { ok: false, error: json.error || res.statusText };
+  return { ok: true, data: json.data };
+}
+
 function DrawerFooter({
-  onSave,
   onCancel,
-  saving = false,
-  saveLabel = 'Create',
-  successToast,
+  onPrimary,
+  onPrimaryAndAnother,
+  primaryLabel,
+  saving,
+  anotherLabel = 'Create & add another',
 }: {
-  onSave: () => void;
   onCancel: () => void;
-  saving?: boolean;
-  saveLabel?: string;
-  /** Shown when primary or “add another” completes — prototype acknowledges the action */
-  successToast?: string;
+  onPrimary: () => Promise<void>;
+  onPrimaryAndAnother?: () => Promise<void>;
+  primaryLabel: string;
+  saving: boolean;
+  anotherLabel?: string;
 }) {
-  const { addToast } = useToast();
-  const done = (message?: string) => {
-    if (message) addToast(message, 'success');
-    onSave();
-  };
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <button
         type="button"
         onClick={onCancel}
-        className="px-4 py-2 rounded-lg text-[13px] font-medium transition-colors"
+        disabled={saving}
+        className="px-4 py-2 rounded-lg text-[13px] font-medium transition-colors disabled:opacity-50"
         style={{ background: 'var(--glass-bg)', color: 'var(--foreground)', border: '1px solid var(--border)' }}
       >
         Cancel
       </button>
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        {onPrimaryAndAnother && (
+          <button
+            type="button"
+            disabled={saving}
+            onClick={() => void onPrimaryAndAnother()}
+            className="px-4 py-2 rounded-lg text-[13px] font-medium transition-all disabled:opacity-50"
+            style={{ background: 'var(--glass-bg)', color: 'var(--foreground)', border: '1px solid var(--border)' }}
+          >
+            {anotherLabel}
+          </button>
+        )}
         <button
           type="button"
-          onClick={() => done(successToast)}
-          className="px-4 py-2 rounded-lg text-[13px] font-medium transition-all hover:scale-[1.02] flex items-center gap-2"
-          style={{ background: 'var(--glass-bg)', color: 'var(--foreground)', border: '1px solid var(--border)' }}
-        >
-          {saveLabel} & Add Another
-        </button>
-        <button
-          type="button"
-          onClick={() => done(successToast)}
-          className="px-5 py-2 rounded-lg text-[13px] font-medium transition-all hover:scale-[1.02] flex items-center gap-2"
+          disabled={saving}
+          onClick={() => void onPrimary()}
+          className="px-5 py-2 rounded-lg text-[13px] font-medium transition-all disabled:opacity-50 flex items-center gap-2"
           style={{ background: '#2563EB', color: '#FFF' }}
         >
           <Check className="w-3.5 h-3.5" />
-          {saving ? 'Saving...' : saveLabel}
+          {saving ? 'Saving…' : primaryLabel}
         </button>
       </div>
     </div>
   );
 }
 
-/* ═══════════════════════════════════════
-   1. CREATE CLIENT DRAWER
-   ═══════════════════════════════════════ */
+/* ── 1. CLIENT ── */
 export function CreateClientDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { addToast } = useToast();
+  const [name, setName] = useState('');
+  const [billingAddress, setBillingAddress] = useState('');
+  const [paymentTerms, setPaymentTerms] = useState('');
+  const [accountManagerId, setAccountManagerId] = useState('');
+  const [saving, setSaving] = useState(false);
+  const opts = useQuickOptions(open);
+
+  useEffect(() => {
+    if (open) {
+      setName('');
+      setBillingAddress('');
+      setPaymentTerms('');
+      setAccountManagerId('');
+    }
+  }, [open]);
+
+  const submit = useCallback(
+    async (closeAfter: boolean) => {
+      if (!name.trim()) {
+        addToast('Company name is required', 'error');
+        return;
+      }
+      setSaving(true);
+      try {
+        const r = await postJson('/api/clients', {
+          name: name.trim(),
+          billing_address: billingAddress.trim() || undefined,
+          payment_terms: paymentTerms.trim() || undefined,
+          account_manager_id: accountManagerId || undefined,
+        });
+        if (!r.ok) throw new Error(r.error);
+        addToast('Client created', 'success');
+        dispatchDataInvalidation('clients');
+        if (closeAfter) onClose();
+        else {
+          setName('');
+          setBillingAddress('');
+          setPaymentTerms('');
+          setAccountManagerId('');
+        }
+      } catch (e) {
+        addToast(e instanceof Error ? e.message : 'Create failed', 'error');
+      } finally {
+        setSaving(false);
+      }
+    },
+    [name, billingAddress, paymentTerms, accountManagerId, addToast, onClose],
+  );
+
   return (
-    <SlideDrawer open={open} onClose={onClose} title="New Client" subtitle="Add a new client to your workspace"
-      footer={<DrawerFooter onSave={onClose} onCancel={onClose} saveLabel="Create Client" successToast="Client created" />}>
+    <SlideDrawer
+      open={open}
+      onClose={onClose}
+      title="New Client"
+      subtitle="Add a new client to your workspace"
+      footer={
+        <DrawerFooter
+          onCancel={onClose}
+          saving={saving}
+          primaryLabel="Create Client"
+          onPrimary={() => submit(true)}
+          onPrimaryAndAnother={() => submit(false)}
+        />
+      }
+    >
       <FormField label="Company Name" required>
-        <GlassInput placeholder="e.g. Acme Corporation" />
-      </FormField>
-      <FormField label="Industry">
-        <GlassSelect>
-          <option value="">Select industry...</option>
-          <option>Technology</option><option>Finance</option>
-          <option>Healthcare</option><option>Retail</option>
-          <option>Education</option><option>Marketing</option>
-          <option>Real Estate</option><option>Consulting</option>
-        </GlassSelect>
-      </FormField>
-      <FormField label="Company Size">
-        <GlassSelect>
-          <option value="">Select size...</option>
-          <option>1-10</option><option>11-50</option>
-          <option>51-200</option><option>201-1000</option><option>1000+</option>
-        </GlassSelect>
-      </FormField>
-      <div className="pt-2 mb-4">
-        <p className="text-[11px] font-medium uppercase tracking-wider mb-3"
-          style={{ color: 'var(--muted-foreground)' }}>Primary Contact</p>
-        <div className="grid grid-cols-2 gap-3">
-          <FormField label="First Name" className="!mb-0">
-            <GlassInput placeholder="John" />
-          </FormField>
-          <FormField label="Last Name" className="!mb-0">
-            <GlassInput placeholder="Doe" />
-          </FormField>
-        </div>
-      </div>
-      <FormField label="Contact Email">
-        <GlassInput type="email" placeholder="john@acme.com" />
-      </FormField>
-      <FormField label="Contact Phone">
-        <GlassInput type="tel" placeholder="+1 (555) 000-0000" />
-      </FormField>
-      <FormField label="Website">
-        <GlassInput type="url" placeholder="https://acme.com" />
+        <GlassInput value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Acme Corporation" />
       </FormField>
       <FormField label="Billing Address">
-        <GlassTextarea rows={2} placeholder="123 Main St, Suite 100, City, State, ZIP" />
+        <GlassTextarea rows={2} value={billingAddress} onChange={(e) => setBillingAddress(e.target.value)} placeholder="Street, city, region…" />
       </FormField>
-      <FormField label="Tags">
-        <GlassInput placeholder="Add tags separated by comma..." />
+      <FormField label="Payment Terms">
+        <GlassInput value={paymentTerms} onChange={(e) => setPaymentTerms(e.target.value)} placeholder="Net 30" />
       </FormField>
-      <div className="flex items-center gap-3 mt-2 px-1">
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input type="checkbox" className="w-4 h-4 rounded accent-blue-500" defaultChecked />
-          <span className="text-[12px]" style={{ color: 'var(--foreground-secondary)' }}>
-            Enable Client Portal access
-          </span>
-        </label>
-      </div>
+      <FormField label="Account manager">
+        <GlassSelect value={accountManagerId} onChange={(e) => setAccountManagerId(e.target.value)}>
+          <option value="">None</option>
+          {(opts?.profiles ?? []).map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.display_name}
+            </option>
+          ))}
+        </GlassSelect>
+      </FormField>
     </SlideDrawer>
   );
 }
 
-/* ═══════════════════════════════════════
-   2. CREATE DEAL DRAWER
-   ═══════════════════════════════════════ */
+/* ── 2. DEAL ── */
+const DEAL_STAGES = [
+  { v: 'lead', l: 'Lead' },
+  { v: 'qualified', l: 'Qualified' },
+  { v: 'proposal_sent', l: 'Proposal sent' },
+  { v: 'negotiation', l: 'Negotiation' },
+];
+
 export function CreateDealDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { addToast } = useToast();
+  const opts = useQuickOptions(open);
+  const [title, setTitle] = useState('');
+  const [clientId, setClientId] = useState('');
+  const [value, setValue] = useState('');
+  const [stage, setStage] = useState('lead');
+  const [closeDate, setCloseDate] = useState('');
+  const [probability, setProbability] = useState('');
+  const [ownerId, setOwnerId] = useState('');
+  const [description, setDescription] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setTitle('');
+      setClientId('');
+      setValue('');
+      setStage('lead');
+      setCloseDate('');
+      setProbability('');
+      setOwnerId('');
+      setDescription('');
+    }
+  }, [open]);
+
+  const submit = async (closeAfter: boolean) => {
+    if (!title.trim()) {
+      addToast('Deal name is required', 'error');
+      return;
+    }
+    setSaving(true);
+    try {
+      const r = await postJson('/api/deals', {
+        title: title.trim(),
+        client_id: clientId || undefined,
+        value,
+        stage,
+        close_date: closeDate || undefined,
+        probability: probability ? Number(probability) : undefined,
+        owner_id: ownerId || undefined,
+        description: description || undefined,
+      });
+      if (!r.ok) throw new Error(r.error);
+      addToast('Deal created', 'success');
+      dispatchDataInvalidation('deals');
+      dispatchDataInvalidation('pipeline');
+      dispatchDataInvalidation('sales');
+      if (closeAfter) onClose();
+      else {
+        setTitle('');
+        setClientId('');
+        setValue('');
+        setDescription('');
+      }
+    } catch (e) {
+      addToast(e instanceof Error ? e.message : 'Create failed', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
-    <SlideDrawer open={open} onClose={onClose} title="New Deal" subtitle="Add a new deal to your pipeline"
-      footer={<DrawerFooter onSave={onClose} onCancel={onClose} saveLabel="Create Deal" successToast="Deal added to pipeline" />}>
+    <SlideDrawer
+      open={open}
+      onClose={onClose}
+      title="New Deal"
+      subtitle="Add a new deal to your pipeline"
+      footer={
+        <DrawerFooter
+          onCancel={onClose}
+          saving={saving}
+          primaryLabel="Create Deal"
+          onPrimary={() => submit(true)}
+          onPrimaryAndAnother={() => submit(false)}
+        />
+      }
+    >
       <FormField label="Deal Name" required>
-        <GlassInput placeholder="e.g. Website Redesign — Acme Corp" />
+        <GlassInput value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Website redesign" />
       </FormField>
       <FormField label="Client">
-        <GlassSelect>
-          <option value="">Select client...</option>
-          <option>Acme Corporation</option>
-          <option>Tech Startup Inc</option>
-          <option>Local Retail Co</option>
-          <option>Growth Labs</option>
-          <option>Fashion Forward</option>
+        <GlassSelect value={clientId} onChange={(e) => setClientId(e.target.value)}>
+          <option value="">Select client…</option>
+          {(opts?.clients ?? []).map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
         </GlassSelect>
       </FormField>
       <div className="grid grid-cols-2 gap-3">
-        <FormField label="Deal Value" required>
-          <GlassInput type="text" placeholder="$25,000" />
+        <FormField label="Deal Value">
+          <GlassInput value={value} onChange={(e) => setValue(e.target.value)} placeholder="$25,000" />
         </FormField>
-        <FormField label="Currency">
-          <GlassSelect>
-            <option>USD</option><option>EUR</option><option>GBP</option><option>INR</option>
+        <FormField label="Stage">
+          <GlassSelect value={stage} onChange={(e) => setStage(e.target.value)}>
+            {DEAL_STAGES.map((s) => (
+              <option key={s.v} value={s.v}>
+                {s.l}
+              </option>
+            ))}
           </GlassSelect>
         </FormField>
       </div>
-      <FormField label="Pipeline Stage">
-        <GlassSelect>
-          <option>Lead</option><option>Qualified</option>
-          <option>Proposal Sent</option><option>Negotiation</option>
-        </GlassSelect>
-      </FormField>
-      <FormField label="Expected Close Date">
-        <GlassInput type="date" />
-      </FormField>
-      <FormField label="Deal Owner">
-        <GlassSelect>
-          <option>John Doe</option><option>Jane Smith</option><option>Sarah Wilson</option>
-        </GlassSelect>
-      </FormField>
-      <FormField label="Win Probability">
-        <GlassInput type="number" placeholder="50" min={0} max={100} />
-      </FormField>
-      <FormField label="Source">
-        <GlassSelect>
-          <option value="">Select source...</option>
-          <option>Referral</option><option>Website</option><option>Cold Outreach</option>
-          <option>Social Media</option><option>Conference</option><option>Existing Client</option>
+      <div className="grid grid-cols-2 gap-3">
+        <FormField label="Expected close">
+          <GlassInput type="date" value={closeDate} onChange={(e) => setCloseDate(e.target.value)} />
+        </FormField>
+        <FormField label="Win probability %">
+          <GlassInput value={probability} onChange={(e) => setProbability(e.target.value)} placeholder="50" />
+        </FormField>
+      </div>
+      <FormField label="Owner">
+        <GlassSelect value={ownerId} onChange={(e) => setOwnerId(e.target.value)}>
+          <option value="">Default (me)</option>
+          {(opts?.profiles ?? []).map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.display_name}
+            </option>
+          ))}
         </GlassSelect>
       </FormField>
       <FormField label="Notes">
-        <GlassTextarea rows={3} placeholder="Add any relevant notes about this deal..." />
+        <GlassTextarea rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
       </FormField>
     </SlideDrawer>
   );
 }
 
-/* ═══════════════════════════════════════
-   3. CREATE PROJECT DRAWER
-   ═══════════════════════════════════════ */
+/* ── 3. PROJECT ── */
 export function CreateProjectDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { addToast } = useToast();
+  const opts = useQuickOptions(open);
+  const [name, setName] = useState('');
+  const [clientId, setClientId] = useState('');
+  const [description, setDescription] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [budgetHours, setBudgetHours] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setName('');
+      setClientId('');
+      setDescription('');
+      setStartDate('');
+      setEndDate('');
+      setBudgetHours('');
+    }
+  }, [open]);
+
+  const submit = async (closeAfter: boolean) => {
+    if (!name.trim()) {
+      addToast('Project name is required', 'error');
+      return;
+    }
+    if (!clientId) {
+      addToast('Client is required', 'error');
+      return;
+    }
+    setSaving(true);
+    try {
+      const r = await postJson('/api/projects', {
+        name: name.trim(),
+        client_id: clientId,
+        description: description || undefined,
+        start_date: startDate || undefined,
+        end_date: endDate || undefined,
+        budget_hours: budgetHours || undefined,
+        status: 'active',
+      });
+      if (!r.ok) throw new Error(r.error);
+      addToast('Project created', 'success');
+      dispatchDataInvalidation('projects');
+      if (closeAfter) onClose();
+      else {
+        setName('');
+        setDescription('');
+      }
+    } catch (e) {
+      addToast(e instanceof Error ? e.message : 'Create failed', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
-    <SlideDrawer open={open} onClose={onClose} title="New Project" subtitle="Set up a new project with team and timeline"
-      footer={<DrawerFooter onSave={onClose} onCancel={onClose} saveLabel="Create Project" successToast="Project created" />}>
+    <SlideDrawer
+      open={open}
+      onClose={onClose}
+      title="New Project"
+      subtitle="Set up a new project"
+      footer={
+        <DrawerFooter
+          onCancel={onClose}
+          saving={saving}
+          primaryLabel="Create Project"
+          onPrimary={() => submit(true)}
+          onPrimaryAndAnother={() => submit(false)}
+        />
+      }
+    >
       <FormField label="Project Name" required>
-        <GlassInput placeholder="e.g. Website Redesign" />
+        <GlassInput value={name} onChange={(e) => setName(e.target.value)} />
       </FormField>
       <FormField label="Client" required>
-        <GlassSelect>
-          <option value="">Select client...</option>
-          <option>Acme Corporation</option>
-          <option>Tech Startup Inc</option>
-          <option>Local Retail Co</option>
-        </GlassSelect>
-      </FormField>
-      <FormField label="Project Type">
-        <GlassSelect>
-          <option>Fixed Price</option><option>Time & Materials</option>
-          <option>Retainer</option><option>Internal</option>
+        <GlassSelect value={clientId} onChange={(e) => setClientId(e.target.value)}>
+          <option value="">Select client…</option>
+          {(opts?.clients ?? []).map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
         </GlassSelect>
       </FormField>
       <div className="grid grid-cols-2 gap-3">
-        <FormField label="Start Date">
-          <GlassInput type="date" />
+        <FormField label="Start date">
+          <GlassInput type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
         </FormField>
-        <FormField label="End Date">
-          <GlassInput type="date" />
-        </FormField>
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        <FormField label="Budget">
-          <GlassInput type="text" placeholder="$50,000" />
-        </FormField>
-        <FormField label="Hourly Rate">
-          <GlassInput type="text" placeholder="$150/hr" />
+        <FormField label="End date">
+          <GlassInput type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
         </FormField>
       </div>
-      <FormField label="Project Lead">
-        <GlassSelect>
-          <option>John Doe</option><option>Jane Smith</option><option>Sarah Wilson</option>
-        </GlassSelect>
-      </FormField>
-      <FormField label="Team Members">
-        <GlassInput placeholder="Search and add team members..." />
+      <FormField label="Budget (hours)">
+        <GlassInput value={budgetHours} onChange={(e) => setBudgetHours(e.target.value)} placeholder="500" />
       </FormField>
       <FormField label="Description">
-        <GlassTextarea rows={3} placeholder="Describe the project scope and deliverables..." />
-      </FormField>
-      <FormField label="Tags">
-        <GlassInput placeholder="design, web, branding..." />
+        <GlassTextarea rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
       </FormField>
     </SlideDrawer>
   );
 }
 
-/* ═══════════════════════════════════════
-   4. CREATE INVOICE DRAWER
-   ═══════════════════════════════════════ */
+type LineRow = { description: string; qty: number; rate: number };
+
+/* ── 4. INVOICE ── */
 export function CreateInvoiceDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const [lineItems] = useState([
-    { desc: '', qty: 1, rate: 0 },
-  ]);
+  const { addToast } = useToast();
+  const opts = useQuickOptions(open);
+  const [clientId, setClientId] = useState('');
+  const [issueDate, setIssueDate] = useState('');
+  const [dueDate, setDueDate] = useState('');
+  const [lines, setLines] = useState<LineRow[]>([{ description: '', qty: 1, rate: 0 }]);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setClientId('');
+      setIssueDate('');
+      setDueDate('');
+      setLines([{ description: '', qty: 1, rate: 0 }]);
+    }
+  }, [open]);
+
+  const submit = async (closeAfter: boolean) => {
+    if (!clientId) {
+      addToast('Client is required', 'error');
+      return;
+    }
+    setSaving(true);
+    try {
+      const r = await postJson('/api/invoices', {
+        client_id: clientId,
+        issue_date: issueDate || undefined,
+        due_date: dueDate || undefined,
+        line_items: lines.filter((l) => l.description.trim() || l.rate > 0),
+        tax: 0,
+        status: 'draft',
+      });
+      if (!r.ok) throw new Error(r.error);
+      addToast('Invoice saved as draft', 'success');
+      dispatchDataInvalidation('invoices');
+      if (closeAfter) onClose();
+    } catch (e) {
+      addToast(e instanceof Error ? e.message : 'Create failed', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
-    <SlideDrawer open={open} onClose={onClose} title="New Invoice" subtitle="Create and send an invoice" width="540px"
-      footer={<DrawerFooter onSave={onClose} onCancel={onClose} saveLabel="Create Invoice" successToast="Invoice saved as draft" />}>
-      <div className="grid grid-cols-2 gap-3">
-        <FormField label="Client" required>
-          <GlassSelect>
-            <option value="">Select client...</option>
-            <option>Acme Corporation</option>
-            <option>Tech Startup Inc</option>
-          </GlassSelect>
-        </FormField>
-        <FormField label="Invoice Number">
-          <GlassInput defaultValue="INV-2026-007" />
-        </FormField>
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        <FormField label="Invoice Date">
-          <GlassInput type="date" />
-        </FormField>
-        <FormField label="Due Date">
-          <GlassInput type="date" />
-        </FormField>
-      </div>
-      <FormField label="Payment Terms">
-        <GlassSelect>
-          <option>Net 30</option><option>Net 15</option>
-          <option>Net 60</option><option>Due on Receipt</option>
+    <SlideDrawer
+      open={open}
+      onClose={onClose}
+      title="New Invoice"
+      subtitle="Create and send an invoice"
+      width="540px"
+      footer={
+        <DrawerFooter
+          onCancel={onClose}
+          saving={saving}
+          primaryLabel="Create Invoice"
+          onPrimary={() => submit(true)}
+          onPrimaryAndAnother={() => submit(false)}
+        />
+      }
+    >
+      <FormField label="Client" required>
+        <GlassSelect value={clientId} onChange={(e) => setClientId(e.target.value)}>
+          <option value="">Select client…</option>
+          {(opts?.clients ?? []).map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
         </GlassSelect>
       </FormField>
-
-      {/* Line Items */}
+      <div className="grid grid-cols-2 gap-3">
+        <FormField label="Invoice date">
+          <GlassInput type="date" value={issueDate} onChange={(e) => setIssueDate(e.target.value)} />
+        </FormField>
+        <FormField label="Due date">
+          <GlassInput type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+        </FormField>
+      </div>
       <div className="mt-2 mb-4">
-        <p className="text-[11px] font-medium uppercase tracking-wider mb-2"
-          style={{ color: 'var(--muted-foreground)' }}>Line Items</p>
-        <div className="rounded-lg overflow-hidden"
-          style={{ border: '1px solid var(--border)' }}>
-          {/* Header */}
-          <div className="grid grid-cols-[1fr_60px_80px_80px] gap-2 px-3 py-2 text-[10px] font-medium uppercase tracking-wider"
-            style={{ background: 'var(--glass-bg)', color: 'var(--muted-foreground)', borderBottom: '1px solid var(--border)' }}>
-            <span>Description</span>
-            <span className="text-right">Qty</span>
-            <span className="text-right">Rate</span>
-            <span className="text-right">Amount</span>
+        <p className="text-[11px] font-medium uppercase tracking-wider mb-2" style={{ color: 'var(--muted-foreground)' }}>
+          Line items
+        </p>
+        {lines.map((row, i) => (
+          <div key={i} className="mb-2 grid grid-cols-[1fr_56px_72px] gap-2">
+            <GlassInput
+              placeholder="Description"
+              value={row.description}
+              onChange={(e) => {
+                const next = [...lines];
+                next[i] = { ...next[i], description: e.target.value };
+                setLines(next);
+              }}
+            />
+            <GlassInput
+              type="number"
+              value={row.qty || ''}
+              onChange={(e) => {
+                const next = [...lines];
+                next[i] = { ...next[i], qty: Number(e.target.value) || 0 };
+                setLines(next);
+              }}
+            />
+            <GlassInput
+              type="number"
+              placeholder="Rate"
+              value={row.rate || ''}
+              onChange={(e) => {
+                const next = [...lines];
+                next[i] = { ...next[i], rate: Number(e.target.value) || 0 };
+                setLines(next);
+              }}
+            />
           </div>
-          {/* Row */}
-          <div className="grid grid-cols-[1fr_60px_80px_80px] gap-2 px-3 py-2.5 items-center">
-            <input className="bg-transparent text-[13px] outline-none w-full"
-              style={{ color: 'var(--foreground)' }} placeholder="Service description..." />
-            <input className="bg-transparent text-[13px] outline-none text-right w-full tabular-nums"
-              style={{ color: 'var(--foreground)' }} defaultValue="1" />
-            <input className="bg-transparent text-[13px] outline-none text-right w-full tabular-nums"
-              style={{ color: 'var(--foreground)' }} placeholder="$0.00" />
-            <span className="text-[13px] text-right tabular-nums font-medium"
-              style={{ color: 'var(--foreground)' }}>$0.00</span>
-          </div>
-          {/* Add Row */}
-          <button className="w-full px-3 py-2 text-[12px] flex items-center gap-1.5 transition-colors hover:bg-white/[0.03]"
-            style={{ color: '#2563EB', borderTop: '1px solid var(--border)' }}>
-            <Plus className="w-3 h-3" /> Add Line Item
-          </button>
-        </div>
+        ))}
+        <button
+          type="button"
+          className="flex w-full items-center justify-center gap-1 py-2 text-[12px]"
+          style={{ color: '#2563EB', border: '1px dashed var(--border)' }}
+          onClick={() => setLines([...lines, { description: '', qty: 1, rate: 0 }])}
+        >
+          <Plus className="w-3 h-3" /> Add line
+        </button>
       </div>
-
-      {/* Totals */}
-      <div className="rounded-lg px-4 py-3 mb-4"
-        style={{ background: 'var(--glass-bg)', border: '1px solid var(--border)' }}>
-        <div className="flex justify-between text-[12px] mb-1.5"
-          style={{ color: 'var(--muted-foreground)' }}>
-          <span>Subtotal</span><span className="tabular-nums" style={{ color: 'var(--foreground)' }}>$0.00</span>
-        </div>
-        <div className="flex justify-between text-[12px] mb-1.5"
-          style={{ color: 'var(--muted-foreground)' }}>
-          <span>Tax (0%)</span><span className="tabular-nums" style={{ color: 'var(--foreground)' }}>$0.00</span>
-        </div>
-        <div className="flex justify-between text-[14px] font-semibold pt-1.5"
-          style={{ borderTop: '1px solid var(--border)', color: 'var(--foreground)' }}>
-          <span>Total</span><span className="tabular-nums">$0.00</span>
-        </div>
-      </div>
-
-      <FormField label="Notes">
-        <GlassTextarea rows={2} placeholder="Payment instructions or additional notes..." />
-      </FormField>
     </SlideDrawer>
   );
 }
 
-/* ═══════════════════════════════════════
-   5. CREATE TIME ENTRY DRAWER
-   ═══════════════════════════════════════ */
+/* ── 5. TIME ENTRY ── */
 export function CreateTimeEntryDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { addToast } = useToast();
+  const opts = useQuickOptions(open);
+  const [projectId, setProjectId] = useState('');
+  const [description, setDescription] = useState('');
+  const [entryDate, setEntryDate] = useState('');
+  const [hours, setHours] = useState('');
+  const [billable, setBillable] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setProjectId('');
+      setDescription('');
+      setEntryDate('');
+      setHours('');
+      setBillable(true);
+    }
+  }, [open]);
+
+  const submit = async (closeAfter: boolean) => {
+    if (!projectId) {
+      addToast('Project is required', 'error');
+      return;
+    }
+    if (!description.trim()) {
+      addToast('Description is required', 'error');
+      return;
+    }
+    const h = Number(hours);
+    if (!Number.isFinite(h) || h <= 0) {
+      addToast('Enter valid hours', 'error');
+      return;
+    }
+    setSaving(true);
+    try {
+      const r = await postJson('/api/time-entries', {
+        project_id: projectId,
+        description: description.trim(),
+        entry_date: entryDate || undefined,
+        hours: h,
+        billable,
+      });
+      if (!r.ok) throw new Error(r.error);
+      addToast('Time logged', 'success');
+      dispatchDataInvalidation('timesheets');
+      if (closeAfter) onClose();
+      else {
+        setDescription('');
+        setHours('');
+      }
+    } catch (e) {
+      addToast(e instanceof Error ? e.message : 'Create failed', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
-    <SlideDrawer open={open} onClose={onClose} title="Log Time" subtitle="Add a manual time entry"
-      footer={<DrawerFooter onSave={onClose} onCancel={onClose} saveLabel="Log Entry" successToast="Time entry logged" />}>
+    <SlideDrawer
+      open={open}
+      onClose={onClose}
+      title="Log Time"
+      subtitle="Add a manual time entry"
+      footer={
+        <DrawerFooter
+          onCancel={onClose}
+          saving={saving}
+          primaryLabel="Log Entry"
+          onPrimary={() => submit(true)}
+          onPrimaryAndAnother={() => submit(false)}
+        />
+      }
+    >
       <FormField label="Project" required>
-        <GlassSelect>
-          <option value="">Select project...</option>
-          <option>Website Redesign — Acme Corp</option>
-          <option>Mobile App Dev — Tech Startup</option>
-          <option>Brand Identity — Local Retail</option>
+        <GlassSelect value={projectId} onChange={(e) => setProjectId(e.target.value)}>
+          <option value="">Select project…</option>
+          {(opts?.projects ?? []).map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
+          ))}
         </GlassSelect>
       </FormField>
-      <FormField label="Task Description" required>
-        <GlassInput placeholder="What did you work on?" />
-      </FormField>
-      <FormField label="Date">
-        <GlassInput type="date" />
+      <FormField label="What did you work on?" required>
+        <GlassInput value={description} onChange={(e) => setDescription(e.target.value)} />
       </FormField>
       <div className="grid grid-cols-2 gap-3">
-        <FormField label="Start Time">
-          <GlassInput type="time" />
+        <FormField label="Date">
+          <GlassInput type="date" value={entryDate} onChange={(e) => setEntryDate(e.target.value)} />
         </FormField>
-        <FormField label="End Time">
-          <GlassInput type="time" />
+        <FormField label="Hours" required>
+          <GlassInput type="number" step="0.25" min="0.25" value={hours} onChange={(e) => setHours(e.target.value)} placeholder="2.5" />
         </FormField>
       </div>
-      <FormField label="Duration">
-        <GlassInput placeholder="2h 30m" />
-      </FormField>
-      <div className="flex items-center gap-3 mt-2 px-1 mb-4">
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input type="checkbox" className="w-4 h-4 rounded accent-blue-500" defaultChecked />
-          <span className="text-[12px]" style={{ color: 'var(--foreground-secondary)' }}>
-            Billable
-          </span>
-        </label>
-      </div>
-      <FormField label="Notes">
-        <GlassTextarea rows={2} placeholder="Additional notes..." />
-      </FormField>
+      <label className="mb-4 flex items-center gap-2 text-[12px] cursor-pointer" style={{ color: 'var(--foreground)' }}>
+        <input type="checkbox" checked={billable} onChange={(e) => setBillable(e.target.checked)} className="rounded accent-blue-500" />
+        Billable
+      </label>
     </SlideDrawer>
   );
 }
 
-/* ═══════════════════════════════════════
-   6. CREATE PROPOSAL DRAWER
-   ═══════════════════════════════════════ */
+/* ── 6. PROPOSAL ── */
 export function CreateProposalDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { addToast } = useToast();
+  const opts = useQuickOptions(open);
+  const [title, setTitle] = useState('');
+  const [dealId, setDealId] = useState('');
+  const [value, setValue] = useState('');
+  const [sentDate, setSentDate] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setTitle('');
+      setDealId('');
+      setValue('');
+      setSentDate('');
+    }
+  }, [open]);
+
+  const submit = async (closeAfter: boolean) => {
+    if (!title.trim()) {
+      addToast('Title is required', 'error');
+      return;
+    }
+    setSaving(true);
+    try {
+      const r = await postJson('/api/proposals', {
+        title: title.trim(),
+        deal_id: dealId || undefined,
+        value: value || undefined,
+        sent_date: sentDate || undefined,
+        status: 'draft',
+      });
+      if (!r.ok) throw new Error(r.error);
+      addToast('Proposal created', 'success');
+      dispatchDataInvalidation('proposals');
+      if (closeAfter) onClose();
+      else setTitle('');
+    } catch (e) {
+      addToast(e instanceof Error ? e.message : 'Create failed', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
-    <SlideDrawer open={open} onClose={onClose} title="New Proposal" subtitle="Draft a new proposal for a client"
-      footer={<DrawerFooter onSave={onClose} onCancel={onClose} saveLabel="Create Proposal" successToast="Proposal draft created" />}>
-      <FormField label="Proposal Title" required>
-        <GlassInput placeholder="e.g. Website Redesign Proposal" />
+    <SlideDrawer
+      open={open}
+      onClose={onClose}
+      title="New Proposal"
+      subtitle="Draft a proposal"
+      footer={
+        <DrawerFooter
+          onCancel={onClose}
+          saving={saving}
+          primaryLabel="Create Proposal"
+          onPrimary={() => submit(true)}
+          onPrimaryAndAnother={() => submit(false)}
+        />
+      }
+    >
+      <FormField label="Title" required>
+        <GlassInput value={title} onChange={(e) => setTitle(e.target.value)} />
       </FormField>
-      <FormField label="Client" required>
-        <GlassSelect>
-          <option value="">Select client...</option>
-          <option>Acme Corporation</option>
-          <option>Tech Startup Inc</option>
+      <FormField label="Related deal (optional)">
+        <GlassSelect value={dealId} onChange={(e) => setDealId(e.target.value)}>
+          <option value="">None</option>
+          {(opts?.deals ?? []).map((d) => (
+            <option key={d.id} value={d.id}>
+              {d.title}
+            </option>
+          ))}
         </GlassSelect>
       </FormField>
-      <FormField label="Template">
-        <GlassSelect>
-          <option value="">Start from scratch...</option>
-          <option>Standard Proposal</option>
-          <option>Detailed Scope of Work</option>
-          <option>Quick Estimate</option>
-        </GlassSelect>
+      <FormField label="Value">
+        <GlassInput value={value} onChange={(e) => setValue(e.target.value)} placeholder="$25,000" />
       </FormField>
-      <FormField label="Valid Until">
-        <GlassInput type="date" />
-      </FormField>
-      <FormField label="Proposal Value">
-        <GlassInput type="text" placeholder="$25,000" />
-      </FormField>
-      <FormField label="Executive Summary">
-        <GlassTextarea rows={4} placeholder="Brief overview of what you're proposing..." />
-      </FormField>
-      <FormField label="Terms & Conditions">
-        <GlassTextarea rows={3} placeholder="Payment terms, timeline, deliverables..." />
+      <FormField label="Valid until">
+        <GlassInput type="date" value={sentDate} onChange={(e) => setSentDate(e.target.value)} />
       </FormField>
     </SlideDrawer>
   );
 }
 
-/* ═══════════════════════════════════════
-   7. CREATE CONTRACT DRAWER
-   ═══════════════════════════════════════ */
+/* ── 7. CONTRACT ── */
 export function CreateContractDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { addToast } = useToast();
+  const opts = useQuickOptions(open);
+  const [title, setTitle] = useState('');
+  const [clientId, setClientId] = useState('');
+  const [value, setValue] = useState('');
+  const [signedDate, setSignedDate] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setTitle('');
+      setClientId('');
+      setValue('');
+      setSignedDate('');
+    }
+  }, [open]);
+
+  const submit = async (closeAfter: boolean) => {
+    if (!title.trim() || !clientId) {
+      addToast('Title and client are required', 'error');
+      return;
+    }
+    setSaving(true);
+    try {
+      const r = await postJson('/api/contracts', {
+        title: title.trim(),
+        client_id: clientId,
+        value: value || undefined,
+        signed_date: signedDate || undefined,
+        status: 'draft',
+      });
+      if (!r.ok) throw new Error(r.error);
+      addToast('Contract saved', 'success');
+      dispatchDataInvalidation('contracts');
+      if (closeAfter) onClose();
+      else setTitle('');
+    } catch (e) {
+      addToast(e instanceof Error ? e.message : 'Create failed', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
-    <SlideDrawer open={open} onClose={onClose} title="New Contract" subtitle="Create a new contract or agreement"
-      footer={<DrawerFooter onSave={onClose} onCancel={onClose} saveLabel="Create Contract" successToast="Contract draft saved" />}>
-      <FormField label="Contract Title" required>
-        <GlassInput placeholder="e.g. Master Service Agreement" />
+    <SlideDrawer
+      open={open}
+      onClose={onClose}
+      title="New Contract"
+      subtitle="Create a contract record"
+      footer={
+        <DrawerFooter
+          onCancel={onClose}
+          saving={saving}
+          primaryLabel="Create Contract"
+          onPrimary={() => submit(true)}
+          onPrimaryAndAnother={() => submit(false)}
+        />
+      }
+    >
+      <FormField label="Title" required>
+        <GlassInput value={title} onChange={(e) => setTitle(e.target.value)} />
       </FormField>
       <FormField label="Client" required>
-        <GlassSelect>
-          <option value="">Select client...</option>
-          <option>Acme Corporation</option>
-          <option>Tech Startup Inc</option>
+        <GlassSelect value={clientId} onChange={(e) => setClientId(e.target.value)}>
+          <option value="">Select client…</option>
+          {(opts?.clients ?? []).map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
         </GlassSelect>
       </FormField>
-      <FormField label="Contract Type">
-        <GlassSelect>
-          <option>Service Agreement</option><option>NDA</option>
-          <option>Scope of Work</option><option>Retainer Agreement</option>
-          <option>Freelancer Agreement</option><option>SLA</option>
-        </GlassSelect>
+      <FormField label="Value">
+        <GlassInput value={value} onChange={(e) => setValue(e.target.value)} />
       </FormField>
-      <div className="grid grid-cols-2 gap-3">
-        <FormField label="Start Date">
-          <GlassInput type="date" />
-        </FormField>
-        <FormField label="End Date">
-          <GlassInput type="date" />
-        </FormField>
-      </div>
-      <FormField label="Contract Value">
-        <GlassInput type="text" placeholder="$120,000" />
-      </FormField>
-      <FormField label="Signed By">
-        <GlassSelect>
-          <option>John Doe</option><option>Jane Smith</option>
-        </GlassSelect>
-      </FormField>
-      <FormField label="Description">
-        <GlassTextarea rows={3} placeholder="Contract scope and key terms..." />
+      <FormField label="Signed date">
+        <GlassInput type="date" value={signedDate} onChange={(e) => setSignedDate(e.target.value)} />
       </FormField>
     </SlideDrawer>
   );
 }
 
-/* ═══════════════════════════════════════
-   8. CREATE EXPENSE DRAWER
-   ═══════════════════════════════════════ */
+/* ── 8. EXPENSE ── */
 export function CreateExpenseDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { addToast } = useToast();
+  const opts = useQuickOptions(open);
+  const [description, setDescription] = useState('');
+  const [amount, setAmount] = useState('');
+  const [category, setCategory] = useState('Travel');
+  const [expenseDate, setExpenseDate] = useState('');
+  const [projectId, setProjectId] = useState('');
+  const [notes, setNotes] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setDescription('');
+      setAmount('');
+      setCategory('Travel');
+      setExpenseDate('');
+      setProjectId('');
+      setNotes('');
+    }
+  }, [open]);
+
+  const submit = async (closeAfter: boolean) => {
+    if (!description.trim()) {
+      addToast('Description is required', 'error');
+      return;
+    }
+    if (!amount.trim()) {
+      addToast('Amount is required', 'error');
+      return;
+    }
+    setSaving(true);
+    try {
+      const desc =
+        notes.trim() ? `${description.trim()}\n\n${notes.trim()}` : description.trim();
+      const r = await postJson('/api/expenses', {
+        description: desc,
+        amount,
+        category,
+        expense_date: expenseDate || undefined,
+        project_id: projectId || undefined,
+      });
+      if (!r.ok) throw new Error(r.error);
+      addToast('Expense submitted', 'success');
+      dispatchDataInvalidation('expenses');
+      if (closeAfter) onClose();
+      else {
+        setDescription('');
+        setAmount('');
+      }
+    } catch (e) {
+      addToast(e instanceof Error ? e.message : 'Create failed', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
-    <SlideDrawer open={open} onClose={onClose} title="New Expense" subtitle="Submit an expense for reimbursement"
-      footer={<DrawerFooter onSave={onClose} onCancel={onClose} saveLabel="Submit Expense" successToast="Expense submitted" />}>
+    <SlideDrawer
+      open={open}
+      onClose={onClose}
+      title="New Expense"
+      subtitle="Submit an expense"
+      footer={
+        <DrawerFooter
+          onCancel={onClose}
+          saving={saving}
+          primaryLabel="Submit Expense"
+          onPrimary={() => submit(true)}
+          onPrimaryAndAnother={() => submit(false)}
+        />
+      }
+    >
       <FormField label="Description" required>
-        <GlassInput placeholder="e.g. Client dinner at Nobu" />
+        <GlassInput value={description} onChange={(e) => setDescription(e.target.value)} />
       </FormField>
       <FormField label="Category">
-        <GlassSelect>
-          <option>Travel</option><option>Meals & Entertainment</option>
-          <option>Software & Tools</option><option>Office Supplies</option>
-          <option>Equipment</option><option>Marketing</option><option>Other</option>
+        <GlassSelect value={category} onChange={(e) => setCategory(e.target.value)}>
+          {['Travel', 'Meals & Entertainment', 'Software & Tools', 'Office Supplies', 'Equipment', 'Marketing', 'Other'].map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
         </GlassSelect>
       </FormField>
       <div className="grid grid-cols-2 gap-3">
         <FormField label="Amount" required>
-          <GlassInput type="text" placeholder="$250.00" />
+          <GlassInput value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="$120" />
         </FormField>
         <FormField label="Date">
-          <GlassInput type="date" />
+          <GlassInput type="date" value={expenseDate} onChange={(e) => setExpenseDate(e.target.value)} />
         </FormField>
       </div>
       <FormField label="Project">
-        <GlassSelect>
+        <GlassSelect value={projectId} onChange={(e) => setProjectId(e.target.value)}>
           <option value="">No project</option>
-          <option>Website Redesign</option>
-          <option>Mobile App Dev</option>
+          {(opts?.projects ?? []).map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
+          ))}
         </GlassSelect>
       </FormField>
-      <FormField label="Receipt">
-        <div className="rounded-lg p-6 text-center cursor-pointer transition-colors hover:bg-white/[0.02]"
-          style={{ border: '2px dashed var(--border)', background: 'var(--glass-bg)' }}>
-          <Receipt className="w-6 h-6 mx-auto mb-2" style={{ color: 'var(--muted-foreground)' }} />
-          <p className="text-[12px]" style={{ color: 'var(--muted-foreground)' }}>
-            Click or drag to upload receipt
-          </p>
-          <p className="text-[10px] mt-1" style={{ color: 'var(--muted-foreground)' }}>
-            PNG, JPG, PDF up to 10MB
-          </p>
-        </div>
-      </FormField>
       <FormField label="Notes">
-        <GlassTextarea rows={2} placeholder="Additional details..." />
+        <GlassTextarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
       </FormField>
     </SlideDrawer>
   );
 }
 
-/* ═══════════════════════════════════════
-   9. CREATE CONTACT DRAWER
-   ═══════════════════════════════════════ */
+/* ── 9. CONTACT ── */
 export function CreateContactDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { addToast } = useToast();
+  const [first, setFirst] = useState('');
+  const [last, setLast] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [company, setCompany] = useState('');
+  const [tags, setTags] = useState('');
+  const [notes, setNotes] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setFirst('');
+      setLast('');
+      setEmail('');
+      setPhone('');
+      setCompany('');
+      setTags('');
+      setNotes('');
+    }
+  }, [open]);
+
+  const submit = async (closeAfter: boolean) => {
+    if (!first.trim() || !last.trim() || !email.trim()) {
+      addToast('First name, last name, and email are required', 'error');
+      return;
+    }
+    setSaving(true);
+    try {
+      const tagArr = tags.trim()
+        ? tags
+            .split(',')
+            .map((t) => t.trim())
+            .filter(Boolean)
+        : [];
+      const r = await postJson('/api/contacts', {
+        first_name: first.trim(),
+        last_name: last.trim(),
+        email: email.trim(),
+        phone: phone || undefined,
+        company: company || undefined,
+        tags: tagArr,
+        notes: notes || undefined,
+      });
+      if (!r.ok) throw new Error(r.error);
+      addToast('Contact created', 'success');
+      dispatchDataInvalidation('contacts');
+      if (closeAfter) onClose();
+      else {
+        setFirst('');
+        setLast('');
+        setEmail('');
+        setPhone('');
+        setCompany('');
+        setTags('');
+        setNotes('');
+      }
+    } catch (e) {
+      addToast(e instanceof Error ? e.message : 'Create failed', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
-    <SlideDrawer open={open} onClose={onClose} title="New Contact" subtitle="Add a contact to your network"
-      footer={<DrawerFooter onSave={onClose} onCancel={onClose} saveLabel="Create Contact" successToast="Contact created" />}>
+    <SlideDrawer
+      open={open}
+      onClose={onClose}
+      title="New Contact"
+      subtitle="Add a contact"
+      footer={
+        <DrawerFooter
+          onCancel={onClose}
+          saving={saving}
+          primaryLabel="Create Contact"
+          onPrimary={() => submit(true)}
+          onPrimaryAndAnother={() => submit(false)}
+        />
+      }
+    >
       <div className="grid grid-cols-2 gap-3">
         <FormField label="First Name" required>
-          <GlassInput placeholder="John" />
+          <GlassInput value={first} onChange={(e) => setFirst(e.target.value)} />
         </FormField>
         <FormField label="Last Name" required>
-          <GlassInput placeholder="Doe" />
+          <GlassInput value={last} onChange={(e) => setLast(e.target.value)} />
         </FormField>
       </div>
       <FormField label="Email" required>
-        <GlassInput type="email" placeholder="john@example.com" />
+        <GlassInput type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
       </FormField>
       <FormField label="Phone">
-        <GlassInput type="tel" placeholder="+1 (555) 000-0000" />
+        <GlassInput value={phone} onChange={(e) => setPhone(e.target.value)} />
       </FormField>
       <FormField label="Company">
-        <GlassSelect>
-          <option value="">Select or type company...</option>
-          <option>Acme Corporation</option>
-          <option>Tech Startup Inc</option>
-        </GlassSelect>
+        <GlassInput value={company} onChange={(e) => setCompany(e.target.value)} placeholder="Acme Inc." />
       </FormField>
-      <FormField label="Job Title">
-        <GlassInput placeholder="e.g. Marketing Director" />
-      </FormField>
-      <FormField label="Lead Source">
-        <GlassSelect>
-          <option value="">Select source...</option>
-          <option>Referral</option><option>Website</option><option>LinkedIn</option>
-          <option>Conference</option><option>Cold Outreach</option>
-        </GlassSelect>
-      </FormField>
-      <FormField label="Tags">
-        <GlassInput placeholder="vip, prospect, partner..." />
+      <FormField label="Tags (comma-separated)">
+        <GlassInput value={tags} onChange={(e) => setTags(e.target.value)} />
       </FormField>
       <FormField label="Notes">
-        <GlassTextarea rows={2} placeholder="How did you meet?" />
+        <GlassTextarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
       </FormField>
     </SlideDrawer>
   );
 }
 
-/* ═══════════════════════════════════════
-   10. CREATE TASK DRAWER
-   ═══════════════════════════════════════ */
+/* ── 10. TASK ── */
 export function CreateTaskDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { addToast } = useToast();
+  const opts = useQuickOptions(open);
+  const [title, setTitle] = useState('');
+  const [projectId, setProjectId] = useState('');
+  const [assigneeId, setAssigneeId] = useState('');
+  const [priority, setPriority] = useState('medium');
+  const [dueDate, setDueDate] = useState('');
+  const [description, setDescription] = useState('');
+  const [tags, setTags] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setTitle('');
+      setProjectId('');
+      setAssigneeId('');
+      setPriority('medium');
+      setDueDate('');
+      setDescription('');
+      setTags('');
+    }
+  }, [open]);
+
+  const submit = async (closeAfter: boolean) => {
+    if (!title.trim()) {
+      addToast('Task title is required', 'error');
+      return;
+    }
+    setSaving(true);
+    try {
+      const tagArr = tags.trim()
+        ? tags
+            .split(',')
+            .map((t) => t.trim())
+            .filter(Boolean)
+        : [];
+      const r = await postJson('/api/tasks', {
+        title: title.trim(),
+        project_id: projectId || undefined,
+        assignee_id: assigneeId || undefined,
+        priority,
+        due_date: dueDate || undefined,
+        description: description || undefined,
+        tags: tagArr,
+        status: 'todo',
+      });
+      if (!r.ok) throw new Error(r.error);
+      addToast('Task created', 'success');
+      dispatchDataInvalidation('tasks');
+      if (closeAfter) onClose();
+      else setTitle('');
+    } catch (e) {
+      addToast(e instanceof Error ? e.message : 'Create failed', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
-    <SlideDrawer open={open} onClose={onClose} title="New Task" subtitle="Create a task and assign it"
-      footer={<DrawerFooter onSave={onClose} onCancel={onClose} saveLabel="Create Task" successToast="Task created" />}>
+    <SlideDrawer
+      open={open}
+      onClose={onClose}
+      title="New Task"
+      subtitle="Create a task"
+      footer={
+        <DrawerFooter
+          onCancel={onClose}
+          saving={saving}
+          primaryLabel="Create Task"
+          onPrimary={() => submit(true)}
+          onPrimaryAndAnother={() => submit(false)}
+        />
+      }
+    >
       <FormField label="Task Title" required>
-        <GlassInput placeholder="e.g. Design homepage wireframe" />
+        <GlassInput value={title} onChange={(e) => setTitle(e.target.value)} />
       </FormField>
       <FormField label="Project">
-        <GlassSelect>
+        <GlassSelect value={projectId} onChange={(e) => setProjectId(e.target.value)}>
           <option value="">No project</option>
-          <option>Website Redesign</option>
-          <option>Mobile App Dev</option>
-          <option>Brand Identity</option>
+          {(opts?.projects ?? []).map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
+          ))}
         </GlassSelect>
       </FormField>
       <FormField label="Assignee">
-        <GlassSelect>
-          <option>John Doe</option><option>Jane Smith</option>
-          <option>Sarah Wilson</option><option>Alex Brown</option>
+        <GlassSelect value={assigneeId} onChange={(e) => setAssigneeId(e.target.value)}>
+          <option value="">Unassigned</option>
+          {(opts?.profiles ?? []).map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.display_name}
+            </option>
+          ))}
         </GlassSelect>
       </FormField>
       <FormField label="Priority">
-        <GlassSelect>
-          <option>Low</option><option>Medium</option><option>High</option><option>Urgent</option>
+        <GlassSelect value={priority} onChange={(e) => setPriority(e.target.value)}>
+          {['low', 'medium', 'high', 'urgent'].map((p) => (
+            <option key={p} value={p}>
+              {p}
+            </option>
+          ))}
         </GlassSelect>
       </FormField>
-      <FormField label="Due Date">
-        <GlassInput type="date" />
+      <FormField label="Due date">
+        <GlassInput type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
       </FormField>
       <FormField label="Description">
-        <GlassTextarea rows={3} placeholder="Describe what needs to be done..." />
+        <GlassTextarea rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
       </FormField>
       <FormField label="Tags">
-        <GlassInput placeholder="design, ui, review..." />
+        <GlassInput value={tags} onChange={(e) => setTags(e.target.value)} placeholder="comma-separated" />
       </FormField>
     </SlideDrawer>
   );
 }
 
-/* ═══════════════════════════════════════
-   11. CREATE FORM DRAWER
-   ═══════════════════════════════════════ */
+/* ── 11. FORM ── */
 export function CreateFormDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { addToast } = useToast();
+  const [title, setTitle] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setTitle('');
+    }
+  }, [open]);
+
+  const submit = async (closeAfter: boolean) => {
+    if (!title.trim()) {
+      addToast('Form name is required', 'error');
+      return;
+    }
+    setSaving(true);
+    try {
+      const r = await postJson('/api/forms', {
+        title: title.trim(),
+        fields: [],
+        status: 'draft',
+      });
+      if (!r.ok) throw new Error(r.error);
+      addToast('Form created', 'success');
+      dispatchDataInvalidation('forms');
+      if (closeAfter) onClose();
+      else setTitle('');
+    } catch (e) {
+      addToast(e instanceof Error ? e.message : 'Create failed', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
-    <SlideDrawer open={open} onClose={onClose} title="New Form" subtitle="Create a new intake or survey form"
-      footer={<DrawerFooter onSave={onClose} onCancel={onClose} saveLabel="Create Form" successToast="Form template created" />}>
+    <SlideDrawer
+      open={open}
+      onClose={onClose}
+      title="New Form"
+      subtitle="Create a form template"
+      footer={
+        <DrawerFooter
+          onCancel={onClose}
+          saving={saving}
+          primaryLabel="Create Form"
+          onPrimary={() => submit(true)}
+          onPrimaryAndAnother={() => submit(false)}
+        />
+      }
+    >
       <FormField label="Form Name" required>
-        <GlassInput placeholder="e.g. Project Intake Form" />
-      </FormField>
-      <FormField label="Template">
-        <GlassSelect>
-          <option value="">Blank form</option>
-          <option>Contact Request</option>
-          <option>Project Intake</option>
-          <option>Support Ticket</option>
-          <option>Feedback Survey</option>
-          <option>Expense Claim</option>
-          <option>Leave Request</option>
-        </GlassSelect>
-      </FormField>
-      <FormField label="Portal Assignment">
-        <GlassSelect>
-          <option value="">Internal only</option>
-          <option>Client Portal</option>
-          <option>Employee Portal</option>
-          <option>Freelancer Portal</option>
-          <option>All Portals</option>
-        </GlassSelect>
-      </FormField>
-      <FormField label="Description">
-        <GlassTextarea rows={3} placeholder="Describe the purpose of this form..." />
+        <GlassInput value={title} onChange={(e) => setTitle(e.target.value)} />
       </FormField>
     </SlideDrawer>
   );

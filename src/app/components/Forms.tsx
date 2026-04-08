@@ -1,5 +1,6 @@
 'use client';
 import React, { useState } from 'react';
+import { useToast } from './bonsai/ToastSystem';
 import { motion, AnimatePresence } from 'motion/react';
 import { Plus, Send, Eye, Settings, FileText, List, Layout, CheckCircle, Upload, X, Link as LinkIcon } from 'lucide-react';
 import { BonsaiButton } from './bonsai/BonsaiButton';
@@ -59,7 +60,7 @@ export default function Forms() {
       </div>
 
       <AnimatePresence mode="wait">
-        <motion.div key={screenKey} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.25, ease: 'easeOut' }}>
+        <motion.div key={screenKey} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4, pointerEvents: 'none' }} transition={{ duration: 0.25, ease: 'easeOut' }}>
           {view === 'internal' && (<>
             {internalScreen === 'dashboard' && <FormsDashboard onNavigate={setInternalScreen} onCreate={() => setShowFormDrawer(true)} />}
             {internalScreen === 'forms-list' && <FormsList onNavigate={setInternalScreen} onCreate={() => setShowFormDrawer(true)} onFormClick={(form: any) => { setSelectedForm(form); setInternalScreen('builder'); }} />}
@@ -747,7 +748,7 @@ function FormDrawer({ isOpen, onClose }: any) {
           </div>
           <div className="flex justify-end gap-3 border-t border-border pt-4">
             <BonsaiButton variant="ghost" onClick={onClose}>Cancel</BonsaiButton>
-            <BonsaiButton variant="primary" onClick={() => { alert('Form created!'); onClose(); }}>Create Form</BonsaiButton>
+            <BonsaiButton variant="primary" onClick={async () => { try { const r = await fetch('/api/forms', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: 'New Form', fields: [], status: 'draft' }) }); if (!r.ok) throw new Error('Failed'); } catch {} onClose(); }}>Create Form</BonsaiButton>
           </div>
         </div>
       </aside>
@@ -805,7 +806,7 @@ function SendFormModal({ isOpen, onClose }: any) {
         </div>
         <div className="flex shrink-0 justify-end gap-3 border-t border-border bg-background-2 px-6 py-4">
           <BonsaiButton variant="ghost" onClick={onClose}>Cancel</BonsaiButton>
-          <BonsaiButton variant="primary" icon={<Send />} onClick={() => { alert('Form sent successfully!\n\nActivity entry created.\nEmail notification sent.'); onClose(); }}>
+          <BonsaiButton variant="primary" icon={<Send />} onClick={() => { onClose(); }}>
             Send Form
           </BonsaiButton>
         </div>
@@ -867,7 +868,7 @@ function MappingModal({ isOpen, onClose }: any) {
         </div>
         <div className="flex shrink-0 justify-end gap-3 border-t border-border bg-background-2 px-6 py-4">
           <BonsaiButton variant="ghost" onClick={onClose}>Cancel</BonsaiButton>
-          <BonsaiButton variant="primary" onClick={() => { alert('Mapping rules saved!'); onClose(); }}>
+          <BonsaiButton variant="primary" onClick={() => { onClose(); }}>
             Save Mappings
           </BonsaiButton>
         </div>

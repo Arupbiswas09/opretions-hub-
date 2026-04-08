@@ -1,44 +1,12 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { X, MessageSquare, ListTodo, Bug } from 'lucide-react';
+import { X, MessageSquare, ListTodo, Bug, Check, Loader2 } from 'lucide-react';
 import { cn } from '../ui/utils';
-
-const LS_TASKS = 'hub_comm_tasks';
-const LS_ISSUES = 'hub_comm_issues';
-
-export type CommTaskPayload = {
-  title: string;
-  description: string;
-  priority: string;
-  dueDate: string;
-  source: 'communication';
-  chatId: string;
-  contactName: string;
-  createdAt: string;
-};
-
-export type CommIssuePayload = {
-  title: string;
-  description: string;
-  severity: string;
-  category: string;
-  source: 'communication';
-  chatId: string;
-  contactName: string;
-  createdAt: string;
-};
-
-function pushLocal(key: string, item: unknown) {
-  try {
-    const raw = typeof window !== 'undefined' ? localStorage.getItem(key) : null;
-    const arr = raw ? (JSON.parse(raw) as unknown[]) : [];
-    arr.push(item);
-    localStorage.setItem(key, JSON.stringify(arr));
-  } catch {
-    /* ignore */
-  }
-}
+import { createTask, type TaskRow } from '../../lib/api/hub-api';
+import { createIssue, type IssueRow } from '../../lib/api/hub-api';
+import { useHubData } from '../../lib/hub/use-hub-data';
+import { dispatchDataInvalidation } from '../../lib/hub-events';
 
 function ModalChrome({
   title,
@@ -107,6 +75,15 @@ function ModalChrome({
   );
 }
 
+/* Shared field component */
+const inputClass = 'w-full rounded-xl border px-3 py-2.5 text-[13px] outline-none transition-shadow focus:ring-2 focus:ring-primary/25';
+const inputStyle: React.CSSProperties = { background: 'var(--secondary)', borderColor: 'var(--border)', color: 'var(--foreground)' };
+const labelClass = 'block text-[11px] font-semibold mb-1.5';
+const labelStyle: React.CSSProperties = { color: 'var(--foreground)' };
+
+/* ═══════════════════════════════════════════════════════════
+   CREATE TASK MODAL — wired to /api/tasks
+═══════════════════════════════════════════════════════════ */
 export function CommunicationCreateTaskModal({
   open,
   onClose,
@@ -124,38 +101,55 @@ export function CommunicationCreateTaskModal({
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState('medium');
   const [dueDate, setDueDate] = useState('');
+  const [projectId, setProjectId] = useState('');
+  const [saving, setSaving] = useState(false);
   const [done, setDone] = useState(false);
+  const [error, setError] = useState('');
+
+  // Fetch projects for the dropdown
+  const { data: projects } = useHubData<Array<{ id: string; name: string }>>('/api/projects?limit=50');
 
   useEffect(() => {
     if (!open) return;
     setDone(false);
+    setSaving(false);
+    setError('');
     setTitle(`Follow up with ${contactName}`);
     setDescription(
       `Created from conversation with ${contactName}.\n\n${snippet ? `Context:\n${snippet}` : ''}`,
     );
+    setDueDate('');
+    setProjectId('');
   }, [open, contactName, snippet, chatId]);
 
   if (!open) return null;
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     const t = title.trim();
-    if (!t) return;
-    const payload: CommTaskPayload = {
-      title: t,
-      description: description.trim(),
-      priority,
-      dueDate,
-      source: 'communication',
-      chatId,
-      contactName,
-      createdAt: new Date().toISOString(),
-    };
-    pushLocal(LS_TASKS, payload);
-    setDone(true);
-    setTimeout(() => {
-      onClose();
-      setDone(false);
-    }, 600);
+    if (!t || saving) return;
+    setSaving(true);
+    setError('');
+    try {
+      await createTask({
+        title: t,
+        description: description.trim() || null,
+        priority,
+        due_date: dueDate || null,
+        project_id: projectId || null,
+        status: 'todo',
+        tags: ['communication', contactName.toLowerCase().replace(/\s+/g, '-')],
+      });
+      setDone(true);
+      dispatchDataInvalidation('tasks');
+      setTimeout(() => {
+        onClose();
+        setDone(false);
+      }, 600);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Failed to create task');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -178,15 +172,17 @@ export function CommunicationCreateTaskModal({
           <button
             type="button"
             onClick={handleCreate}
-            disabled={!title.trim() || done}
-            className="px-4 py-2 rounded-xl text-[13px] font-semibold text-primary-foreground transition-opacity disabled:opacity-40"
-            style={{ background: 'var(--primary)' }}
+            disabled={!title.trim() || saving || done}
+            className="px-4 py-2 rounded-xl text-[13px] font-semibold text-primary-foreground transition-opacity disabled:opacity-40 inline-flex items-center gap-2"
+            style={{ background: done ? '#10b981' : 'var(--primary)' }}
           >
-            {done ? 'Saved' : 'Create task'}
+            {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+            {done ? <><Check className="h-3.5 w-3.5" /> Created</> : saving ? 'Saving…' : 'Create task'}
           </button>
         </>
       }
     >
+      {/* Source context badge */}
       <div
         className="flex items-start gap-2 p-3 rounded-xl border text-[12px]"
         style={{
@@ -202,34 +198,44 @@ export function CommunicationCreateTaskModal({
           </p>
         </div>
       </div>
+
+      {error && (
+        <div className="flex items-center gap-2 p-3 rounded-xl text-[12px]"
+          style={{ background: 'color-mix(in srgb, #ef4444 8%, var(--secondary))', border: '1px solid color-mix(in srgb, #ef4444 20%, var(--border))' }}>
+          <span style={{ color: '#ef4444' }}>{error}</span>
+        </div>
+      )}
+
       <div>
-        <label className="block text-[11px] font-semibold mb-1.5" style={{ color: 'var(--foreground)' }}>Title</label>
+        <label className={labelClass} style={labelStyle}>Title</label>
         <input
           value={title}
           onChange={e => setTitle(e.target.value)}
-          className="w-full rounded-xl border px-3 py-2.5 text-[13px] outline-none transition-shadow focus:ring-2 focus:ring-primary/25"
-          style={{ background: 'var(--secondary)', borderColor: 'var(--border)', color: 'var(--foreground)' }}
+          className={inputClass}
+          style={inputStyle}
           placeholder="Task title"
         />
       </div>
+
       <div>
-        <label className="block text-[11px] font-semibold mb-1.5" style={{ color: 'var(--foreground)' }}>Description</label>
+        <label className={labelClass} style={labelStyle}>Description</label>
         <textarea
           value={description}
           onChange={e => setDescription(e.target.value)}
-          rows={4}
-          className="w-full rounded-xl border px-3 py-2.5 text-[13px] resize-none outline-none transition-shadow focus:ring-2 focus:ring-primary/25"
-          style={{ background: 'var(--secondary)', borderColor: 'var(--border)', color: 'var(--foreground)' }}
+          rows={3}
+          className={cn(inputClass, 'resize-none')}
+          style={inputStyle}
         />
       </div>
+
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-[11px] font-semibold mb-1.5" style={{ color: 'var(--foreground)' }}>Priority</label>
+          <label className={labelClass} style={labelStyle}>Priority</label>
           <select
             value={priority}
             onChange={e => setPriority(e.target.value)}
-            className="w-full rounded-xl border px-3 py-2.5 text-[13px] outline-none cursor-pointer"
-            style={{ background: 'var(--secondary)', borderColor: 'var(--border)', color: 'var(--foreground)' }}
+            className={cn(inputClass, 'cursor-pointer')}
+            style={inputStyle}
           >
             <option value="low">Low</option>
             <option value="medium">Medium</option>
@@ -237,20 +243,39 @@ export function CommunicationCreateTaskModal({
           </select>
         </div>
         <div>
-          <label className="block text-[11px] font-semibold mb-1.5" style={{ color: 'var(--foreground)' }}>Due</label>
+          <label className={labelClass} style={labelStyle}>Due date</label>
           <input
             type="date"
             value={dueDate}
             onChange={e => setDueDate(e.target.value)}
-            className="w-full rounded-xl border px-3 py-2.5 text-[13px] outline-none"
-            style={{ background: 'var(--secondary)', borderColor: 'var(--border)', color: 'var(--foreground)' }}
+            className={inputClass}
+            style={inputStyle}
           />
         </div>
+      </div>
+
+      {/* Project select */}
+      <div>
+        <label className={labelClass} style={labelStyle}>Project (optional)</label>
+        <select
+          value={projectId}
+          onChange={e => setProjectId(e.target.value)}
+          className={cn(inputClass, 'cursor-pointer')}
+          style={inputStyle}
+        >
+          <option value="">— no project —</option>
+          {(projects ?? []).map(p => (
+            <option key={p.id} value={p.id}>{p.name}</option>
+          ))}
+        </select>
       </div>
     </ModalChrome>
   );
 }
 
+/* ═══════════════════════════════════════════════════════════
+   CREATE ISSUE MODAL — wired to /api/issues
+═══════════════════════════════════════════════════════════ */
 export function CommunicationCreateIssueModal({
   open,
   onClose,
@@ -266,40 +291,54 @@ export function CommunicationCreateIssueModal({
 }) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [severity, setSeverity] = useState('medium');
-  const [category, setCategory] = useState('communication');
+  const [priority, setPriority] = useState('medium');
+  const [type, setType] = useState('bug');
+  const [projectId, setProjectId] = useState('');
+  const [saving, setSaving] = useState(false);
   const [done, setDone] = useState(false);
+  const [error, setError] = useState('');
+
+  const { data: projects } = useHubData<Array<{ id: string; name: string }>>('/api/projects?limit=50');
 
   useEffect(() => {
     if (!open) return;
     setDone(false);
+    setSaving(false);
+    setError('');
     setTitle(`Issue from chat: ${contactName}`);
     setDescription(
       `Reported from Operations Hub · Communication.\nContact: ${contactName}\n\n${snippet ? `Context:\n${snippet}` : ''}`,
     );
+    setProjectId('');
   }, [open, contactName, snippet, chatId]);
 
   if (!open) return null;
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     const t = title.trim();
-    if (!t) return;
-    const payload: CommIssuePayload = {
-      title: t,
-      description: description.trim(),
-      severity,
-      category,
-      source: 'communication',
-      chatId,
-      contactName,
-      createdAt: new Date().toISOString(),
-    };
-    pushLocal(LS_ISSUES, payload);
-    setDone(true);
-    setTimeout(() => {
-      onClose();
-      setDone(false);
-    }, 600);
+    if (!t || saving) return;
+    setSaving(true);
+    setError('');
+    try {
+      await createIssue({
+        title: t,
+        description: description.trim() || null,
+        priority,
+        type,
+        status: 'open',
+        project_id: projectId || null,
+      });
+      setDone(true);
+      dispatchDataInvalidation('issues');
+      setTimeout(() => {
+        onClose();
+        setDone(false);
+      }, 600);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Failed to create issue');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -322,15 +361,17 @@ export function CommunicationCreateIssueModal({
           <button
             type="button"
             onClick={handleCreate}
-            disabled={!title.trim() || done}
-            className="px-4 py-2 rounded-xl text-[13px] font-semibold text-primary-foreground transition-opacity disabled:opacity-40"
-            style={{ background: 'var(--primary)' }}
+            disabled={!title.trim() || saving || done}
+            className="px-4 py-2 rounded-xl text-[13px] font-semibold text-primary-foreground transition-opacity disabled:opacity-40 inline-flex items-center gap-2"
+            style={{ background: done ? '#10b981' : 'var(--primary)' }}
           >
-            {done ? 'Saved' : 'Create issue'}
+            {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+            {done ? <><Check className="h-3.5 w-3.5" /> Created</> : saving ? 'Saving…' : 'Create issue'}
           </button>
         </>
       }
     >
+      {/* Conversation context badge */}
       <div
         className="flex items-start gap-2 p-3 rounded-xl border text-[12px]"
         style={{
@@ -346,54 +387,79 @@ export function CommunicationCreateIssueModal({
           </p>
         </div>
       </div>
+
+      {error && (
+        <div className="flex items-center gap-2 p-3 rounded-xl text-[12px]"
+          style={{ background: 'color-mix(in srgb, #ef4444 8%, var(--secondary))', border: '1px solid color-mix(in srgb, #ef4444 20%, var(--border))' }}>
+          <span style={{ color: '#ef4444' }}>{error}</span>
+        </div>
+      )}
+
       <div>
-        <label className="block text-[11px] font-semibold mb-1.5" style={{ color: 'var(--foreground)' }}>Title</label>
+        <label className={labelClass} style={labelStyle}>Title</label>
         <input
           value={title}
           onChange={e => setTitle(e.target.value)}
-          className="w-full rounded-xl border px-3 py-2.5 text-[13px] outline-none transition-shadow focus:ring-2 focus:ring-primary/25"
-          style={{ background: 'var(--secondary)', borderColor: 'var(--border)', color: 'var(--foreground)' }}
+          className={inputClass}
+          style={inputStyle}
         />
       </div>
+
       <div>
-        <label className="block text-[11px] font-semibold mb-1.5" style={{ color: 'var(--foreground)' }}>Description</label>
+        <label className={labelClass} style={labelStyle}>Description</label>
         <textarea
           value={description}
           onChange={e => setDescription(e.target.value)}
-          rows={4}
-          className="w-full rounded-xl border px-3 py-2.5 text-[13px] resize-none outline-none"
-          style={{ background: 'var(--secondary)', borderColor: 'var(--border)', color: 'var(--foreground)' }}
+          rows={3}
+          className={cn(inputClass, 'resize-none')}
+          style={inputStyle}
         />
       </div>
+
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-[11px] font-semibold mb-1.5" style={{ color: 'var(--foreground)' }}>Severity</label>
+          <label className={labelClass} style={labelStyle}>Type</label>
           <select
-            value={severity}
-            onChange={e => setSeverity(e.target.value)}
-            className="w-full rounded-xl border px-3 py-2.5 text-[13px] outline-none cursor-pointer"
-            style={{ background: 'var(--secondary)', borderColor: 'var(--border)', color: 'var(--foreground)' }}
+            value={type}
+            onChange={e => setType(e.target.value)}
+            className={cn(inputClass, 'cursor-pointer')}
+            style={inputStyle}
+          >
+            <option value="bug">Bug</option>
+            <option value="feature">Feature request</option>
+            <option value="improvement">Improvement</option>
+          </select>
+        </div>
+        <div>
+          <label className={labelClass} style={labelStyle}>Priority</label>
+          <select
+            value={priority}
+            onChange={e => setPriority(e.target.value)}
+            className={cn(inputClass, 'cursor-pointer')}
+            style={inputStyle}
           >
             <option value="low">Low</option>
             <option value="medium">Medium</option>
             <option value="high">High</option>
-            <option value="critical">Critical</option>
+            <option value="urgent">Urgent</option>
           </select>
         </div>
-        <div>
-          <label className="block text-[11px] font-semibold mb-1.5" style={{ color: 'var(--foreground)' }}>Category</label>
-          <select
-            value={category}
-            onChange={e => setCategory(e.target.value)}
-            className="w-full rounded-xl border px-3 py-2.5 text-[13px] outline-none cursor-pointer"
-            style={{ background: 'var(--secondary)', borderColor: 'var(--border)', color: 'var(--foreground)' }}
-          >
-            <option value="communication">Communication</option>
-            <option value="integration">Integration</option>
-            <option value="data">Data quality</option>
-            <option value="other">Other</option>
-          </select>
-        </div>
+      </div>
+
+      {/* Project select */}
+      <div>
+        <label className={labelClass} style={labelStyle}>Project (optional)</label>
+        <select
+          value={projectId}
+          onChange={e => setProjectId(e.target.value)}
+          className={cn(inputClass, 'cursor-pointer')}
+          style={inputStyle}
+        >
+          <option value="">— no project —</option>
+          {(projects ?? []).map(p => (
+            <option key={p.id} value={p.id}>{p.name}</option>
+          ))}
+        </select>
       </div>
     </ModalChrome>
   );

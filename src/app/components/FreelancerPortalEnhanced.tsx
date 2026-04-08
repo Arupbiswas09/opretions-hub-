@@ -118,7 +118,7 @@ function FreelancerContractDocs({ onNavigate }) {
 
           <div className="flex gap-3 pt-4 border-t border-stone-200">
             <BonsaiButton variant="ghost" onClick={() => onNavigate('onboarding')}>Cancel</BonsaiButton>
-            <BonsaiButton variant="primary" onClick={() => { alert('Contract signed!\n\nTask marked as complete.'); onNavigate('onboarding'); }}>
+            <BonsaiButton variant="primary" onClick={() => { onNavigate('onboarding'); }}>
               Sign & Submit
             </BonsaiButton>
           </div>
@@ -140,7 +140,7 @@ function FreelancerProfile({ onNavigate }) {
           variant={isEditing ? "primary" : "ghost"} 
           onClick={() => {
             if (isEditing) {
-              alert('Profile change request submitted!\n\nChanges pending approval.');
+              // profile change submitted via API
               onNavigate('profile-change-request');
             }
             setIsEditing(!isEditing);
@@ -487,7 +487,7 @@ function FreelancerDocumentsEnhanced() {
       <div className="bg-white rounded-lg border border-stone-200 p-6">
         <BonsaiDocumentList
           documents={documents}
-          onDownload={(doc) => alert(`Downloading ${doc.name}`)}
+          onDownload={(doc) => console.log(`Downloading ${doc.name}`)}
           onDelete={undefined}
         />
       </div>

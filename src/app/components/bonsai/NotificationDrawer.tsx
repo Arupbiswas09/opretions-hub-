@@ -1,10 +1,11 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useRouter } from 'next/navigation';
-import { X, FileText, Clock, Users, CheckCircle, AlertTriangle, ArrowUpRight } from 'lucide-react';
+import { X, FileText, Clock, Users, CheckCircle, AlertTriangle, ArrowUpRight, Bell } from 'lucide-react';
+import { listNotifications, markNotificationRead, type NotificationRow } from '../../lib/api/hub-api';
 
-type Notification = {
+type UiNotification = {
   id: string;
   title: string;
   description: string;
@@ -12,18 +13,65 @@ type Notification = {
   read: boolean;
   type: 'approval' | 'info' | 'warning' | 'success';
   icon: React.ElementType;
-  /** Deep link into hub — approvals, finance, etc. */
   href?: string;
 };
 
-const INITIAL_NOTIFICATIONS: Notification[] = [
-  { id: '1', title: 'Timesheet Approval Required', description: 'John Doe submitted 42 hours for Week 2', time: '5 min ago', read: false, type: 'approval', icon: Clock, href: '/hub/projects/approvals' },
-  { id: '2', title: 'Invoice Overdue – INV-1245', description: 'Acme Corp $12,400 — 3 days past due', time: '1 hour ago', read: false, type: 'warning', icon: AlertTriangle, href: '/hub/finance/invoices' },
-  { id: '3', title: 'Leave Request: Jane Smith', description: 'Vacation Feb 10-14, 2026 (5 days)', time: '2 hours ago', read: false, type: 'approval', icon: Users, href: '/hub/people/approvals' },
-  { id: '4', title: 'New Deal Created', description: 'Website Redesign for Acme Corp — $45K', time: '3 hours ago', read: true, type: 'info', icon: FileText },
-  { id: '5', title: 'Project Milestone Completed', description: 'Q1 Launch milestone reached 100%', time: '5 hours ago', read: true, type: 'success', icon: CheckCircle },
-  { id: '6', title: 'Candidate Applied', description: 'Senior Designer role — Alice Chen', time: 'Yesterday', read: true, type: 'info', icon: Users },
-];
+function mapEntityToType(entityType: string | null): 'approval' | 'info' | 'warning' | 'success' {
+  switch (entityType) {
+    case 'approvals': return 'approval';
+    case 'invoices': case 'expenses': return 'warning';
+    case 'projects': case 'deals': return 'success';
+    default: return 'info';
+  }
+}
+
+function mapEntityToIcon(entityType: string | null): React.ElementType {
+  switch (entityType) {
+    case 'approvals': return Clock;
+    case 'invoices': case 'expenses': return AlertTriangle;
+    case 'projects': case 'deals': return CheckCircle;
+    case 'candidates': case 'people': return Users;
+    default: return FileText;
+  }
+}
+
+function mapEntityToHref(entityType: string | null): string | undefined {
+  switch (entityType) {
+    case 'approvals': return '/hub/projects/approvals';
+    case 'invoices': return '/hub/finance/invoices';
+    case 'expenses': return '/hub/people/approvals';
+    case 'projects': return '/hub/projects';
+    case 'deals': return '/hub/sales';
+    case 'candidates': return '/hub/talent';
+    case 'support_tickets': return '/hub/support';
+    default: return undefined;
+  }
+}
+
+function formatRelativeTime(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const min = Math.floor(diff / 60000);
+  if (min < 1) return 'Just now';
+  if (min < 60) return `${min} min ago`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return `${h} hour${h > 1 ? 's' : ''} ago`;
+  const d = Math.floor(h / 24);
+  if (d === 1) return 'Yesterday';
+  return `${d} days ago`;
+}
+
+function mapRow(row: NotificationRow): UiNotification {
+  return {
+    id: row.id,
+    title: row.title,
+    description: row.body ?? '',
+    time: formatRelativeTime(row.created_at),
+    read: !!row.read_at,
+    type: mapEntityToType(row.entity_type),
+    icon: mapEntityToIcon(row.entity_type),
+    href: mapEntityToHref(row.entity_type),
+  };
+}
 
 const typeStyles: Record<string, { dot: string; iconBg: string; iconColor: string }> = {
   approval: {
@@ -55,15 +103,37 @@ interface NotificationDrawerProps {
 
 export function NotificationDrawer({ open, onClose }: NotificationDrawerProps) {
   const router = useRouter();
-  const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState<UiNotification[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch from API when drawer opens
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    setLoading(true);
+    (async () => {
+      const res = await listNotifications({ limit: 20 });
+      if (cancelled) return;
+      if (res.data && Array.isArray(res.data)) {
+        setNotifications(res.data.map(mapRow));
+      }
+      setLoading(false);
+    })();
+    return () => { cancelled = true; };
+  }, [open]);
+
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  const markAllRead = () => {
+  const markAllRead = async () => {
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    // Mark each unread notification read in API
+    const unread = notifications.filter(n => !n.read);
+    await Promise.allSettled(unread.map(n => markNotificationRead(n.id)));
   };
 
-  const markRead = (id: string) => {
+  const markRead = async (id: string) => {
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    await markNotificationRead(id);
   };
 
   return (
@@ -73,7 +143,7 @@ export function NotificationDrawer({ open, onClose }: NotificationDrawerProps) {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            exit={{ opacity: 0, pointerEvents: 'none' }}
             transition={{ duration: 0.2 }}
             className="fixed inset-0 z-[80]"
             onClick={onClose}

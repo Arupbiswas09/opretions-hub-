@@ -2,7 +2,8 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { showPersonaSimulator } from '../lib/UserRoleContext';
 import { motion, AnimatePresence, MotionConfig } from 'motion/react';
 import {
   Settings, Search, Bell, Plus, Play,
@@ -24,6 +25,7 @@ import { NotificationDrawer } from './bonsai/NotificationDrawer';
 import { useTheme } from '../lib/theme';
 import { useUserRole, PERSONAS, type UserPersona } from '../lib/UserRoleContext';
 import { useMediaQuery } from '../lib/use-media-query';
+import { prefetchCommunicationData } from '../lib/communication-prefetch';
 import {
   CreateClientDrawer, CreateDealDrawer, CreateProjectDrawer,
   CreateInvoiceDrawer, CreateTimeEntryDrawer, CreateProposalDrawer,
@@ -31,6 +33,7 @@ import {
   CreateTaskDrawer, CreateFormDrawer,
 } from './ui/QuickCreateDrawers';
 import { SettingsDrawer } from './ui/DetailPanels';
+import { GlobalSearchBar } from './hub/GlobalSearchBar';
 import { cn } from './ui/utils';
 
 export { HUB_MODULES, type HubModule };
@@ -91,6 +94,7 @@ function NavRow({
   /** Called after following a sidebar link (e.g. close mobile drawer). */
   onNavigate?: () => void;
 }) {
+  const router = useRouter();
   const className = `group relative flex items-center rounded-lg transition-all duration-200 w-full text-left ${
     collapsed ? 'justify-center px-0 py-2.5' : 'px-3 py-[7px] gap-2.5'
   }`;
@@ -130,7 +134,21 @@ function NavRow({
     );
   }
   return (
-    <Link href={href!} className={className} style={style} onClick={() => onNavigate?.()}>
+    <Link
+      href={href!}
+      prefetch
+      className={className}
+      style={style}
+      onMouseEnter={() => {
+        if (href) router.prefetch(href);
+        if (href === '/hub/communication') void prefetchCommunicationData();
+      }}
+      onFocus={() => {
+        if (href) router.prefetch(href);
+        if (href === '/hub/communication') void prefetchCommunicationData();
+      }}
+      onClick={() => onNavigate?.()}
+    >
       {body}
     </Link>
   );
@@ -207,6 +225,7 @@ export default function HubShell({ children }: { children: React.ReactNode }) {
   const [portalMenuOpen, setPortalMenuOpen] = useState(false);
   const { isDark, toggleTheme } = useTheme();
   const { persona, setPersona } = useUserRole();
+  const router = useRouter();
   const isLg = useMediaQuery('(min-width: 1024px)');
   const closeMobileNav = () => setMobileNavOpen(false);
 
@@ -457,6 +476,8 @@ export default function HubShell({ children }: { children: React.ReactNode }) {
                 </div>
               );
             })()}
+
+            {!isPortalView && <GlobalSearchBar />}
 
             {/* Right actions — Bonsai exact: ▶ + 👤 */}
             <div className="flex min-w-0 shrink-0 items-center gap-0.5 sm:gap-1.5">
@@ -714,66 +735,74 @@ export default function HubShell({ children }: { children: React.ReactNode }) {
                   </AnimatePresence>
                 </div>
 
-              {/* Switch User (demo personas) */}
-              <div className="relative" ref={switchUserRef}>
-                <button
-                  onClick={() => setSwitchUserOpen(o => !o)}
-                  className="flex min-h-[44px] min-w-[44px] items-center justify-center gap-1 rounded-lg px-2 text-[11px] font-medium transition-colors hover:bg-white/[0.05] sm:min-w-0 sm:justify-start"
-                  style={{ color: 'var(--muted-foreground)' }}
-                  title="Switch user persona"
-                >
-                  <Users className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline capitalize">{persona.role}</span>
-                  <ChevronDown className="hidden w-2.5 opacity-60 sm:inline" />
-                </button>
-                <AnimatePresence>
-                  {switchUserOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.96, y: 4 }}
-                      animate={{ opacity: 1, scale: 1, y: 0 }}
-                      exit={{ opacity: 0, scale: 0.97, y: 4 }}
-                      transition={{ duration: 0.12 }}
-                      className="absolute right-0 top-full mt-1.5 w-60 rounded-xl overflow-hidden z-50 py-1"
-                      style={{
-                        background: 'var(--popover)',
-                        backdropFilter: 'blur(24px)',
-                        border: '1px solid var(--border)',
-                        boxShadow: 'var(--shadow-lg)',
-                      }}
-                    >
-                      <p className="px-3 pt-2 pb-1.5 text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--muted-foreground)' }}>
-                        Simulate persona
-                      </p>
-                      {PERSONAS.map(p => (
-                        <button
-                          key={p.role}
-                          onClick={() => { setPersona(p); setSwitchUserOpen(false); }}
-                          className="w-full flex items-center gap-3 px-3 py-2 text-left transition-colors hover:bg-white/[0.05]"
-                        >
-                          <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-bold text-white"
-                            style={{ background: p.avatarColor }}>
-                            {p.initials}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[12px] font-medium" style={{ color: 'var(--foreground)' }}>{p.name}</p>
-                            <p className="text-[11px] capitalize" style={{ color: 'var(--muted-foreground)' }}>{p.role}</p>
-                          </div>
-                          {persona.role === p.role && (
-                            <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#2563EB' }} />
-                          )}
-                        </button>
-                      ))}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+              {/* Demo persona switcher (opt-in via NEXT_PUBLIC_ENABLE_PERSONA_SIMULATOR) */}
+              {showPersonaSimulator() && (
+                <div className="relative" ref={switchUserRef}>
+                  <button
+                    type="button"
+                    onClick={() => setSwitchUserOpen(o => !o)}
+                    className="flex min-h-[44px] min-w-[44px] items-center justify-center gap-1 rounded-lg px-2 text-[11px] font-medium transition-colors hover:bg-white/[0.05] sm:min-w-0 sm:justify-start"
+                    style={{ color: 'var(--muted-foreground)' }}
+                    title="Simulate persona (dev)"
+                  >
+                    <Users className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline capitalize">{persona.role}</span>
+                    <ChevronDown className="hidden w-2.5 opacity-60 sm:inline" />
+                  </button>
+                  <AnimatePresence>
+                    {switchUserOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.96, y: 4 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.97, y: 4 }}
+                        transition={{ duration: 0.12 }}
+                        className="absolute right-0 top-full mt-1.5 w-60 rounded-xl overflow-hidden z-50 py-1"
+                        style={{
+                          background: 'var(--popover)',
+                          backdropFilter: 'blur(24px)',
+                          border: '1px solid var(--border)',
+                          boxShadow: 'var(--shadow-lg)',
+                        }}
+                      >
+                        <p className="px-3 pt-2 pb-1.5 text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--muted-foreground)' }}>
+                          Simulate persona
+                        </p>
+                        {PERSONAS.map(p => (
+                          <button
+                            key={p.role}
+                            type="button"
+                            onClick={() => { setPersona(p); setSwitchUserOpen(false); }}
+                            className="w-full flex items-center gap-3 px-3 py-2 text-left transition-colors hover:bg-white/[0.05]"
+                          >
+                            <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-bold text-white"
+                              style={{ background: p.avatarColor }}>
+                              {p.initials}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[12px] font-medium" style={{ color: 'var(--foreground)' }}>{p.name}</p>
+                              <p className="text-[11px] capitalize" style={{ color: 'var(--muted-foreground)' }}>{p.role}</p>
+                            </div>
+                            {persona.role === p.role && (
+                              <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#2563EB' }} />
+                            )}
+                          </button>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )}
 
               {/* User */}
               <div className="relative" ref={userMenuRef}>
-                <button onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full sm:h-9 sm:w-9"
-                  style={{ background: persona.avatarColor }}>
-                  <span className="text-[10px] font-bold text-white sm:text-[9px]">{persona.initials}</span>
+                <button type="button" onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full overflow-hidden sm:h-9 sm:w-9"
+                  style={{ background: persona.avatarUrl ? 'transparent' : persona.avatarColor }}>
+                  {persona.avatarUrl ? (
+                    <img src={persona.avatarUrl} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="text-[10px] font-bold text-white sm:text-[9px]">{persona.initials}</span>
+                  )}
                 </button>
                 <AnimatePresence>
                   {userMenuOpen && (
@@ -800,7 +829,7 @@ export default function HubShell({ children }: { children: React.ReactNode }) {
                       </div>
                       <div className="py-1">
                         {[{ label: 'Profile', icon: User }, { label: 'Settings', icon: Settings }].map(item => (
-                          <button key={item.label}
+                          <button key={item.label} type="button"
                             onClick={() => {
                               setUserMenuOpen(false);
                               if (item.label === 'Settings') setSettingsOpen(true);
@@ -813,8 +842,17 @@ export default function HubShell({ children }: { children: React.ReactNode }) {
                         ))}
                       </div>
                       <div style={{ borderTop: '1px solid var(--border)' }}>
-                        <button className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-left"
-                          style={{ color: 'var(--muted-foreground)' }}>
+                        <button
+                          type="button"
+                          className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-left hover:bg-white/[0.05]"
+                          style={{ color: 'var(--muted-foreground)' }}
+                          onClick={async () => {
+                            setUserMenuOpen(false);
+                            await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+                            router.push('/login');
+                            router.refresh();
+                          }}
+                        >
                           <LogOut className="w-3.5 h-3.5" />
                           Sign Out
                         </button>

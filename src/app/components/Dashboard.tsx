@@ -1,6 +1,6 @@
 'use client';
-import React, { useState, useEffect } from 'react';
-import { motion } from 'motion/react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import Link from 'next/link';
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -10,6 +10,9 @@ import { Plus, Check, TrendingUp, Clock, Users, ChevronRight, FolderKanban, Inbo
 import { easeOutQuart } from '../lib/motion';
 import { useTheme } from '../lib/theme';
 import { dashboardFoldRootRelaxedClass, DashboardScrollPanel } from './dashboard/DashboardFoldLayout';
+import { useHubData } from '../lib/hub/use-hub-data';
+import { listTasks, updateTask, type TaskRow } from '../lib/api/hub-api';
+import { dispatchQuickCreate, type QuickCreateKind } from '../lib/hub-events';
 
 /* ── Framer Motion stagger variants ── */
 const container = {
@@ -82,58 +85,6 @@ function Section({ children, className = '' }: { children: React.ReactNode; clas
   );
 }
 
-/* ─── P&L data ─── */
-const PNL_DATA = [
-  { month: "Oct '25", revenue: 113000, expenses: 87000 },
-  { month: "Nov '25", revenue: 138000, expenses: 91000 },
-  { month: "Dec '25", revenue: 128000, expenses: 95000 },
-  { month: "Jan '26", revenue: 145000, expenses: 99000 },
-  { month: "Feb '26", revenue: 138000, expenses: 94000 },
-  { month: "Mar '26", revenue: 152000, expenses: 101000 },
-  { month: "Apr '26", revenue: 148000, expenses: 98000 },
-];
-
-/* ─── Time tracked data ─── */
-const TIME_DATA = [
-  { day: 'Apr 01', hours: 6.5 },
-  { day: 'Apr 04', hours: 7.0 },
-  { day: 'Apr 06', hours: 5.5 },
-  { day: 'Apr 08', hours: 8.0 },
-  { day: 'Apr 10', hours: 6.0 },
-  { day: 'Apr 12', hours: 7.5 },
-  { day: 'Apr 14', hours: 4.0 },
-  { day: 'Apr 16', hours: 7.0 },
-  { day: 'Apr 18', hours: 8.5 },
-  { day: 'Apr 20', hours: 6.0 },
-  { day: 'Apr 22', hours: 7.0 },
-  { day: 'Apr 24', hours: 5.5 },
-  { day: 'Apr 26', hours: 3.0 },
-  { day: 'Apr 28', hours: 0 },
-  { day: 'Apr 30', hours: 0 },
-];
-
-/* ─── Project timeline ─── */
-const PROJECTS_TIMELINE = [
-  { name: 'Website Redesign', start: 10, end: 75, color: '#2563EB' },
-  { name: 'Mobile App Dev', start: 20, end: 90, color: '#1D4ED8' },
-  { name: 'Brand Identity', start: 0, end: 55, color: '#3B82F6' },
-];
-
-/** Doc §4.1 — pending approvals widget → real approval routes */
-const PENDING_APPROVALS = [
-  { id: 'ts', title: 'Timesheets', subtitle: 'John Doe · Week 2 · 42h', href: '/hub/projects/approvals', badge: '3' },
-  { id: 'leave', title: 'People & leave', subtitle: 'Jane Smith · Feb 10–14', href: '/hub/people/approvals', badge: '1' },
-  { id: 'inv', title: 'Invoice review', subtitle: 'Q1 close checklist', href: '/hub/finance/invoices', badge: null },
-] as const;
-
-/* ─── Tasks ─── */
-const TASKS = [
-  { id: 1, title: 'Review Q2 budget proposal', project: 'Acme Corp', done: false },
-  { id: 2, title: 'Send SOW to Tech Startup', project: 'Tech Startup Inc', done: false },
-  { id: 3, title: 'Approve timesheet — Jane S.', project: 'Internal', done: true },
-  { id: 4, title: 'Finalize brand guidelines', project: 'Local Retail Co', done: true },
-];
-
 const fmt = (v: number) => `$${(v / 1000).toFixed(0)}K`;
 
 const glassKpiStyle: React.CSSProperties = {
@@ -144,16 +95,16 @@ const glassKpiStyle: React.CSSProperties = {
   boxShadow: 'var(--shadow-sm), inset 0 1px 0 color-mix(in srgb, var(--foreground) 5%, transparent)',
 };
 
-const ACTIVITY_ITEMS = [
-  { text: 'New project', time: 'Apr 5 · 9:54 PM', emphasis: true },
-  { text: 'Workspace updated', time: 'Apr 5 · 9:54 PM', emphasis: false },
-  { text: 'Invoice INV-2026-001 sent', time: 'Apr 5 · 8:30 PM', emphasis: true },
-  { text: 'Proposal · Acme', time: 'Apr 4 · 2:12 PM', emphasis: false },
-] as const;
+interface ActivityItem { text: string; time: string; emphasis: boolean; }
+interface ApprovalItem { id: string; title: string; subtitle: string; href: string; badge: string | null; }
 
-function ActivitySpineFeed() {
+function ActivitySpineFeed({ items }: { items: ActivityItem[] }) {
   const lineColor = 'color-mix(in srgb, var(--muted-foreground) 32%, transparent)';
   const softDot = 'color-mix(in srgb, var(--muted-foreground) 48%, transparent)';
+
+  if (items.length === 0) {
+    return <p className="text-[13px] py-4" style={{ color: 'var(--muted-foreground)' }}>No recent activity.</p>;
+  }
 
   return (
     <div className="relative min-w-0">
@@ -163,7 +114,7 @@ function ActivitySpineFeed() {
         aria-hidden
       />
       <ul className="m-0 list-none p-0">
-        {ACTIVITY_ITEMS.map((row, i) => (
+        {items.map((row, i) => (
           <li key={i} className="relative flex gap-4 pb-6 last:pb-0">
             <div className="relative z-[1] flex w-3 shrink-0 justify-center pt-1">
               {row.emphasis ? (
@@ -201,13 +152,101 @@ export default function Dashboard() {
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
   const dateStr = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 
-  const [tasks, setTasks] = useState(TASKS);
-  const toggleTask = (id: number) => {
-    setTasks(prev => prev.map(t => t.id === id ? { ...t, done: !t.done } : t));
-  };
+  /* ── Quick New dropdown ── */
+  const [quickNewOpen, setQuickNewOpen] = useState(false);
+  const quickNewRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (quickNewRef.current && !quickNewRef.current.contains(e.target as Node)) setQuickNewOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+  const quickItems: { label: string; kind: QuickCreateKind }[] = [
+    { label: 'Task', kind: 'task' },
+    { label: 'Project', kind: 'project' },
+    { label: 'Deal', kind: 'deal' },
+    { label: 'Client', kind: 'client' },
+    { label: 'Invoice', kind: 'invoice' },
+    { label: 'Expense', kind: 'expense' },
+    { label: 'Contact', kind: 'contact' },
+    { label: 'Time Entry', kind: 'time' },
+  ];
 
-  const pendingApprovalsCount = PENDING_APPROVALS.reduce((n, r) => n + (r.badge ? Number(r.badge) : 0), 0);
-  const lastRev = PNL_DATA[PNL_DATA.length - 1]?.revenue ?? 0;
+  /* ── Live data hooks ── */
+  const { data: kpi } = useHubData<{
+    revenue: number; expenses: number; billable_hours: number;
+    pending_approvals: number; active_clients: number; active_projects: number;
+    open_tasks: number; total_tasks: number;
+  }>('/api/kpi/dashboard');
+
+  const { data: tasksRaw } = useHubData<TaskRow[]>('/api/tasks?limit=8');
+  const tasks = (tasksRaw ?? []).map(t => ({
+    id: t.id, title: t.title, project: t.project_name ?? 'Internal', done: t.status === 'done' || t.status === 'completed',
+  }));
+
+  const toggleTask = useCallback(async (id: string) => {
+    const task = tasksRaw?.find(t => t.id === id);
+    if (!task) return;
+    const newStatus = task.status === 'done' ? 'todo' : 'done';
+    await updateTask(id, { status: newStatus });
+  }, [tasksRaw]);
+
+  const { data: approvalsRaw } = useHubData<Array<{ id: string; type: string; payload: Record<string, unknown>; amount: number | null }>>('/api/approvals?status=pending&limit=10');
+  const pendingApprovals: ApprovalItem[] = (approvalsRaw ?? []).slice(0, 5).map(a => {
+    const p = a.payload ?? {};
+    const typeMap: Record<string, { title: string; href: string }> = {
+      timesheet: { title: 'Timesheets', href: '/hub/projects/approvals' },
+      leave: { title: 'People & leave', href: '/hub/people/approvals' },
+      expense: { title: 'Expense review', href: '/hub/people/approvals' },
+      invoice: { title: 'Invoice review', href: '/hub/finance/invoices' },
+    };
+    const info = typeMap[a.type] ?? { title: a.type, href: '/hub/admin' };
+    return { id: a.id, ...info, subtitle: String(p.employee ?? p.description ?? p.invoice_number ?? ''), badge: null };
+  });
+  const pendingApprovalsCount = approvalsRaw?.length ?? 0;
+
+  const { data: projectsRaw } = useHubData<Array<{ id: string; name: string; status: string; start_date: string | null; end_date: string | null }>>('/api/projects?status=active&limit=5');
+  const PROJECTS_TIMELINE = (projectsRaw ?? []).map((p, i) => {
+    const colors = ['#2563EB', '#1D4ED8', '#3B82F6', '#0284C7', '#6366F1'];
+    const start = Math.max(0, Math.min(80, i * 15));
+    const end = Math.min(100, start + 40 + Math.random() * 25);
+    return { name: p.name, start, end, color: colors[i % colors.length] };
+  });
+
+  const { data: activityRaw } = useHubData<Array<{ action: string; entity_type: string; metadata: Record<string, unknown>; created_at: string }>>('/api/admin/activity-log?limit=6');
+  const activityItems: ActivityItem[] = (activityRaw ?? []).map(a => {
+    const meta = a.metadata ?? {};
+    const text = `${a.action.charAt(0).toUpperCase() + a.action.slice(1)} ${String(meta.name ?? meta.title ?? meta.number ?? a.entity_type)}`;
+    const d = new Date(a.created_at);
+    const time = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' · ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    return { text, time, emphasis: ['created', 'sent'].includes(a.action) };
+  });
+
+  const { data: timeRaw } = useHubData<Array<{ entry_date: string; hours: number }>>('/api/time-entries?limit=30');
+  const TIME_DATA = (timeRaw ?? []).map(e => ({ day: new Date(e.entry_date + 'T12:00').toLocaleDateString('en-US', { month: 'short', day: '2-digit' }), hours: e.hours })).reverse();
+
+  const { data: invoicesRaw } = useHubData<Array<{ total: number; status: string }>>('/api/invoices?limit=200');
+  const PNL_DATA = (() => {
+    const months: Record<string, { revenue: number; expenses: number }> = {};
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    for (let m = 6; m >= 0; m--) {
+      const d = new Date(); d.setMonth(d.getMonth() - m);
+      const key = `${monthNames[d.getMonth()]} '${String(d.getFullYear()).slice(2)}`;
+      months[key] = { revenue: 0, expenses: 0 };
+    }
+    (invoicesRaw ?? []).forEach(inv => {
+      if (inv.status === 'paid' || inv.status === 'sent') {
+        const first = Object.keys(months).pop();
+        if (first && months[first]) months[first].revenue += Number(inv.total ?? 0);
+      }
+    });
+    return Object.entries(months).map(([month, v]) => ({ month, ...v }));
+  })();
+
+  const revenue = kpi?.revenue ?? 0;
+  const totalHours = TIME_DATA.reduce((s, d) => s + d.hours, 0);
+  const billableHours = kpi?.billable_hours ?? Math.round(totalHours * 0.78);
 
   /* ATCON blue chart system */
   const chartStroke = '#2563EB';
@@ -215,9 +254,6 @@ export default function Dashboard() {
   const gridColor = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)';
   const tickColor = isDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.35)';
   const barColor = '#2563EB';
-
-  const totalHours = TIME_DATA.reduce((s, d) => s + d.hours, 0);
-  const billableHours = Math.round(totalHours * 0.78);
 
   return (
     <motion.div
@@ -240,25 +276,55 @@ export default function Dashboard() {
           </h1>
         </div>
 
-        <div className="hidden sm:flex items-center gap-2 shrink-0">
-          <button
-            type="button"
-            className="inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-[12px] font-semibold transition-opacity hover:opacity-90"
-            style={{ background: 'var(--glass-bg)', border: '1px solid var(--border)', color: 'var(--foreground)' }}
-          >
-            <Plus className="w-3.5 h-3.5" />
-            New
-          </button>
+        <div className="hidden sm:flex items-center gap-2 shrink-0" ref={quickNewRef}>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setQuickNewOpen(o => !o)}
+              className="inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-[12px] font-semibold transition-all hover:opacity-90"
+              style={{ background: 'var(--glass-bg)', border: '1px solid var(--border)', color: 'var(--foreground)' }}
+            >
+              <Plus className="w-3.5 h-3.5" />
+              New
+            </button>
+            <AnimatePresence>
+              {quickNewOpen && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.96, y: 4 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.97, y: 4 }}
+                  transition={{ duration: 0.12 }}
+                  className="absolute right-0 top-full mt-1.5 w-44 rounded-xl overflow-hidden z-50"
+                  style={{ background: 'var(--popover)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-lg)' }}
+                >
+                  <div className="py-1">
+                    {quickItems.map(qi => (
+                      <button
+                        key={qi.kind}
+                        type="button"
+                        onClick={() => { setQuickNewOpen(false); dispatchQuickCreate(qi.kind); }}
+                        className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-left transition-colors hover:bg-white/[0.05]"
+                        style={{ color: 'var(--foreground)' }}
+                      >
+                        <div className="h-2 w-2 shrink-0 rounded-full bg-primary opacity-80" />
+                        {qi.label}
+                      </button>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </motion.div>
 
       {/* KPI strip — number-first hierarchy, calmer density */}
       <motion.div variants={item} className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         {[
-          { label: 'Revenue', value: fmt(lastRev), icon: <TrendingUp className="h-4 w-4 opacity-45" /> },
+          { label: 'Revenue', value: fmt(revenue), icon: <TrendingUp className="h-4 w-4 opacity-45" /> },
           { label: 'Billable', value: `${billableHours}h`, icon: <Clock className="h-4 w-4 opacity-45" /> },
-          { label: 'Inbox', value: pendingApprovalsCount.toString(), icon: <Inbox className="h-4 w-4 opacity-45" /> },
-          { label: 'Clients', value: '12', icon: <Users className="h-4 w-4 opacity-45" /> },
+          { label: 'Inbox', value: String(pendingApprovalsCount), icon: <Inbox className="h-4 w-4 opacity-45" /> },
+          { label: 'Clients', value: String(kpi?.active_clients ?? 0), icon: <Users className="h-4 w-4 opacity-45" /> },
         ].map((k) => (
           <div key={k.label} className="min-w-0 rounded-2xl px-4 py-4 sm:px-5 sm:py-5" style={glassKpiStyle}>
             <div className="flex items-start justify-between gap-2">
@@ -491,7 +557,7 @@ export default function Dashboard() {
             </div>
             <div className="px-5 py-5 sm:px-6 sm:py-6">
               <DashboardScrollPanel size="sm">
-                <ActivitySpineFeed />
+                <ActivitySpineFeed items={activityItems} />
               </DashboardScrollPanel>
             </div>
           </Section>
@@ -515,12 +581,16 @@ export default function Dashboard() {
             </div>
             <DashboardScrollPanel size="sm">
               <div>
-                {PENDING_APPROVALS.map((row, i) => (
+                {pendingApprovals.length === 0 ? (
+                  <div className="px-5 py-8 text-center sm:px-6">
+                    <p className="text-[13px]" style={{ color: 'var(--muted-foreground)' }}>No pending approvals.</p>
+                  </div>
+                ) : pendingApprovals.map((row, i) => (
                   <Link
                     key={row.id}
                     href={row.href}
                     className="flex items-center gap-3 px-5 py-4 transition-colors hover:bg-white/[0.03] sm:px-6"
-                    style={{ borderBottom: i < PENDING_APPROVALS.length - 1 ? '1px solid var(--border-subtle)' : 'none' }}
+                    style={{ borderBottom: i < pendingApprovals.length - 1 ? '1px solid var(--border-subtle)' : 'none' }}
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
@@ -556,7 +626,7 @@ export default function Dashboard() {
               <h2 className="text-[15px] font-semibold tracking-[-0.02em]" style={{ color: 'var(--foreground)' }}>
                 Tasks
               </h2>
-              <button type="button" className="text-[12px] font-medium flex items-center gap-1" style={{ color: 'var(--primary)' }}>
+              <button type="button" onClick={() => dispatchQuickCreate('task')} className="text-[12px] font-medium flex items-center gap-1 transition-opacity hover:opacity-80" style={{ color: 'var(--primary)' }}>
                 <Plus className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -567,7 +637,7 @@ export default function Dashboard() {
                     <p className="text-[13px]" style={{ color: 'var(--muted-foreground)' }}>
                       Nothing here yet.
                     </p>
-                    <button type="button" className="mt-2 text-[13px] font-medium" style={{ color: 'var(--primary)' }}>
+                    <button type="button" onClick={() => dispatchQuickCreate('task')} className="mt-2 text-[13px] font-medium transition-opacity hover:opacity-80" style={{ color: 'var(--primary)' }}>
                       Add task
                     </button>
                   </div>

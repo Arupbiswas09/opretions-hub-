@@ -8,12 +8,14 @@ interface ThemeContextValue {
   theme: Theme;
   isDark: boolean;
   toggleTheme: () => void;
+  setTheme: (t: Theme) => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue>({
   theme: 'dark',
   isDark: true,
   toggleTheme: () => {},
+  setTheme: () => {},
 });
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
@@ -26,6 +28,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     applyTheme(initial);
   }, []);
 
+  const setThemeExplicit = (next: Theme) => {
+    setTheme(next);
+    localStorage.setItem('hub-theme', next);
+    applyTheme(next);
+  };
+
   const toggleTheme = () => {
     setTheme(prev => {
       const next: Theme = prev === 'dark' ? 'light' : 'dark';
@@ -36,7 +44,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <ThemeContext.Provider value={{ theme, isDark: theme === 'dark', toggleTheme }}>
+    <ThemeContext.Provider
+      value={{ theme, isDark: theme === 'dark', toggleTheme, setTheme: setThemeExplicit }}
+    >
       {children}
     </ThemeContext.Provider>
   );

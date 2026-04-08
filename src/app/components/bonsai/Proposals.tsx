@@ -1,6 +1,7 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'motion/react';
+import { useHubDataInvalidation } from '../../lib/hub/use-data-invalidation';
 import {
   Plus, Search, FileText, Eye, Send, CheckCircle2,
   Clock, DollarSign, MoreHorizontal, ArrowUpRight, Filter
@@ -42,26 +43,44 @@ const ROW_ACCENT: Record<ProposalStatus, string> = {
   declined: '#b91c1c',
 };
 
-const PROPOSALS = [
-  { id: 1, title: 'Website Redesign Proposal', client: 'Acme Corporation',
-    amount: '$24,500', status: 'accepted' as ProposalStatus, date: 'Mar 28, 2026',
-    viewed: true },
-  { id: 2, title: 'Mobile App Development — Phase 2', client: 'Tech Startup Inc',
-    amount: '$85,000', status: 'sent' as ProposalStatus, date: 'Apr 1, 2026',
-    viewed: false },
-  { id: 3, title: 'Brand Identity Package', client: 'Local Retail Co',
-    amount: '$15,000', status: 'viewed' as ProposalStatus, date: 'Apr 3, 2026',
-    viewed: true },
-  { id: 4, title: 'SEO & Content Strategy', client: 'Growth Labs',
-    amount: '$12,000', status: 'draft' as ProposalStatus, date: 'Apr 5, 2026',
-    viewed: false },
-  { id: 5, title: 'E-commerce Platform Build', client: 'Fashion Forward',
-    amount: '$45,000', status: 'sent' as ProposalStatus, date: 'Apr 4, 2026',
-    viewed: false },
-  { id: 6, title: 'Analytics Dashboard Design', client: 'DataViz Corp',
-    amount: '$18,500', status: 'declined' as ProposalStatus, date: 'Mar 20, 2026',
-    viewed: true },
-];
+function normalizeProposalStatus(raw: string | null | undefined): ProposalStatus {
+  const k = (raw || 'draft').toLowerCase().replace(/\s+/g, '_');
+  if (k in STATUS_CONFIG) return k as ProposalStatus;
+  if (k === 'rejected' || k === 'declined') return 'declined';
+  if (k === 'approved' || k === 'accepted') return 'accepted';
+  return 'draft';
+}
+
+function formatMoney(n: number | null | undefined): string {
+  if (n == null || !Number.isFinite(Number(n))) return '—';
+  const v = Number(n);
+  if (v >= 1000) return `$${(v / 1000).toFixed(1)}K`;
+  return `$${Math.round(v).toLocaleString()}`;
+}
+
+function formatDate(iso: string | null | undefined): string {
+  if (!iso) return '—';
+  try {
+    return new Date(iso).toLocaleDateString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  } catch {
+    return '—';
+  }
+}
+
+type ProposalRow = {
+  id: string;
+  title: string;
+  client: string;
+  amount: string;
+  valueNum: number | null;
+  status: ProposalStatus;
+  date: string;
+  viewed: boolean;
+};
 
 /* ── Glass card ── */
 function Card({ children, className = '' }: { children: React.ReactNode; className?: string }) {
@@ -79,23 +98,56 @@ function Card({ children, className = '' }: { children: React.ReactNode; classNa
 }
 
 export default function Proposals() {
+  const refresh = useHubDataInvalidation('proposals', 'all');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<ProposalStatus | 'all'>('all');
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
-  const [selectedProposal, setSelectedProposal] = useState<typeof PROPOSALS[0] | null>(null);
+  const [selectedProposal, setSelectedProposal] = useState<ProposalRow | null>(null);
+  const [rows, setRows] = useState<ProposalRow[]>([]);
 
-  const filtered = PROPOSALS.filter(p => {
-    if (filterStatus !== 'all' && p.status !== filterStatus) return false;
-    if (searchQuery && !p.title.toLowerCase().includes(searchQuery.toLowerCase())) return false;
-    return true;
-  });
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const res = await fetch('/api/proposals?limit=100', { credentials: 'include' });
+      const json = await res.json();
+      if (cancelled || !res.ok || !Array.isArray(json.data)) return;
+      const mapped: ProposalRow[] = json.data.map((r: Record<string, unknown>) => {
+        const st = normalizeProposalStatus(r.status as string);
+        const val = r.value != null ? Number(r.value) : null;
+        return {
+          id: String(r.id),
+          title: String(r.title ?? ''),
+          client: String(r.client_name ?? '—'),
+          amount: formatMoney(val),
+          valueNum: val,
+          status: st,
+          date: formatDate(r.sent_date as string | undefined) || formatDate(r.created_at as string),
+          viewed: st === 'viewed',
+        };
+      });
+      setRows(mapped);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [refresh]);
 
-  /* Pipeline metrics */
-  const totalValue = PROPOSALS.reduce((s, p) => s + parseFloat(p.amount.replace(/[$,]/g, '')), 0);
-  const acceptedValue = PROPOSALS.filter(p => p.status === 'accepted')
-    .reduce((s, p) => s + parseFloat(p.amount.replace(/[$,]/g, '')), 0);
-  const pendingCount = PROPOSALS.filter(p => p.status === 'sent' || p.status === 'viewed').length;
+  const filtered = useMemo(
+    () =>
+      rows.filter((p) => {
+        if (filterStatus !== 'all' && p.status !== filterStatus) return false;
+        if (searchQuery && !p.title.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+        return true;
+      }),
+    [rows, filterStatus, searchQuery]
+  );
+
+  const totalValue = rows.reduce((s, p) => s + (p.valueNum ?? 0), 0);
+  const acceptedValue = rows
+    .filter((p) => p.status === 'accepted')
+    .reduce((s, p) => s + (p.valueNum ?? 0), 0);
+  const pendingCount = rows.filter((p) => p.status === 'sent' || p.status === 'viewed').length;
 
   return (
     <>
@@ -115,7 +167,7 @@ export default function Proposals() {
       {/* ═══ Pipeline Summary KPIs ═══ */}
       <motion.div variants={fadeItem} className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {[
-          { label: 'TOTAL PROPOSALS', value: PROPOSALS.length.toString(), sub: 'All time' },
+          { label: 'TOTAL PROPOSALS', value: rows.length.toString(), sub: 'All time' },
           { label: 'PIPELINE VALUE', value: `$${(totalValue / 1000).toFixed(0)}K`, sub: 'Combined' },
           { label: 'WON VALUE', value: `$${(acceptedValue / 1000).toFixed(1)}K`, sub: 'Accepted', accent: true },
           { label: 'PENDING', value: pendingCount.toString(), sub: 'Awaiting response' },
@@ -140,8 +192,8 @@ export default function Proposals() {
           {(['all', ...Object.keys(STATUS_CONFIG)] as const).map(status => {
             const isActive = filterStatus === status;
             const cfg = status === 'all' ? null : STATUS_CONFIG[status as ProposalStatus];
-            const count = status === 'all' ? PROPOSALS.length :
-              PROPOSALS.filter(p => p.status === status).length;
+            const count =
+              status === 'all' ? rows.length : rows.filter((p) => p.status === status).length;
             return (
               <button
                 key={status}

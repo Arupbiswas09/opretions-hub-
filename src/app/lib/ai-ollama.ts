@@ -13,8 +13,17 @@ export function getOllamaBaseUrl(): string {
   return base.replace(/\/$/, '');
 }
 
-export function getAiModel(): string {
-  return (process.env.AI_MODEL || 'gemma4:e4b').trim();
+/** True when `OLLAMA_URL` is set — health and pings use Ollama; otherwise health checks OpenAI. */
+export function isOllamaConfigured(): boolean {
+  return Boolean(process.env.OLLAMA_URL?.trim());
+}
+
+/**
+ * Tag expected on the Ollama server for `/api/ai/health` when Ollama is enabled.
+ * Separate from `AI_MODEL` (GPT/OpenAI) so both can coexist.
+ */
+export function getOllamaModel(): string {
+  return (process.env.OLLAMA_MODEL || 'llama3.2:3b').trim();
 }
 
 export function ollamaHeaders(extra?: Record<string, string>): HeadersInit {

@@ -58,7 +58,7 @@ export default function Talent({ initialScreen = 'dashboard', hideNav = false }:
       )}
 
       <AnimatePresence mode="wait">
-        <motion.div key={currentScreen} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.25, ease: 'easeOut' }}>
+        <motion.div key={currentScreen} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4, pointerEvents: 'none' }} transition={{ duration: 0.25, ease: 'easeOut' }}>
           {currentScreen === 'dashboard' && <TA01Dashboard onNavigateToJobs={() => setCurrentScreen('jobs')} onNavigateToCandidates={() => setCurrentScreen('candidates')} />}
           {currentScreen === 'jobs' && <TA02JobsList onJobClick={(job) => { setSelectedJob(job); setCurrentScreen('job-detail'); }} onCreate={() => setShowJobDrawer(true)} onPipelineView={() => setCurrentScreen('pipeline')} />}
           {currentScreen === 'pipeline' && <TA03JobsPipeline />}
@@ -618,7 +618,6 @@ function ClientShortlistView({ onFeedbackSubmit }: any) {
 
   const handleFeedback = (id: string, decision: 'approved' | 'rejected') => {
     setFeedback({ ...feedback, [id]: decision });
-    alert(`Candidate ${decision}!\n\nFeedback will be shared with recruiter.\nActivity entry created in internal system.`);
   };
 
   return (
@@ -789,7 +788,7 @@ function AddToJobModal({ isOpen, onClose }: any) {
         </div>
         <div className="flex justify-end gap-3 border-t border-border bg-background-2 px-6 py-4">
           <BonsaiButton variant="ghost" onClick={onClose}>Cancel</BonsaiButton>
-          <BonsaiButton variant="primary" onClick={() => { alert('Candidate added to job!'); onClose(); }}>
+          <BonsaiButton variant="primary" onClick={() => { onClose(); }}>
             Add to Job
           </BonsaiButton>
         </div>
@@ -842,7 +841,7 @@ function InterviewModal({ isOpen, onClose }: any) {
         </div>
         <div className="flex shrink-0 justify-end gap-3 border-t border-border bg-background-2 px-6 py-4">
           <BonsaiButton variant="ghost" onClick={onClose}>Cancel</BonsaiButton>
-          <BonsaiButton variant="primary" onClick={() => { alert('Interview scheduled!'); onClose(); }}>
+          <BonsaiButton variant="primary" onClick={() => { onClose(); }}>
             Schedule Interview
           </BonsaiButton>
         </div>

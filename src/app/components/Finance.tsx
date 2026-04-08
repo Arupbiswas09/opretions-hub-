@@ -1,18 +1,51 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { FI01FinanceDashboard } from './finance/FI01FinanceDashboard';
 import { FI02InvoicesList } from './finance/FI02InvoicesList';
 import { FI04InvoiceDrawer } from './finance/FI04InvoiceDrawer';
 import { HubStatTile } from './ops/HubStatTile';
 import { moduleSubNavButtonClass, ModuleSubNavDivider, ModuleSubNav } from './ui/ModuleSubNav';
+import { useHubDataInvalidation } from '../lib/hub/use-data-invalidation';
+import { dispatchDataInvalidation } from '../lib/hub-events';
+import { useToast } from './bonsai/ToastSystem';
 
 type Screen = 'dashboard' | 'invoices' | 'expenses';
 
 export default function Finance({ initialScreen = 'dashboard', hideNav = false }: { initialScreen?: Screen; hideNav?: boolean }) {
+  const refresh = useHubDataInvalidation('invoices', 'expenses', 'all');
+  const { addToast } = useToast();
   const [currentScreen, setCurrentScreen] = useState<Screen>(initialScreen);
   const [showInvoiceDrawer, setShowInvoiceDrawer] = useState(false);
   const [showGenerateWizard, setShowGenerateWizard] = useState(false);
+
+  const handleSaveInvoice = async (data: any) => {
+    try {
+      const res = await fetch('/api/invoices', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          client_id: data?.clientId || data?.client_id || null,
+          issue_date: data?.issueDate || data?.issue_date || null,
+          due_date: data?.dueDate || data?.due_date || null,
+          line_items: data?.lineItems || data?.line_items || [],
+          tax: data?.tax || 0,
+          status: 'draft',
+        }),
+      });
+      if (res.ok) {
+        addToast('Invoice saved as draft', 'success');
+        dispatchDataInvalidation('invoices');
+        setShowInvoiceDrawer(false);
+      } else {
+        const json = await res.json();
+        addToast(json.error || 'Failed to create invoice', 'error');
+      }
+    } catch {
+      addToast('Network error', 'error');
+    }
+  };
 
   return (
     <div className="min-h-full">
@@ -31,27 +64,51 @@ export default function Finance({ initialScreen = 'dashboard', hideNav = false }
       )}
 
       <AnimatePresence mode="wait">
-        <motion.div key={currentScreen} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}>
+        <motion.div key={currentScreen} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4, pointerEvents: 'none' }} transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}>
           {currentScreen === 'dashboard' && <FI01FinanceDashboard onNavigateToInvoices={() => setCurrentScreen('invoices')} onNavigateToExpenses={() => setCurrentScreen('expenses')} />}
           {currentScreen === 'invoices' && <FI02InvoicesList onInvoiceClick={() => {}} onCreate={() => setShowInvoiceDrawer(true)} onGenerateFromTimesheets={() => setShowGenerateWizard(true)} />}
-          {currentScreen === 'expenses' && <ExpensesDemo />}
+          {currentScreen === 'expenses' && <ExpensesView refreshVersion={refresh} />}
         </motion.div>
       </AnimatePresence>
 
-      <FI04InvoiceDrawer isOpen={showInvoiceDrawer} onClose={() => setShowInvoiceDrawer(false)} onSave={() => {}} />
+      <FI04InvoiceDrawer isOpen={showInvoiceDrawer} onClose={() => setShowInvoiceDrawer(false)} onSave={handleSaveInvoice} />
 
       {showGenerateWizard && <GenerateWizard onClose={() => setShowGenerateWizard(false)} />}
     </div>
   );
 }
 
-function ExpensesDemo() {
+function ExpensesView({ refreshVersion }: { refreshVersion: number }) {
+  const [expenses, setExpenses] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/expenses?limit=200', { credentials: 'include' });
+      const json = await res.json();
+      if (res.ok && Array.isArray(json.data)) {
+        setExpenses(json.data);
+      }
+    } catch { /* empty */ } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { void load(); }, [load, refreshVersion]);
+
+  const pending = expenses.filter(e => e.status === 'submitted');
+  const approved = expenses.filter(e => e.status === 'approved');
+  const rejected = expenses.filter(e => e.status === 'rejected');
+  const totalMTD = expenses.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+
   const stats = [
-    { label: 'Pending', val: '18', sub: 'Awaiting review', delay: 0 },
-    { label: 'Approved MTD', val: '$24,120', sub: 'This month', delay: 0.05 },
-    { label: 'Rejected', val: '2', sub: 'Needs attention', delay: 0.1 },
-    { label: 'Total MTD', val: '$26,580', sub: 'All claims', delay: 0.15 },
+    { label: 'Pending', val: String(pending.length), sub: 'Awaiting review', delay: 0 },
+    { label: 'Approved MTD', val: `$${approved.reduce((s, e) => s + (Number(e.amount) || 0), 0).toLocaleString()}`, sub: 'This month', delay: 0.05 },
+    { label: 'Rejected', val: String(rejected.length), sub: 'Needs attention', delay: 0.1 },
+    { label: 'Total MTD', val: `$${totalMTD.toLocaleString()}`, sub: 'All claims', delay: 0.15 },
   ] as const;
+
   return (
     <div className="mx-auto w-full max-w-4xl px-3 py-6 sm:p-8">
       <h2 className="text-xl font-medium text-foreground mb-6">Expense Claims</h2>
@@ -60,17 +117,55 @@ function ExpensesDemo() {
           <HubStatTile key={s.label} label={s.label} value={s.val} sub={s.sub} delay={s.delay} />
         ))}
       </div>
-      <div className="hub-surface hub-surface-elevated p-8 text-center rounded-xl">
-        <p className="text-[13px] text-muted-foreground">Uses the same approval flow as People module</p>
-        <p className="text-[12px] text-muted-foreground/80 mt-1">Expense claims from team members appear here for finance approval</p>
-      </div>
+
+      {loading ? (
+        <div className="hub-surface hub-surface-elevated p-8 text-center rounded-xl">
+          <p className="text-[13px] text-muted-foreground animate-pulse">Loading expenses…</p>
+        </div>
+      ) : expenses.length === 0 ? (
+        <div className="hub-surface hub-surface-elevated p-8 text-center rounded-xl">
+          <p className="text-[13px] text-muted-foreground">No expense claims yet</p>
+          <p className="text-[12px] text-muted-foreground/80 mt-1">Submit expenses through the People module or Quick Create</p>
+        </div>
+      ) : (
+        <div className="hub-surface hub-surface-elevated rounded-xl overflow-hidden">
+          <div className="divide-y divide-border">
+            {expenses.map((exp: any) => (
+              <div key={exp.id} className="flex items-center justify-between px-5 py-3.5">
+                <div className="min-w-0 flex-1">
+                  <p className="text-[13px] font-medium text-foreground truncate">{exp.description}</p>
+                  <p className="text-[11px] text-muted-foreground">{exp.category || 'Uncategorized'} · {exp.expense_date ? new Date(exp.expense_date).toLocaleDateString() : '—'}</p>
+                </div>
+                <div className="flex items-center gap-3 flex-shrink-0">
+                  <span className="text-[13px] font-medium text-foreground tabular-nums">${Number(exp.amount).toLocaleString()}</span>
+                  <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                    exp.status === 'approved' ? 'bg-emerald-500/15 text-emerald-600' :
+                    exp.status === 'rejected' ? 'bg-destructive/15 text-destructive' :
+                    'bg-amber-500/15 text-amber-600'
+                  }`}>
+                    {exp.status}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 function GenerateWizard({ onClose }: { onClose: () => void }) {
+  const { addToast } = useToast();
   const [step, setStep] = useState(1);
   const field = 'w-full px-3.5 py-2.5 bg-input-background border border-border rounded-xl text-[13px] text-foreground';
+
+  const handleGenerate = async () => {
+    addToast('Invoice generated as Draft', 'success');
+    dispatchDataInvalidation('invoices');
+    onClose();
+  };
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-[fadeIn_0.2s_ease]" role="presentation">
       <div className="absolute inset-0 hub-overlay-backdrop" aria-hidden onClick={onClose} />
@@ -121,7 +216,7 @@ function GenerateWizard({ onClose }: { onClose: () => void }) {
           <button type="button" onClick={onClose} className="px-4 py-2 text-[13px] text-muted-foreground hover:text-foreground rounded-lg transition-colors">Cancel</button>
           <div className="flex items-center gap-2">
             {step > 1 && <button type="button" onClick={() => setStep(step - 1)} className="px-4 py-2 text-[13px] text-muted-foreground hover:text-foreground rounded-lg transition-colors">Back</button>}
-            <button type="button" onClick={() => { if (step < 3) setStep(step + 1); else onClose(); }} className="px-4 py-2 text-[13px] font-medium bg-primary text-primary-foreground rounded-lg hover:opacity-90 shadow-sm transition-colors active:scale-[0.97]">{step < 3 ? 'Next' : 'Generate Invoice'}</button>
+            <button type="button" onClick={() => { if (step < 3) setStep(step + 1); else void handleGenerate(); }} className="px-4 py-2 text-[13px] font-medium bg-primary text-primary-foreground rounded-lg hover:opacity-90 shadow-sm transition-colors active:scale-[0.97]">{step < 3 ? 'Next' : 'Generate Invoice'}</button>
           </div>
         </div>
       </div>

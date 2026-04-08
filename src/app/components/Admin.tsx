@@ -60,7 +60,7 @@ export default function Admin() {
       </div>
 
       <AnimatePresence mode="wait">
-        <motion.div key={currentScreen} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.25, ease: 'easeOut' }}>
+        <motion.div key={currentScreen} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4, pointerEvents: 'none' }} transition={{ duration: 0.25, ease: 'easeOut' }}>
           {currentScreen === 'overview' && <AdminOverview onNavigate={setCurrentScreen} />}
           {currentScreen === 'modules' && <ModulesSettings onNavigate={setCurrentScreen} />}
           {currentScreen === 'modules-preview' && <ModulesSidebarPreview onNavigate={setCurrentScreen} />}
@@ -538,7 +538,7 @@ function CustomFieldsBuilder({ onNavigate }: { onNavigate: (screen: Screen) => v
             </div>
             <div className="flex justify-end gap-3 border-t border-border bg-background-2 px-6 py-4">
               <BonsaiButton variant="ghost" onClick={() => setShowAddModal(false)}>Cancel</BonsaiButton>
-              <BonsaiButton variant="primary" onClick={() => { setShowAddModal(false); alert('Field added!'); }}>Add Field</BonsaiButton>
+              <BonsaiButton variant="primary" onClick={() => { setShowAddModal(false); }}>Add Field</BonsaiButton>
             </div>
           </div>
         </div>

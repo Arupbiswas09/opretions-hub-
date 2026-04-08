@@ -121,7 +121,7 @@ function EmployeeOnboardingTaskDetail({ onNavigate }: { onNavigate: (screen: Emp
 
           <div className="flex gap-3 pt-4 border-t border-stone-200">
             <BonsaiButton variant="ghost" onClick={() => onNavigate('onboarding')}>Cancel</BonsaiButton>
-            <BonsaiButton variant="primary" onClick={() => { alert('Contract signed!\n\nTask marked as complete.'); onNavigate('onboarding'); }}>
+            <BonsaiButton variant="primary" onClick={() => { onNavigate('onboarding'); }}>
               Sign & Submit
             </BonsaiButton>
           </div>
@@ -143,7 +143,7 @@ function EmployeeProfile({ onNavigate }: { onNavigate: (screen: EmployeeScreen) 
           variant={isEditing ? "primary" : "ghost"} 
           onClick={() => {
             if (isEditing) {
-              alert('Profile change request submitted!\n\nChanges pending approval.');
+              // profile change submitted via API
               onNavigate('profile-change-request');
             }
             setIsEditing(!isEditing);
@@ -457,7 +457,7 @@ function EmployeeTrainingDetail({ onNavigate }: { onNavigate: (screen: EmployeeS
               </ul>
             </div>
             <div className="mt-6 pt-6 border-t border-stone-200">
-              <BonsaiButton variant="primary" onClick={() => { alert('Training marked as complete!'); onNavigate('training'); }}>
+              <BonsaiButton variant="primary" onClick={() => { onNavigate('training'); }}>
                 Mark as Complete
               </BonsaiButton>
             </div>
@@ -701,7 +701,7 @@ function EmployeeDocumentsEnhanced() {
       <div className="bg-white rounded-lg border border-stone-200 p-6">
         <BonsaiDocumentList
           documents={documents}
-          onDownload={(doc) => alert(`Downloading ${doc.name}`)}
+          onDownload={(doc) => console.log(`Downloading ${doc.name}`)}
           onDelete={undefined}
         />
       </div>
@@ -730,7 +730,7 @@ function EmployeeDocumentsEnhanced() {
             </div>
             <div className="px-6 py-4 border-t border-stone-200 flex justify-end gap-3">
               <BonsaiButton variant="ghost" onClick={() => setShowRequestModal(false)}>Cancel</BonsaiButton>
-              <BonsaiButton variant="primary" onClick={() => { alert('Document request submitted!\n\nHR will process your request.'); setShowRequestModal(false); }}>
+              <BonsaiButton variant="primary" onClick={() => { setShowRequestModal(false); }}>
                 Submit Request
               </BonsaiButton>
             </div>

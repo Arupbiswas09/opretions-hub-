@@ -7,28 +7,52 @@ import {
   Sparkles, FileText, Link as LinkIcon, Loader2,
   Mail, MessageCircle, MessageSquare, StickyNote,
   AlertCircle, WifiOff,
-  Plug, ExternalLink, Filter, Wand2, Copy, Check,
+  ExternalLink, Filter, Wand2, Copy, Check,
   RotateCcw, Zap, ListTodo, Bug,
+  ChevronDown,
 } from 'lucide-react';
 import { CommunicationCreateTaskModal, CommunicationCreateIssueModal } from './communication/CommTaskIssueModals';
 import { BonsaiButton } from './bonsai/BonsaiButton';
 import { cn } from './ui/utils';
 import { useMediaQuery } from '../lib/use-media-query';
 import { useSearchParams } from 'next/navigation';
+import { commFetchJsonWithPolicy, getCommNavCache, getCommBackoff } from '../lib/communication-prefetch';
+import DOMPurify from 'dompurify';
+import { inferReplyToneFromSummary } from '../lib/ai/tone-from-summary';
 
 /* ═══════════════════════════════════════════════════════════
    Types
 ═══════════════════════════════════════════════════════════ */
 type Channel = 'email' | 'linkedin' | 'whatsapp' | 'internal' | 'unknown';
+type ReplyTone = 'professional' | 'friendly' | 'concise' | 'detailed';
 type AccountStatus = 'CONNECTED' | 'RUNNING' | 'STOPPED' | 'CONNECTING' | 'ERROR';
+
+function isEmailAccount(a: UnipileAccount): boolean {
+  return providerToChannel(a.type) === 'email';
+}
 
 interface UnipileAccount {
   id: string;
   type: string; // 'LINKEDIN' | 'WHATSAPP' | 'GOOGLE' | 'MICROSOFT' | etc.
   name?: string;
   username?: string;
-  status: AccountStatus;
+  status?: AccountStatus;
   created_at?: string;
+}
+
+function normalizeUnipileAccount(raw: Record<string, unknown>): UnipileAccount | null {
+  // Unipile often exposes both `id` and `account_id`; `account_id` is the stable identifier
+  // expected by many endpoints (notably mail). Prefer it when present.
+  const id = raw.account_id ?? raw.id;
+  if (id == null || String(id).trim() === '') return null;
+  return {
+    id: String(id),
+    type: String(raw.type ?? 'UNKNOWN'),
+    name: typeof raw.name === 'string' ? raw.name : undefined,
+    username: typeof raw.username === 'string' ? raw.username : undefined,
+    status: typeof raw.status === 'string' ? (raw.status as AccountStatus) : undefined,
+    created_at: typeof raw.created_at === 'string' ? raw.created_at : undefined,
+  };
 }
 
 interface UnipileMessage {
@@ -51,6 +75,9 @@ interface UnipileChat {
   id: string;
   account_id: string;
   provider?: string;
+  /** Email thread (Unipile mail API — not /chats) */
+  mail_thread_id?: string;
+  mail_message_id?: string;
   name?: string;
   attendees?: { name?: string; identifier?: string; headline?: string }[];
   last_message?: { text?: string; timestamp?: string; from_me?: boolean };
@@ -59,6 +86,114 @@ interface UnipileChat {
   updated_at?: string;
   subject?: string;
   is_unread?: boolean;
+}
+
+function parseMailTime(raw: string | undefined): number {
+  if (!raw) return 0;
+  const t = Date.parse(raw);
+  return Number.isFinite(t) ? t : 0;
+}
+
+function looksLikeHtml(s: string): boolean {
+  return /<([a-z][\s\S]*?)>/i.test(s);
+}
+
+function htmlToText(html: string): string {
+  if (!html) return '';
+  try {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    return (doc.body?.textContent || '').replace(/\s+/g, ' ').trim();
+  } catch {
+    return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+}
+
+function sanitizeEmailHtml(html: string): string {
+  const clean = DOMPurify.sanitize(html, {
+    USE_PROFILES: { html: true },
+    ADD_ATTR: ['target', 'rel', 'style'],
+  });
+  return clean.replace(/<a\b(?![^>]*\btarget=)[^>]*>/gi, (m) => {
+    const hasRel = /\brel=/.test(m);
+    const withTarget = m.replace(/>$/, ' target="_blank">');
+    return hasRel ? withTarget : withTarget.replace(/>$/, ' rel="noopener noreferrer">');
+  });
+}
+
+function mailRecordId(e: Record<string, unknown>): string {
+  const id = e.id ?? e.deprecated_id;
+  if (id == null || String(id).trim() === '') return '';
+  return String(id);
+}
+
+function mailRecordThreadId(e: Record<string, unknown>): string {
+  const t = e.thread_id ?? e.threadId;
+  return t != null ? String(t).trim() : '';
+}
+
+function mailRecordFrom(e: Record<string, unknown>): { display_name?: string; identifier?: string } | null {
+  if (e.from_attendee && typeof e.from_attendee === 'object') {
+    return e.from_attendee as { display_name?: string; identifier?: string };
+  }
+  const list = e.from_attendees;
+  if (Array.isArray(list) && list[0] && typeof list[0] === 'object') {
+    return list[0] as { display_name?: string; identifier?: string };
+  }
+  return null;
+}
+
+/** Collapse GET /emails rows into one row per thread (or single message if no thread_id). */
+function groupRawEmailsToChats(items: unknown[], accountId: string): UnipileChat[] {
+  const best = new Map<string, { mail: Record<string, unknown>; at: number }>();
+  for (const raw of items) {
+    if (!raw || typeof raw !== 'object') continue;
+    const e = raw as Record<string, unknown>;
+    const id = mailRecordId(e);
+    if (!id) continue;
+    const threadId = mailRecordThreadId(e);
+    const solo = !threadId;
+    const key = solo ? `msg:${id}` : threadId;
+    const at = parseMailTime(typeof e.date === 'string' ? e.date : undefined);
+    const prev = best.get(key);
+    if (!prev || at >= prev.at) best.set(key, { mail: e, at });
+  }
+
+  const rows: UnipileChat[] = [];
+  for (const [key, { mail }] of best) {
+    const mid = mailRecordId(mail);
+    const threadId = mailRecordThreadId(mail);
+    const solo = !threadId;
+    const fromA = mailRecordFrom(mail);
+    const fromAddr = fromA?.identifier ? String(fromA.identifier) : '';
+    const fromName = fromA?.display_name ? String(fromA.display_name) : '';
+    const subject = typeof mail.subject === 'string' ? mail.subject : '';
+    const body =
+      (typeof mail.body === 'string' && mail.body) ||
+      (typeof mail.body_plain === 'string' && mail.body_plain) ||
+      '';
+    const snippetSource = looksLikeHtml(body) ? htmlToText(body) : body;
+    const snippet = snippetSource
+      ? snippetSource.slice(0, 220).replace(/\s+/g, ' ').trim()
+      : subject || 'No subject';
+    const date =
+      (typeof mail.date === 'string' && mail.date) ||
+      (typeof mail.read_date === 'string' && mail.read_date) ||
+      new Date().toISOString();
+
+    rows.push({
+      id: `mail:${accountId}:${key}`,
+      account_id: accountId,
+      provider: 'MAIL',
+      subject: subject || undefined,
+      name: (fromName || fromAddr || subject || `Email · ${mid.slice(0, 8)}`).trim() || 'Email',
+      mail_thread_id: solo ? undefined : threadId,
+      mail_message_id: solo ? mid : undefined,
+      last_message: { text: snippet, timestamp: date, from_me: false },
+      timestamp: date,
+      updated_at: date,
+    });
+  }
+  return rows;
 }
 
 /** Sidebar list: filled after GET /chats/{id}/attendees when the list API omits title/photo */
@@ -89,6 +224,38 @@ const INTERNAL_TEAM = [
 ] as const;
 
 const INTERNAL_INBOX_STORAGE_KEY = 'hub-internal-inbox-v1';
+const CHAT_MEMORY_STORAGE_KEY = 'hub-comm-chat-memory-v1';
+
+type ChatMemory = {
+  summary?: string;
+  tone?: ReplyTone;
+  updatedAt?: string;
+};
+
+function memoryKeyForChat(chatId: string) {
+  return `${CHAT_MEMORY_STORAGE_KEY}:${chatId}`;
+}
+
+function loadChatMemory(chatId: string): ChatMemory | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem(memoryKeyForChat(chatId));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as ChatMemory;
+    return parsed && typeof parsed === 'object' ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveChatMemory(chatId: string, mem: ChatMemory) {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(memoryKeyForChat(chatId), JSON.stringify(mem));
+  } catch {
+    // ignore storage quota/errors
+  }
+}
 
 function seedInternalThreads(): InternalThread[] {
   return INTERNAL_TEAM.map(p => ({
@@ -133,15 +300,40 @@ function providerToChannel(type: string): Channel {
   const t = (type || '').toUpperCase();
   if (t.includes('LINKEDIN')) return 'linkedin';
   if (t.includes('WHATSAPP')) return 'whatsapp';
-  if (t.includes('GOOGLE') || t.includes('MICROSOFT') || t.includes('IMAP') || t.includes('MAIL')) return 'email';
+  if (
+    t.includes('GOOGLE') ||
+    t.includes('GMAIL') ||
+    t.includes('MICROSOFT') ||
+    t.includes('OUTLOOK') ||
+    t.includes('OFFICE') ||
+    t.includes('EXCHANGE') ||
+    t.includes('O365') ||
+    t.includes('IMAP') ||
+    t.includes('ICLOUD') ||
+    t.includes('MAIL')
+  ) {
+    return 'email';
+  }
   if (t.includes('INTERNAL')) return 'internal';
   return 'unknown';
 }
 
 function channelFromAccountId(accountId: string, accounts: UnipileAccount[]): Channel {
   if (accountId === INTERNAL_LOCAL_ACCOUNT) return 'internal';
-  const acc = accounts.find(a => a.id === accountId);
+  const acc = accounts.find((a) => String(a.id) === String(accountId));
   return acc ? providerToChannel(acc.type) : 'unknown';
+}
+
+/** Channel types that appear in the filter bar, in display order (only those with a connected account). */
+const FILTERABLE_INTEGRATION_CHANNELS: Channel[] = ['email', 'linkedin', 'whatsapp'];
+
+function channelsFromAccounts(accounts: UnipileAccount[]): Channel[] {
+  const have = new Set<Channel>();
+  for (const a of accounts) {
+    const ch = providerToChannel(a.type);
+    if (FILTERABLE_INTEGRATION_CHANNELS.includes(ch)) have.add(ch);
+  }
+  return FILTERABLE_INTEGRATION_CHANNELS.filter((c) => have.has(c));
 }
 
 const CHANNEL_ICON: Record<Channel, React.ElementType> = {
@@ -343,6 +535,7 @@ function chatTime(chat: UnipileChat): string {
 }
 
 const CHATS_CACHE_TTL_MS = 120_000;
+const ACCOUNTS_CACHE_TTL_MS = 300_000;
 
 /** Initials avatar from a name string */
 function initials(name: string): string {
@@ -524,21 +717,32 @@ function resolveMessageSenderLabel(
 /* ═══════════════════════════════════════════════════════════
    Account Status Badge
 ═══════════════════════════════════════════════════════════ */
-function StatusDot({ status }: { status: AccountStatus }) {
-  const cls = {
-    RUNNING: 'bg-emerald-500', CONNECTED: 'bg-emerald-500',
-    CONNECTING: 'bg-amber-500 animate-pulse', STOPPED: 'bg-red-500', ERROR: 'bg-red-500',
-  }[status] || 'bg-gray-400';
+function StatusDot({ status }: { status?: AccountStatus }) {
+  const cls = (status
+    ? {
+        RUNNING: 'bg-emerald-500',
+        CONNECTED: 'bg-emerald-500',
+        CONNECTING: 'bg-amber-500 animate-pulse',
+        STOPPED: 'bg-red-500',
+        ERROR: 'bg-red-500',
+      }[status]
+    : undefined) || 'bg-gray-400';
   return <span className={cn('inline-block h-2 w-2 rounded-full shrink-0', cls)} />;
 }
 
-/** Single channel filter — segmented control (replaces duplicate “All Channels” dropdown vs account tabs) */
-function ChannelSegmented({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+/** Channel filter: All + only integrations you have connected + Internal */
+function ChannelSegmented({
+  value,
+  onChange,
+  connectedChannels,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  connectedChannels: Channel[];
+}) {
   const opts: { id: string; label: string }[] = [
     { id: 'all', label: 'All' },
-    { id: 'email', label: 'Email' },
-    { id: 'linkedin', label: 'LinkedIn' },
-    { id: 'whatsapp', label: 'WhatsApp' },
+    ...connectedChannels.map((ch) => ({ id: ch, label: CHANNEL_LABEL[ch] })),
     { id: 'internal', label: 'Internal' },
   ];
   return (
@@ -547,8 +751,8 @@ function ChannelSegmented({ value, onChange }: { value: string; onChange: (v: st
       role="group"
       aria-label="Filter by channel type"
       style={{
-        background: 'color-mix(in srgb, var(--foreground) 4.5%, var(--secondary))',
-        boxShadow: 'inset 0 1px 2px color-mix(in srgb, var(--foreground) 5%, transparent)',
+        background: 'color-mix(in srgb, var(--foreground) 5%, var(--muted))',
+        boxShadow: 'inset 0 1px 2px color-mix(in srgb, var(--foreground) 6%, transparent)',
       }}>
       {opts.map(o => {
         const active = value === o.id;
@@ -575,130 +779,114 @@ function ChannelSegmented({ value, onChange }: { value: string; onChange: (v: st
 }
 
 /* ═══════════════════════════════════════════════════════════
-   Connect Accounts Panel (shown when no accounts)
-═══════════════════════════════════════════════════════════ */
-function ConnectPanel({ onConnect, connecting }: {
-  onConnect: (provider: string) => void; connecting: string | null;
-}) {
-  const providers = [
-    { id: 'linkedin', label: 'LinkedIn', icon: MessageCircle, color: '#0077b5', desc: 'Messages & InMails' },
-    { id: 'whatsapp', label: 'WhatsApp', icon: MessageSquare, color: '#16a34a', desc: 'WhatsApp messages' },
-    { id: 'gmail', label: 'Gmail', icon: Mail, color: '#ea4335', desc: 'Google email' },
-    { id: 'outlook', label: 'Outlook', icon: Mail, color: '#0078d4', desc: 'Microsoft email' },
-  ];
-
-  return (
-    <div className="flex flex-1 flex-col items-center justify-center p-8 gap-6">
-      <div className="text-center max-w-sm">
-        <div className="mb-4 flex justify-center">
-          <div className="rounded-2xl p-3" style={{ background: 'var(--secondary)' }}>
-            <Plug className="h-8 w-8" style={{ color: 'var(--primary)' }} />
-          </div>
-        </div>
-        <h3 className="text-[15px] font-semibold mb-2" style={{ color: 'var(--foreground)' }}>
-          Connect your accounts
-        </h3>
-        <p className="text-[12px] leading-relaxed" style={{ color: 'var(--muted-foreground)' }}>
-          Connect LinkedIn, WhatsApp, and email accounts to see all your messages in one place.
-        </p>
-      </div>
-
-      <div className="grid grid-cols-2 gap-3 w-full max-w-xs">
-        {providers.map(p => {
-          const Icon = p.icon;
-          const isConnecting = connecting === p.id;
-          return (
-            <button key={p.id} onClick={() => onConnect(p.id)} disabled={!!connecting}
-              className="flex flex-col items-center gap-2 rounded-xl border p-4 text-center transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ borderColor: 'var(--border)', background: 'var(--secondary)' }}>
-              {isConnecting
-                ? <Loader2 className="h-6 w-6 animate-spin" style={{ color: p.color }} />
-                : <Icon className="h-6 w-6" style={{ color: p.color }} />}
-              <span className="text-[12px] font-medium" style={{ color: 'var(--foreground)' }}>{p.label}</span>
-              <span className="text-[10px]" style={{ color: 'var(--muted-foreground)' }}>{p.desc}</span>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-/* ═══════════════════════════════════════════════════════════
    Account Selector Bar
 ═══════════════════════════════════════════════════════════ */
-function AccountBar({ accounts, selectedId, onSelect, onConnect, onRefresh, connecting }: {
-  accounts: UnipileAccount[]; selectedId: string; onSelect: (id: string) => void;
-  onConnect: (provider: string) => void; onRefresh: () => void; connecting: string | null;
+function AccountBar({ accounts, onConnect, connecting }: {
+  accounts: UnipileAccount[];
+  onConnect: (provider: string) => void;
+  connecting: string | null;
 }) {
   const [showAdd, setShowAdd] = useState(false);
+  const [showManage, setShowManage] = useState(false);
   const btnRef = useRef<HTMLButtonElement>(null);
-  const [dropPos, setDropPos] = useState({ top: 0, left: 0 });
+  const manageBtnRef = useRef<HTMLButtonElement>(null);
+  const addPanelRef = useRef<HTMLDivElement>(null);
+  const managePanelRef = useRef<HTMLDivElement>(null);
+  const [dropPos, setDropPos] = useState({ top: 0, right: 0 });
+  const [managePos, setManagePos] = useState({ top: 0, right: 0 });
+  const PANEL_W = 260;
+  const panelW = () => {
+    const vw =
+      typeof document !== 'undefined'
+        ? (document.documentElement?.clientWidth || window.innerWidth)
+        : 1200;
+    return Math.min(PANEL_W, Math.max(180, vw - 16));
+  };
+  const clampRight = (right: number) => {
+    const pad = 8;
+    const vw =
+      typeof document !== 'undefined'
+        ? (document.documentElement?.clientWidth || window.innerWidth)
+        : 1200;
+    const w = panelW();
+    return Math.min(Math.max(pad, right), Math.max(pad, vw - w - pad));
+  };
 
-  // Close on outside click
+  // Close on outside click (include fixed dropdown panels)
   useEffect(() => {
-    if (!showAdd) return;
+    if (!showAdd && !showManage) return;
     const h = (e: MouseEvent) => {
       const t = e.target as Node;
-      if (!btnRef.current?.contains(t)) setShowAdd(false);
+      if (showAdd && !btnRef.current?.contains(t) && !addPanelRef.current?.contains(t)) setShowAdd(false);
+      if (showManage && !manageBtnRef.current?.contains(t) && !managePanelRef.current?.contains(t)) {
+        setShowManage(false);
+      }
     };
     document.addEventListener('mousedown', h);
     return () => document.removeEventListener('mousedown', h);
-  }, [showAdd]);
+  }, [showAdd, showManage]);
 
   const openDrop = () => {
     if (btnRef.current) {
       const r = btnRef.current.getBoundingClientRect();
-      setDropPos({ top: r.bottom + 6, left: r.left });
+      // Anchor to the viewport right edge to avoid off-screen overflow.
+      const vw =
+        typeof document !== 'undefined'
+          ? (document.documentElement?.clientWidth || window.innerWidth)
+          : window.innerWidth;
+      setDropPos({ top: r.bottom + 6, right: clampRight(Math.max(8, vw - r.right)) });
     }
     setShowAdd(v => !v);
   };
 
+  const openManage = () => {
+    if (manageBtnRef.current) {
+      const r = manageBtnRef.current.getBoundingClientRect();
+      const vw =
+        typeof document !== 'undefined'
+          ? (document.documentElement?.clientWidth || window.innerWidth)
+          : window.innerWidth;
+      setManagePos({ top: r.bottom + 6, right: clampRight(Math.max(8, vw - r.right)) });
+    }
+    setShowManage(v => !v);
+  };
+
+  const btnClass =
+    'flex items-center gap-1.5 rounded-[10px] px-2.5 py-1.5 text-[11px] font-semibold tracking-tight transition-colors disabled:opacity-50 ' +
+    'border border-border/80 bg-muted/25 text-foreground hover:bg-muted/50 backdrop-blur-sm';
 
   return (
-    <div className="flex items-center gap-2 px-4 py-2 overflow-x-auto scrollbar-none"
-      style={{ borderBottom: '1px solid var(--border)', background: 'var(--sidebar-glass)' }}>
-      {/* All accounts tab */}
-      <button onClick={() => onSelect('all')}
-        className={cn('flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[12px] font-medium whitespace-nowrap transition-colors shrink-0',
-          selectedId === 'all' ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary')}
-        style={selectedId !== 'all' ? { color: 'var(--muted-foreground)' } : {}}>
-        All
-      </button>
-
-      {/* Per-account tabs */}
-      {accounts.map(acc => {
-        const ch = providerToChannel(acc.type);
-        const Icon = CHANNEL_ICON[ch];
-        const isActive = selectedId === acc.id;
-        return (
-          <button key={acc.id} onClick={() => onSelect(acc.id)}
-            className={cn('flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[12px] font-medium whitespace-nowrap transition-colors shrink-0',
-              isActive ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary')}
-            style={!isActive ? { color: 'var(--foreground)' } : {}}>
-            <StatusDot status={acc.status} />
-            <Icon className="h-3.5 w-3.5 shrink-0" style={isActive ? {} : { color: CHANNEL_COLOR[ch] }} />
-            <span className="max-w-[80px] truncate">{CHANNEL_LABEL[ch]}{acc.username ? ` · ${acc.username}` : ''}</span>
+    <>
+      <div className="flex items-center gap-1.5 shrink-0">
+        <div className="relative shrink-0">
+          <button ref={btnRef} type="button" onClick={openDrop} disabled={!!connecting} className={btnClass}>
+            {connecting ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+            ) : (
+              <Plus className="h-3.5 w-3.5 text-primary" />
+            )}
+            Connect
           </button>
-        );
-      })}
-
-      {/* Add account — fixed dropdown */}
-      <div className="relative shrink-0">
-        <button ref={btnRef} onClick={openDrop} disabled={!!connecting}
-          className="flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[11px] font-semibold transition-all hover:bg-secondary disabled:opacity-50"
-          style={{ borderColor: 'var(--border)', color: 'var(--foreground)', letterSpacing: '0.02em' }}>
-          {connecting
-            ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            : <Plus className="h-3.5 w-3.5" style={{ color: 'var(--primary)' }} />}
-          Connect
-        </button>
+        </div>
+        <div className="relative shrink-0">
+          <button
+            ref={manageBtnRef}
+            type="button"
+            onClick={openManage}
+            className={btnClass}
+            title="Manage accounts"
+          >
+            <Filter className="h-3.5 w-3.5 text-muted-foreground" />
+            Manage
+          </button>
+        </div>
       </div>
 
       {/* Premium fixed-position dropdown */}
       <AnimatePresence>
         {showAdd && (
           <motion.div
+            ref={addPanelRef}
             initial={{ opacity: 0, scale: 0.96, y: -6 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: -4 }}
@@ -706,18 +894,19 @@ function AccountBar({ accounts, selectedId, onSelect, onConnect, onRefresh, conn
             style={{
               position: 'fixed',
               top: dropPos.top,
-              left: dropPos.left,
+              right: dropPos.right,
               zIndex: 9999,
-              width: '260px',
+              width: 'min(260px, calc(100vw - 16px))',
+              maxWidth: 'calc(100vw - 16px)',
             }}>
-            {/* Glass card */}
-            <div style={{
-              background: 'linear-gradient(145deg, color-mix(in srgb, var(--popover) 97%, var(--primary) 3%), var(--popover))',
-              border: '1px solid color-mix(in srgb, var(--border) 80%, var(--primary) 20%)',
-              borderRadius: '16px',
-              boxShadow: '0 20px 60px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.03) inset',
-              overflow: 'hidden',
-            }}>
+            <div
+              className="hub-modal-solid overflow-hidden rounded-2xl shadow-2xl"
+              style={{
+                border: '1px solid color-mix(in srgb, var(--border) 85%, transparent)',
+                background: 'var(--popover)',
+                backdropFilter: 'saturate(180%) blur(12px)',
+              }}
+            >
               {/* Header */}
               <div className="px-4 pt-4 pb-3" style={{ borderBottom: '1px solid var(--border)' }}>
                 <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: 'var(--muted-foreground)', letterSpacing: '0.1em' }}>
@@ -760,8 +949,9 @@ function AccountBar({ accounts, selectedId, onSelect, onConnect, onRefresh, conn
                   },
                 ] as { id: string; label: string; desc: string; gradient: string; icon: React.ReactNode }[]).map(p => (
                   <button key={p.id}
+                    type="button"
                     onClick={() => { onConnect(p.id); setShowAdd(false); }}
-                    className="group w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all hover:bg-white/5"
+                    className="group w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all hover:bg-muted/60"
                     style={{ color: 'var(--foreground)' }}>
                     {/* Brand icon */}
                     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl shadow-md transition-transform group-hover:scale-105"
@@ -794,11 +984,86 @@ function AccountBar({ accounts, selectedId, onSelect, onConnect, onRefresh, conn
         )}
       </AnimatePresence>
 
-      <div className="flex-1" />
-      <button onClick={onRefresh} title="Refresh" className="rounded-lg p-1.5 transition-colors hover:bg-secondary shrink-0" style={{ color: 'var(--muted-foreground)' }}>
-        <RefreshCw className="h-3.5 w-3.5" />
-      </button>
-    </div>
+      {/* Manage dropdown (minimal) */}
+      <AnimatePresence>
+        {showManage && (
+          <motion.div
+            ref={managePanelRef}
+            initial={{ opacity: 0, scale: 0.98, y: -6 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.98, y: -4 }}
+            transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
+            style={{
+              position: 'fixed',
+              top: managePos.top,
+              right: managePos.right,
+              zIndex: 9999,
+              width: 'min(260px, calc(100vw - 16px))',
+              maxWidth: 'calc(100vw - 16px)',
+            }}
+          >
+            <div
+              className="hub-modal-solid overflow-hidden rounded-2xl shadow-xl"
+              style={{ border: '1px solid var(--border)' }}
+            >
+              <div className="px-4 pt-4 pb-3" style={{ borderBottom: '1px solid var(--border)' }}>
+                <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: 'var(--muted-foreground)' }}>
+                  Accounts
+                </p>
+                <p className="text-[12px] mt-0.5" style={{ color: 'var(--foreground)' }}>
+                  Connected channels
+                </p>
+              </div>
+              <div className="p-2 space-y-0.5">
+                {accounts.map((acc) => {
+                  const ch = providerToChannel(acc.type);
+                  const Icon = CHANNEL_ICON[ch];
+                  return (
+                    <div
+                      key={acc.id}
+                      className="w-full flex items-center gap-2 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-muted"
+                      style={{ color: 'var(--foreground)' }}
+                    >
+                      <StatusDot status={acc.status} />
+                      <Icon className="h-4 w-4 shrink-0" style={{ color: CHANNEL_COLOR[ch] }} />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[13px] font-semibold leading-tight truncate">
+                          {CHANNEL_LABEL[ch]}{acc.username ? ` · ${acc.username}` : ''}
+                        </p>
+                        <p className="text-[11px] mt-0.5 truncate" style={{ color: 'var(--muted-foreground)' }}>
+                          {acc.status === 'RUNNING' || acc.status === 'CONNECTED'
+                            ? 'Connected'
+                            : typeof acc.status === 'string'
+                              ? acc.status.toLowerCase()
+                              : 'Unknown'}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          window.dispatchEvent(new CustomEvent('hub:unipile-disconnect', { detail: { accountId: acc.id } }));
+                          setShowManage(false);
+                        }}
+                        className="shrink-0 rounded-lg px-2 py-1 text-[11px] font-semibold transition-colors hover:bg-destructive/10"
+                        style={{ color: 'var(--muted-foreground)' }}
+                        title="Disconnect"
+                      >
+                        Disconnect
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="px-4 py-2.5" style={{ borderTop: '1px solid var(--border)' }}>
+                <p className="text-[10px] text-center" style={{ color: 'var(--muted-foreground)' }}>
+                  Manage connections · Disconnect to revoke access
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
 
@@ -906,8 +1171,6 @@ function ChatRow({ chat, accounts, active, onClick, enrichment, onRequestEnrichm
 /* ═══════════════════════════════════════════════════════════
    Reply Box — AI reply (segmented tone) + auto-growing composer
 ═══════════════════════════════════════════════════════════ */
-type ReplyTone = 'professional' | 'friendly' | 'concise' | 'detailed';
-
 const REPLY_TONES: { id: ReplyTone; label: string; subtitle: string }[] = [
   { id: 'professional', label: 'Professional', subtitle: 'Clear & formal' },
   { id: 'friendly', label: 'Friendly', subtitle: 'Warm tone' },
@@ -915,13 +1178,24 @@ const REPLY_TONES: { id: ReplyTone; label: string; subtitle: string }[] = [
   { id: 'detailed', label: 'Detailed', subtitle: 'Thorough' },
 ];
 
-function ReplyBox({ onSend, sending, messages, chatName: cName, channel, peerLabel, senderLookup }: {
+function toneLabel(t: ReplyTone) {
+  return REPLY_TONES.find(x => x.id === t)?.label ?? 'Professional';
+}
+
+function ReplyBox({ onSend, sending, messages, chatName: cName, channel, peerLabel, senderLookup, chatId, readOnly, prefetchSummary, prefetchTone, insightLoading }: {
   onSend: (text: string) => Promise<void> | void;
   sending: boolean;
   messages: any[]; chatName?: string; channel?: string;
   /** Display / AI context name (e.g. resolved from attendees when chat title is unknown) */
   peerLabel?: string;
   senderLookup?: Record<string, string>;
+  chatId?: string;
+  /** Email threads — now with full composer */
+  readOnly?: boolean;
+  /** Background thread summary (server + cache); feeds smart reply without opening Summary */
+  prefetchSummary?: string;
+  prefetchTone?: ReplyTone;
+  insightLoading?: boolean;
 }) {
   const displayPeer = peerLabel?.trim() || cName || 'Contact';
   const lookup = senderLookup ?? {};
@@ -946,6 +1220,14 @@ function ReplyBox({ onSend, sending, messages, chatName: cName, channel, peerLab
   }, []);
 
   useEffect(() => { autoResize(); }, [text, autoResize]);
+
+  useEffect(() => {
+    if (prefetchTone) setSelectedTone(prefetchTone);
+  }, [prefetchTone]);
+
+  /** Prefer server-inferred tone when generating in one tap */
+  const effectiveTone: ReplyTone = prefetchTone ?? selectedTone;
+
   useEffect(() => {
     if (aiLoading) {
       setElapsed(0);
@@ -988,6 +1270,10 @@ function ReplyBox({ onSend, sending, messages, chatName: cName, channel, peerLab
     setShowTones(false);
     setAiGenerated(false);
     try {
+      const fromPrefetch = (prefetchSummary && prefetchSummary.trim()) || '';
+      const threadSummary =
+        fromPrefetch || (chatId ? (loadChatMemory(chatId)?.summary || '') : '');
+
       const msgPayload = messages.slice(-16).map((m: any) => ({
         sender: resolveMessageSenderLabel(m, displayPeer, lookup),
         text: m.text || m.body || (m as any).content || '',
@@ -997,7 +1283,7 @@ function ReplyBox({ onSend, sending, messages, chatName: cName, channel, peerLab
       const res = await fetch('/api/ai/auto-reply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: msgPayload, chat_name: displayPeer, channel, tone }),
+        body: JSON.stringify({ messages: msgPayload, chat_name: displayPeer, channel, tone, thread_summary: threadSummary }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to generate reply');
@@ -1014,6 +1300,417 @@ function ReplyBox({ onSend, sending, messages, chatName: cName, channel, peerLab
     }
   };
 
+  const RefineStrip = ({ dense }: { dense?: boolean }) => (
+    <div
+      className={cn('mx-3 mb-2 rounded-2xl border px-2.5 py-2', dense ? 'mt-2' : 'mt-2.5')}
+      style={{
+        background: 'linear-gradient(180deg, color-mix(in srgb, var(--background) 86%, transparent), color-mix(in srgb, var(--secondary) 80%, transparent))',
+        borderColor: 'color-mix(in srgb, var(--foreground) 10%, var(--border))',
+        boxShadow: '0 10px 30px rgba(0,0,0,0.18)',
+        backdropFilter: 'saturate(180%) blur(14px)',
+      }}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0">
+          <div className="text-[10px] font-semibold tracking-tight" style={{ color: 'var(--muted-foreground)' }}>
+            Refine draft
+          </div>
+          <div className="text-[12px] font-semibold truncate" style={{ color: 'var(--foreground)' }}>
+            {toneLabel(effectiveTone)}
+          </div>
+        </div>
+        <div className="flex items-center gap-1.5">
+          {REPLY_TONES.map((t) => {
+            const active = effectiveTone === t.id;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => {
+                  setSelectedTone(t.id);
+                  void generateReply(t.id);
+                }}
+                className={cn(
+                  'h-8 rounded-xl px-2.5 text-[11px] font-semibold transition-all',
+                  active ? 'shadow-sm' : 'hover:opacity-90',
+                )}
+                style={{
+                  background: active
+                    ? 'color-mix(in srgb, var(--primary) 16%, var(--background))'
+                    : 'color-mix(in srgb, var(--foreground) 5%, transparent)',
+                  color: active ? 'var(--foreground)' : 'var(--muted-foreground)',
+                  border: `1px solid ${active ? 'color-mix(in srgb, var(--primary) 35%, var(--border))' : 'color-mix(in srgb, var(--foreground) 9%, var(--border))'}`,
+                }}
+                title={t.subtitle}
+              >
+                {t.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+
+  /* ── EMAIL COMPOSER states ── */
+  const [emailTo, setEmailTo] = useState('');
+  const [emailCc, setEmailCc] = useState('');
+  const [emailSubject, setEmailSubject] = useState('');
+  const [showCc, setShowCc] = useState(false);
+  const [showEmailHeaders, setShowEmailHeaders] = useState(false);
+  const [emailSending, setEmailSending] = useState(false);
+  const [emailError, setEmailError] = useState('');
+  const [emailSent, setEmailSent] = useState(false);
+  const [emailComposerExpanded, setEmailComposerExpanded] = useState(false);
+  const composerRef = useRef<HTMLDivElement>(null);
+
+  // Pre-fill email fields when opening
+  useEffect(() => {
+    if (!readOnly) return;
+    // Extract email from last received message or chat name
+    const lastMsg = messages.find((m: any) => !isSentByMe(m));
+    const fromAddr = lastMsg?.from_attendees?.[0]?.identifier || lastMsg?.from?.email || '';
+    if (fromAddr) setEmailTo(fromAddr);
+    // Subject
+    const subj = messages[0]?.subject || cName || '';
+    setEmailSubject(subj.startsWith('Re:') ? subj : `Re: ${subj}`);
+    setEmailSent(false);
+    setShowEmailHeaders(false);
+    setEmailComposerExpanded(false);
+  }, [readOnly, messages, cName]);
+
+  useEffect(() => {
+    if (!readOnly) return;
+    if (text.trim() || aiLoading || showTones || showEmailHeaders) setEmailComposerExpanded(true);
+  }, [readOnly, text, aiLoading, showTones, showEmailHeaders]);
+
+  if (readOnly) {
+    const handleEmailSend = async () => {
+      const body = text.trim();
+      if (!body || emailSending) return;
+      setEmailSending(true);
+      setEmailError('');
+      try {
+        const res = await fetch('/api/unipile/emails/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            account_id: chatId?.split(':')[0] || '',
+            to: emailTo.trim(),
+            cc: emailCc.trim() || undefined,
+            subject: emailSubject.trim(),
+            body,
+            in_reply_to: messages[messages.length - 1]?.id,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to send email');
+        setText('');
+        setEmailSent(true);
+        setAiGenerated(false);
+        setTimeout(() => setEmailSent(false), 3000);
+      } catch (e: unknown) {
+        setEmailError(e instanceof Error ? e.message : 'Failed to send');
+      } finally {
+        setEmailSending(false);
+      }
+    };
+
+    return (
+      <div className="shrink-0" style={{ borderTop: '1px solid var(--border)' }}>
+        {/* AI error */}
+        <AnimatePresence>
+          {aiError && (
+            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}>
+              <div className="flex items-center gap-2 px-4 py-2 text-[11px]"
+                style={{ background: 'color-mix(in srgb, #ef4444 8%, var(--background))', borderBottom: '1px solid color-mix(in srgb, #ef4444 15%, var(--border))' }}>
+                <AlertCircle className="h-3.5 w-3.5 text-red-500 shrink-0" />
+                <span className="flex-1 min-w-0 break-words" style={{ color: '#ef4444' }}>{aiError}</span>
+                <button type="button" onClick={() => generateReply(effectiveTone)} className="shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-md hover:bg-red-500/10" style={{ color: '#ef4444' }}>Retry</button>
+                <button type="button" onClick={() => setAiError('')} className="shrink-0"><X className="h-3 w-3" style={{ color: 'var(--muted-foreground)' }} /></button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {insightLoading && !prefetchSummary && messages.length > 0 && (
+          <div className="flex items-center gap-1.5 px-4 py-1 text-[10px]" style={{ color: 'var(--muted-foreground)', borderBottom: '1px solid color-mix(in srgb, var(--border) 60%, transparent)' }}>
+            <Loader2 className="h-3 w-3 animate-spin shrink-0" />
+            Preparing thread summary in the background…
+          </div>
+        )}
+
+        {/* Tone menu is anchored to tone triggers (see chevrons / tone pill) */}
+
+        {/* AI generated badge */}
+        <AnimatePresence>
+          {aiGenerated && text && !aiLoading && (
+            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}>
+              <div className="flex items-center gap-2 px-4 py-1.5" style={{
+                background: 'color-mix(in srgb, #10b981 5%, var(--background))',
+                borderBottom: '1px solid color-mix(in srgb, #10b981 12%, var(--border))',
+              }}>
+                <div className="h-3.5 w-3.5 rounded-full flex items-center justify-center" style={{ background: '#10b981' }}>
+                  <Check className="h-2 w-2 text-white" />
+                </div>
+                <span className="text-[10px] font-medium" style={{ color: '#10b981' }}>AI draft ready — review before sending</span>
+                <div className="flex-1" />
+                {/* Tone refinement appears below after draft is generated */}
+                <button type="button" onClick={() => { setText(''); setAiGenerated(false); textareaRef.current?.focus(); }}
+                  className="text-[10px] font-medium px-2 py-0.5 rounded-md hover:bg-secondary transition-colors" style={{ color: 'var(--muted-foreground)' }}>Clear</button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {emailSent && (
+          <div className="flex items-center gap-2 px-4 py-2 text-[11px]"
+            style={{ background: 'color-mix(in srgb, #10b981 8%, var(--background))', borderBottom: '1px solid color-mix(in srgb, #10b981 15%, var(--border))' }}>
+            <Check className="h-3.5 w-3.5 text-emerald-500" />
+            <span style={{ color: '#10b981' }} className="font-medium">Email sent successfully</span>
+          </div>
+        )}
+
+        {emailError && (
+          <div className="flex items-center gap-2 px-4 py-2 text-[11px]"
+            style={{ background: 'color-mix(in srgb, #ef4444 8%, var(--background))', borderBottom: '1px solid color-mix(in srgb, #ef4444 15%, var(--border))' }}>
+            <AlertCircle className="h-3.5 w-3.5 text-red-500 shrink-0" />
+            <span className="flex-1" style={{ color: '#ef4444' }}>{emailError}</span>
+            <button type="button" onClick={() => setEmailError('')} className="shrink-0"><X className="h-3 w-3" style={{ color: 'var(--muted-foreground)' }} /></button>
+          </div>
+        )}
+
+        {/* Compact email header strip (expandable) */}
+        <div
+          className="px-3 py-2 flex items-center gap-2"
+          style={{ borderBottom: '1px solid color-mix(in srgb, var(--border) 55%, transparent)' }}
+        >
+          <div className="min-w-0 flex-1 flex items-center gap-2">
+            <span
+              className="text-[10px] font-semibold px-2 py-1 rounded-full truncate"
+              style={{
+                background: 'color-mix(in srgb, var(--foreground) 6%, transparent)',
+                color: 'var(--muted-foreground)',
+              }}
+              title={emailTo || 'To'}
+            >
+              To: {emailTo || '—'}
+            </span>
+            <span
+              className="text-[10px] font-semibold px-2 py-1 rounded-full truncate"
+              style={{
+                background: 'color-mix(in srgb, var(--foreground) 6%, transparent)',
+                color: 'var(--muted-foreground)',
+              }}
+              title={emailSubject || 'Subject'}
+            >
+              Subj: {emailSubject || '—'}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowEmailHeaders(v => !v)}
+            className="shrink-0 text-[10px] font-semibold px-2 py-1 rounded-lg transition-colors hover:bg-secondary/80"
+            style={{ color: 'var(--foreground)', border: '1px solid var(--border)' }}
+            title="Edit To/Cc/Subject"
+          >
+            {showEmailHeaders ? 'Done' : 'Edit'}
+          </button>
+        </div>
+
+        <AnimatePresence>
+          {showEmailHeaders && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.16 }}
+              className="px-3 pt-2 pb-2 space-y-1.5"
+              style={{
+                borderBottom: '1px solid color-mix(in srgb, var(--border) 55%, transparent)',
+                background: 'color-mix(in srgb, var(--secondary) 75%, transparent)',
+              }}
+            >
+              <div className="flex items-center gap-2">
+                <label className="text-[11px] font-medium w-10 shrink-0" style={{ color: 'var(--muted-foreground)' }}>To</label>
+                <input
+                  value={emailTo}
+                  onChange={e => setEmailTo(e.target.value)}
+                  placeholder="recipient@email.com"
+                  className="flex-1 bg-transparent border-0 text-[12px] py-1 outline-none"
+                  style={{ color: 'var(--foreground)' }}
+                />
+                {!showCc && (
+                  <button type="button" onClick={() => setShowCc(true)} className="text-[10px] font-medium px-1.5 shrink-0 transition-colors hover:opacity-80" style={{ color: 'var(--primary)' }}>
+                    Cc
+                  </button>
+                )}
+              </div>
+              {showCc && (
+                <div className="flex items-center gap-2">
+                  <label className="text-[11px] font-medium w-10 shrink-0" style={{ color: 'var(--muted-foreground)' }}>Cc</label>
+                  <input
+                    value={emailCc}
+                    onChange={e => setEmailCc(e.target.value)}
+                    placeholder="cc@email.com"
+                    className="flex-1 bg-transparent border-0 text-[12px] py-1 outline-none"
+                    style={{ color: 'var(--foreground)' }}
+                  />
+                </div>
+              )}
+              <div className="flex items-center gap-2">
+                <label className="text-[11px] font-medium w-10 shrink-0" style={{ color: 'var(--muted-foreground)' }}>Subj</label>
+                <input
+                  value={emailSubject}
+                  onChange={e => setEmailSubject(e.target.value)}
+                  placeholder="Subject"
+                  className="flex-1 bg-transparent border-0 text-[12px] py-1 font-medium outline-none"
+                  style={{ color: 'var(--foreground)' }}
+                />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Body composer (sticky + collapsible) */}
+        <div className="px-3 pb-3 pt-2">
+          <div className="rounded-2xl border flex flex-col overflow-hidden"
+            style={{
+              borderColor: aiGenerated ? 'color-mix(in srgb, #10b981 28%, var(--border))' : aiLoading ? 'color-mix(in srgb, #6366f1 28%, var(--border))' : 'color-mix(in srgb, var(--border) 92%, transparent)',
+              background: aiGenerated ? 'color-mix(in srgb, #10b981 5%, var(--secondary))' : 'color-mix(in srgb, var(--secondary) 88%, var(--background))',
+              boxShadow: '0 1px 2px color-mix(in srgb, var(--foreground) 4%, transparent)',
+            }}>
+            <div
+              ref={composerRef}
+              className="relative"
+              onFocusCapture={() => setEmailComposerExpanded(true)}
+              onBlurCapture={() => {
+                window.setTimeout(() => {
+                  const root = composerRef.current;
+                  const active = document.activeElement;
+                  const stillInside = !!(root && active && root.contains(active));
+                  if (stillInside) return;
+                  if (!text.trim() && !aiLoading && !showTones && !showEmailHeaders && !emailSending) {
+                    setEmailComposerExpanded(false);
+                  }
+                }, 0);
+              }}
+            >
+              {aiLoading && (
+                <div className="absolute inset-0 z-10 flex items-center justify-center gap-2 rounded-t-2xl pointer-events-none"
+                  style={{ background: 'color-mix(in srgb, var(--background) 88%, transparent)' }}>
+                  <Sparkles className="h-3.5 w-3.5" style={{ color: '#6366f1' }} />
+                  <span className="text-[11px] font-medium" style={{ color: 'var(--muted-foreground)' }}>
+                    {REPLY_TONES.find(x => x.id === effectiveTone)?.label ?? 'Smart'} reply
+                  </span>
+                  <span className="flex gap-0.5">
+                    <span className="h-1 w-1 rounded-full bg-[#6366f1]" style={{ animation: 'aiDot 1.2s infinite 0s' }} />
+                    <span className="h-1 w-1 rounded-full bg-[#6366f1]" style={{ animation: 'aiDot 1.2s infinite 0.15s' }} />
+                    <span className="h-1 w-1 rounded-full bg-[#6366f1]" style={{ animation: 'aiDot 1.2s infinite 0.3s' }} />
+                  </span>
+                  {elapsed > 0 && (
+                    <span className="text-[9px] tabular-nums" style={{ color: 'var(--muted-foreground)' }}>{elapsed}s</span>
+                  )}
+                </div>
+              )}
+              <div className="flex items-stretch gap-2">
+                {emailComposerExpanded ? (
+                  <textarea
+                    ref={textareaRef}
+                    value={text}
+                    onChange={e => { setText(e.target.value); if (aiGenerated) setAiGenerated(false); }}
+                    onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); void handleEmailSend(); } }}
+                    disabled={emailSending || aiLoading}
+                    rows={2}
+                    placeholder="Write your email reply…"
+                    className="flex-1 border-0 bg-transparent px-3 pt-2 pb-2 text-[13px] leading-[1.55] resize-none outline-none focus:ring-0"
+                    style={{ minHeight: 56, maxHeight: MAX_TA_PX, color: 'var(--foreground)' }}
+                    onFocus={() => { if (!emailTo.trim()) setShowEmailHeaders(true); }}
+                    autoFocus={false}
+                  />
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEmailComposerExpanded(true);
+                      requestAnimationFrame(() => textareaRef.current?.focus());
+                    }}
+                    className="flex-1 text-left px-3 py-2.5 rounded-2xl transition-colors"
+                    style={{
+                      background: 'color-mix(in srgb, var(--background) 30%, transparent)',
+                      color: 'var(--muted-foreground)',
+                      border: '1px solid color-mix(in srgb, var(--border) 65%, transparent)',
+                    }}
+                  >
+                    <span className="text-[13px] font-medium">Reply…</span>
+                    {emailTo.trim() ? null : (
+                      <span className="ml-2 text-[11px]" style={{ opacity: 0.85 }}>
+                        Add recipient
+                      </span>
+                    )}
+                  </button>
+                )}
+
+                {/* WhatsApp-style right action shelf */}
+                <div className="shrink-0 pr-2 py-2 flex flex-col justify-end gap-1.5">
+                  <motion.button
+                    whileTap={{ scale: 0.96 }}
+                    type="button"
+                    onClick={() => {
+                      setEmailComposerExpanded(true);
+                      void generateReply(effectiveTone);
+                    }}
+                    disabled={aiLoading || messages.length === 0}
+                    title="AI Smart Reply"
+                    className="flex h-9 w-9 items-center justify-center rounded-xl transition-all disabled:opacity-30"
+                    style={{
+                      background: 'linear-gradient(180deg, #a855f7, #6366f1)',
+                      boxShadow: '0 0 0 1px color-mix(in srgb, white 18%, transparent) inset, 0 2px 8px rgba(99,102,241,0.3)',
+                      color: 'white',
+                    }}>
+                    {aiLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
+                  </motion.button>
+                  {/* No tone dropdown near AI button (premium minimal) */}
+
+                  <motion.button
+                    whileTap={{ scale: 0.96 }}
+                    type="button"
+                    onClick={() => {
+                      setEmailComposerExpanded(true);
+                      void handleEmailSend();
+                    }}
+                    disabled={!text.trim() || !emailTo.trim() || emailSending || aiLoading}
+                    title="Send"
+                    className="flex h-9 w-9 items-center justify-center rounded-xl transition-all disabled:opacity-35"
+                    style={{
+                      background: text.trim() && emailTo.trim() ? 'var(--primary)' : 'var(--secondary)',
+                      color: text.trim() && emailTo.trim() ? 'var(--primary-foreground)' : 'var(--muted-foreground)',
+                      border: text.trim() && emailTo.trim() ? 'none' : '1px solid var(--border)',
+                      boxShadow: text.trim() && emailTo.trim() ? '0 0 0 1px color-mix(in srgb, white 10%, transparent) inset' : undefined,
+                    }}>
+                    {emailSending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+                  </motion.button>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center justify-between gap-2 px-3 pb-2 pt-1 border-t"
+              style={{ borderColor: 'color-mix(in srgb, var(--border) 75%, transparent)' }}>
+              <p className="text-[9px] pl-1 min-w-0 truncate" style={{ color: 'var(--muted-foreground)' }}>
+                ⌘+Return
+              </p>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[9px] tabular-nums" style={{ color: 'var(--muted-foreground)' }}>
+                  {Math.max(0, 280 - text.length)}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <style>{`@keyframes aiDot { 0%, 80%, 100% { opacity: 0.25; transform: scale(0.85); } 40% { opacity: 1; transform: scale(1.15); } }`}</style>
+      </div>
+    );
+  }
+
   return (
     <div className="shrink-0" style={{ borderTop: '1px solid var(--border)' }}>
       <AnimatePresence>
@@ -1023,66 +1720,21 @@ function ReplyBox({ onSend, sending, messages, chatName: cName, channel, peerLab
               style={{ background: 'color-mix(in srgb, #ef4444 8%, var(--background))', borderBottom: '1px solid color-mix(in srgb, #ef4444 15%, var(--border))' }}>
               <AlertCircle className="h-3.5 w-3.5 text-red-500 shrink-0" />
               <span className="flex-1 min-w-0 break-words" style={{ color: '#ef4444' }}>{aiError}</span>
-              <button type="button" onClick={() => generateReply(selectedTone)} className="shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-md hover:bg-red-500/10" style={{ color: '#ef4444' }}>Retry</button>
+              <button type="button" onClick={() => generateReply(effectiveTone)} className="shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-md hover:bg-red-500/10" style={{ color: '#ef4444' }}>Retry</button>
               <button type="button" onClick={() => setAiError('')} className="shrink-0"><X className="h-3 w-3" style={{ color: 'var(--muted-foreground)' }} /></button>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      <AnimatePresence>
-        {showTones && (
-          <motion.div
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 6 }}
-            transition={{ duration: 0.22, ease: [0.32, 0.72, 0, 1] }}
-            className="px-3 pt-3 pb-2"
-            style={{
-              background: 'color-mix(in srgb, var(--secondary) 88%, var(--background))',
-              borderBottom: '1px solid var(--border)',
-              backdropFilter: 'saturate(180%) blur(12px)',
-            }}>
-            <div className="flex items-center gap-2 mb-2.5">
-              <span className="text-[13px] font-semibold tracking-tight" style={{ color: 'var(--foreground)' }}>Smart reply</span>
-              <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-md" style={{ background: 'color-mix(in srgb, var(--foreground) 6%, transparent)', color: 'var(--muted-foreground)' }}>Choose tone</span>
-              <div className="flex-1" />
-              <button type="button" onClick={() => setShowTones(false)} className="rounded-full p-1 hover:bg-black/5 dark:hover:bg-white/10 transition-colors" style={{ color: 'var(--muted-foreground)' }} aria-label="Close tone picker">
-                <X className="h-3.5 w-3.5" />
-              </button>
-            </div>
-            {/* Segmented control — Apple-style pill */}
-            <div
-              className="flex p-0.5 rounded-xl gap-0.5 overflow-x-auto scrollbar-none snap-x snap-mandatory"
-              style={{
-                background: 'color-mix(in srgb, var(--foreground) 5%, var(--secondary))',
-                boxShadow: 'inset 0 1px 2px color-mix(in srgb, var(--foreground) 6%, transparent)',
-              }}>
-              {REPLY_TONES.map(t => {
-                const active = selectedTone === t.id;
-                return (
-                  <button
-                    key={t.id}
-                    type="button"
-                    onClick={() => { setSelectedTone(t.id); void generateReply(t.id); }}
-                    className={cn(
-                      'snap-start shrink-0 min-w-[100px] flex-1 rounded-[10px] px-2.5 py-2 text-center transition-all duration-200',
-                      active ? 'shadow-sm' : 'hover:opacity-90',
-                    )}
-                    style={{
-                      background: active ? 'var(--background)' : 'transparent',
-                      color: active ? 'var(--foreground)' : 'var(--muted-foreground)',
-                      boxShadow: active ? '0 1px 3px color-mix(in srgb, var(--foreground) 12%, transparent)' : undefined,
-                    }}>
-                    <div className="text-[12px] font-semibold leading-tight tracking-tight">{t.label}</div>
-                    <div className="text-[9px] mt-0.5 opacity-80 leading-tight">{t.subtitle}</div>
-                  </button>
-                );
-              })}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {insightLoading && !prefetchSummary && messages.length > 0 && (
+        <div className="flex items-center gap-1.5 px-4 py-1 text-[10px]" style={{ color: 'var(--muted-foreground)', borderBottom: '1px solid color-mix(in srgb, var(--border) 60%, transparent)' }}>
+          <Loader2 className="h-3 w-3 animate-spin shrink-0" />
+          Preparing thread summary in the background…
+        </div>
+      )}
+
+      {/* Tone menu is anchored to the triggers (chevron / tone pill). */}
 
       <AnimatePresence>
         {aiGenerated && text && !aiLoading && (
@@ -1102,6 +1754,10 @@ function ReplyBox({ onSend, sending, messages, chatName: cName, channel, peerLab
           </motion.div>
         )}
       </AnimatePresence>
+
+      {aiGenerated && text && !aiLoading && !sending && (
+        <RefineStrip />
+      )}
 
       {/* Unified composer: text + bottom toolbar (hint + smart reply + send) — aligns controls like iOS */}
       <div className="px-3 pb-3 pt-1">
@@ -1124,7 +1780,7 @@ function ReplyBox({ onSend, sending, messages, chatName: cName, channel, peerLab
                 style={{ background: 'color-mix(in srgb, var(--background) 88%, transparent)' }}>
                 <Sparkles className="h-3.5 w-3.5" style={{ color: '#6366f1' }} />
                 <span className="text-[11px] font-medium" style={{ color: 'var(--muted-foreground)' }}>
-                  {REPLY_TONES.find(x => x.id === selectedTone)?.label ?? 'Smart'} reply
+                  {REPLY_TONES.find(x => x.id === effectiveTone)?.label ?? 'Smart'} reply
                 </span>
                 <span className="flex gap-0.5">
                   <span className="h-1 w-1 rounded-full bg-[#6366f1]" style={{ animation: 'aiDot 1.2s infinite 0s' }} />
@@ -1159,20 +1815,23 @@ function ReplyBox({ onSend, sending, messages, chatName: cName, channel, peerLab
               Return to send · Shift+Return for new line
             </p>
             <div className="flex items-center gap-1.5 shrink-0">
-              <motion.button
-                whileTap={{ scale: 0.96 }}
-                type="button"
-                onClick={() => { if (showTones) void generateReply(selectedTone); else setShowTones(true); }}
-                disabled={aiLoading || messages.length === 0}
-                title="Smart reply"
-                className="flex h-9 w-9 items-center justify-center rounded-xl transition-all disabled:opacity-30"
-                style={{
-                  background: 'linear-gradient(180deg, #a855f7, #6366f1)',
-                  boxShadow: '0 0 0 1px color-mix(in srgb, white 18%, transparent) inset, 0 2px 8px rgba(99,102,241,0.3)',
-                  color: 'white',
-                }}>
-                {aiLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
-              </motion.button>
+              <div className="flex flex-col gap-1 items-center">
+                <motion.button
+                  whileTap={{ scale: 0.96 }}
+                  type="button"
+                  onClick={() => { void generateReply(effectiveTone); }}
+                  disabled={aiLoading || messages.length === 0}
+                  title="Smart reply"
+                  className="flex h-9 w-9 items-center justify-center rounded-xl transition-all disabled:opacity-30"
+                  style={{
+                    background: 'linear-gradient(180deg, #a855f7, #6366f1)',
+                    boxShadow: '0 0 0 1px color-mix(in srgb, white 18%, transparent) inset, 0 2px 8px rgba(99,102,241,0.3)',
+                    color: 'white',
+                  }}>
+                  {aiLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
+                </motion.button>
+                {/* No tone dropdown near AI button (premium minimal) */}
+              </div>
               <motion.button
                 whileTap={{ scale: 0.96 }}
                 type="button"
@@ -1221,10 +1880,19 @@ function ChatDetail({ chat, accounts, onBack, onSend, sending }: {
   const [summaryCopied, setSummaryCopied] = useState(false);
   /** Set when last summary used full-thread fetch */
   const [summaryThreadCount, setSummaryThreadCount] = useState<number | null>(null);
+  const [previousSummary, setPreviousSummary] = useState<string>('');
   const [taskModalOpen, setTaskModalOpen] = useState(false);
   const [issueModalOpen, setIssueModalOpen] = useState(false);
   const [senderLookup, setSenderLookup] = useState<Record<string, string>>({});
   const [resolvedHeaderName, setResolvedHeaderName] = useState('');
+
+  /** Background AI: rolling summary + inferred tone (Supabase + localStorage fallback) */
+  const [threadInsight, setThreadInsight] = useState<{ summary: string; tone: ReplyTone } | null>(null);
+  const [threadInsightBusy, setThreadInsightBusy] = useState(false);
+  const messagesRef = useRef<UnipileMessage[]>([]);
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
 
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -1242,20 +1910,93 @@ function ChatDetail({ chat, accounts, onBack, onSend, sending }: {
       .slice(0, 1200);
   }, [messages]);
 
+  const messageInsightSig = useMemo(() => {
+    if (messages.length === 0) return '';
+    const last = messages[messages.length - 1];
+    return `${messages.length}|${last?.timestamp ?? (last as any)?.created_at ?? ''}|${String((last as any)?.id ?? '')}`;
+  }, [messages]);
+
+  const isMailThread = !!(chat.mail_thread_id || chat.mail_message_id);
+  const compactActions = channel === 'email' && isMailThread;
+  const selfMailHint = (
+    accounts.find((a) => String(a.id) === String(chat.account_id))?.username ||
+    accounts.find((a) => String(a.id) === String(chat.account_id))?.name ||
+    ''
+  ).toLowerCase();
+
+  const mapMailRecordsToMessages = useCallback(
+    (items: unknown[]): UnipileMessage[] => {
+      const rows: UnipileMessage[] = [];
+      for (const raw of items) {
+        if (!raw || typeof raw !== 'object') continue;
+        const e = raw as Record<string, unknown>;
+        const fromA = mailRecordFrom(e);
+        const fromAddr = (fromA?.identifier && String(fromA.identifier).toLowerCase()) || '';
+        const fromMe =
+          !!selfMailHint &&
+          (fromAddr === selfMailHint ||
+            (fromAddr && selfMailHint.includes(fromAddr)) ||
+            (selfMailHint && fromAddr.includes(selfMailHint)));
+
+        const html = typeof e.body === 'string' ? e.body.trim() : '';
+        const plain = typeof e.body_plain === 'string' ? e.body_plain.trim() : '';
+        const bodyText = plain || (html ? htmlToText(html) : '');
+        const text = bodyText || (typeof e.subject === 'string' ? e.subject : '') || '';
+        const mid = mailRecordId(e);
+        if (!mid) continue;
+        rows.push({
+          id: mid,
+          text,
+          body: html || plain || undefined,
+          timestamp: typeof e.date === 'string' ? e.date : undefined,
+          created_at: typeof e.date === 'string' ? e.date : undefined,
+          is_sender: fromMe,
+          from_me: fromMe,
+          sender: fromA
+            ? {
+              identifier: typeof fromA.identifier === 'string' ? fromA.identifier : undefined,
+              display_name: typeof fromA.display_name === 'string' ? fromA.display_name : undefined,
+            }
+            : undefined,
+        });
+      }
+      return sortMessagesOldestFirst(rows);
+    },
+    [selfMailHint],
+  );
+
   const fetchMessages = useCallback(async () => {
     setLoadingMsgs(true); setMsgError('');
     try {
-      const res = await fetch(`/api/unipile/messages?chat_id=${encodeURIComponent(chat.id)}&limit=30`);
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to load messages');
-      const raw: UnipileMessage[] = Array.isArray(data) ? data : (data.items || data.messages || []);
-      setMessages(sortMessagesOldestFirst(raw));
+      if (isMailThread) {
+        const sp = new URLSearchParams();
+        sp.set('account_id', chat.account_id);
+        if (chat.mail_thread_id) sp.set('thread_id', chat.mail_thread_id);
+        if (chat.mail_message_id) sp.set('message_id', chat.mail_message_id);
+        sp.set('fetch_all', '1');
+        sp.set('meta_only', 'false');
+        const res = await fetch(`/api/unipile/emails?${sp}`);
+        const data = (await res.json().catch(() => ({}))) as { items?: unknown[]; error?: unknown };
+        if (!res.ok) {
+          const err = data.error;
+          const msg = typeof err === 'string' ? err : JSON.stringify(err || data);
+          throw new Error(msg || 'Failed to load email');
+        }
+        const items = Array.isArray(data.items) ? data.items : [];
+        setMessages(mapMailRecordsToMessages(items));
+      } else {
+        const res = await fetch(`/api/unipile/messages?chat_id=${encodeURIComponent(chat.id)}&limit=30`);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to load messages');
+        const raw: UnipileMessage[] = Array.isArray(data) ? data : (data.items || data.messages || []);
+        setMessages(sortMessagesOldestFirst(raw));
+      }
     } catch (e: any) {
       setMsgError(e.message);
     } finally {
       setLoadingMsgs(false);
     }
-  }, [chat.id]);
+  }, [chat.id, chat.account_id, chat.mail_thread_id, chat.mail_message_id, isMailThread, mapMailRecordsToMessages]);
 
   /** Full thread (paginated server-side) → short model summary — not limited to on-screen messages */
   const fetchSummary = useCallback(async () => {
@@ -1264,16 +2005,35 @@ function ChatDetail({ chat, accounts, onBack, onSend, sending }: {
     setSummaryText('');
     setSummaryThreadCount(null);
     try {
-      const res = await fetch(
-        `/api/unipile/messages?chat_id=${encodeURIComponent(chat.id)}&fetch_all=1`,
-      );
-      const data = await res.json();
-      if (!res.ok) {
-        const err = data.error;
-        const msg = typeof err === 'string' ? err : (err?.detail || err?.title || JSON.stringify(err || data));
-        throw new Error(msg || 'Failed to load conversation');
+      const prev = loadChatMemory(chat.id)?.summary || '';
+      let items: UnipileMessage[] = [];
+      if (isMailThread) {
+        const sp = new URLSearchParams();
+        sp.set('account_id', chat.account_id);
+        if (chat.mail_thread_id) sp.set('thread_id', chat.mail_thread_id);
+        if (chat.mail_message_id) sp.set('message_id', chat.mail_message_id);
+        sp.set('fetch_all', '1');
+        sp.set('meta_only', 'false');
+        const res = await fetch(`/api/unipile/emails?${sp}`);
+        const data = (await res.json().catch(() => ({}))) as { items?: unknown[]; error?: unknown };
+        if (!res.ok) {
+          const err = data.error;
+          const msg = typeof err === 'string' ? err : JSON.stringify(err || data);
+          throw new Error(msg || 'Failed to load conversation');
+        }
+        items = mapMailRecordsToMessages(Array.isArray(data.items) ? data.items : []);
+      } else {
+        const res = await fetch(
+          `/api/unipile/messages?chat_id=${encodeURIComponent(chat.id)}&fetch_all=1`,
+        );
+        const data = await res.json();
+        if (!res.ok) {
+          const err = data.error;
+          const msg = typeof err === 'string' ? err : (err?.detail || err?.title || JSON.stringify(err || data));
+          throw new Error(msg || 'Failed to load conversation');
+        }
+        items = Array.isArray(data.items) ? data.items : [];
       }
-      const items: UnipileMessage[] = Array.isArray(data.items) ? data.items : [];
       if (items.length === 0) {
         setSummaryError('No messages in this chat yet.');
         return;
@@ -1293,18 +2053,105 @@ function ChatDetail({ chat, accounts, onBack, onSend, sending }: {
           messages: msgPayload,
           chat_name: displayHeaderName,
           channel,
+          previous_summary: prev,
         }),
       });
       const out = await resAi.json();
       if (!resAi.ok) throw new Error(out.error || 'Summarization failed');
       setSummaryText(out.summary || 'No summary generated.');
       setSummaryThreadCount(typeof out.message_count === 'number' ? out.message_count : items.length);
+      setPreviousSummary(prev);
+      const s = String(out.summary || '').trim();
+      const tone = inferReplyToneFromSummary(s);
+      saveChatMemory(chat.id, { summary: s, tone, updatedAt: new Date().toISOString() });
+      setThreadInsight({ summary: s, tone });
     } catch (e: unknown) {
       setSummaryError(e instanceof Error ? e.message : 'Summarization failed');
     } finally {
       setSummaryLoading(false);
     }
+  }, [
+    chat.id,
+    chat.account_id,
+    chat.mail_thread_id,
+    chat.mail_message_id,
+    displayHeaderName,
+    channel,
+    senderLookup,
+    isMailThread,
+    mapMailRecordsToMessages,
+  ]);
+
+  const prefetchThreadInsight = useCallback(async () => {
+    const msgs = messagesRef.current;
+    if (msgs.length === 0) return;
+    const msgPayload = msgs.map((m: any) => ({
+      sender: resolveMessageSenderLabel(m, displayHeaderName, senderLookup),
+      text: m.text || m.body || (m as any).content || '',
+      timestamp: m.timestamp || m.created_at,
+      from_me: isSentByMe(m),
+    }));
+
+    setThreadInsightBusy(true);
+    try {
+      const res = await fetch('/api/comm/thread-ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          thread_key: chat.id,
+          messages: msgPayload,
+          chat_name: displayHeaderName,
+          channel,
+        }),
+      });
+
+      if (res.ok) {
+        const d = await res.json();
+        const summary = String(d.summary || '').trim();
+        const tone = (['professional', 'friendly', 'concise', 'detailed'].includes(String(d.tone))
+          ? d.tone
+          : 'professional') as ReplyTone;
+        if (summary.length > 12) {
+          saveChatMemory(chat.id, { summary, tone, updatedAt: new Date().toISOString() });
+          setThreadInsight({ summary, tone });
+          setSummaryText((st) => (st ? st : summary));
+        }
+        return;
+      }
+
+      const prev = loadChatMemory(chat.id)?.summary || '';
+      const r2 = await fetch('/api/ai/summarize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: msgPayload,
+          chat_name: displayHeaderName,
+          channel,
+          previous_summary: prev,
+        }),
+      });
+      const out = await r2.json();
+      if (r2.ok && out.summary) {
+        const summary = String(out.summary).trim();
+        const tone = inferReplyToneFromSummary(summary);
+        saveChatMemory(chat.id, { summary, tone, updatedAt: new Date().toISOString() });
+        setThreadInsight({ summary, tone });
+        setSummaryText((st) => (st ? st : summary));
+      }
+    } catch {
+      /* background best-effort */
+    } finally {
+      setThreadInsightBusy(false);
+    }
   }, [chat.id, displayHeaderName, channel, senderLookup]);
+
+  useEffect(() => {
+    if (!messageInsightSig) return;
+    const t = window.setTimeout(() => {
+      void prefetchThreadInsight();
+    }, 550);
+    return () => window.clearTimeout(t);
+  }, [messageInsightSig, prefetchThreadInsight]);
 
   const copySummary = () => {
     navigator.clipboard.writeText(summaryText);
@@ -1329,11 +2176,23 @@ function ChatDetail({ chat, accounts, onBack, onSend, sending }: {
     setSummaryError('');
     setShowSummary(false);
     setSummaryThreadCount(null);
+    const mem = loadChatMemory(chat.id);
+    setPreviousSummary(mem?.summary || '');
+    if (mem?.summary) {
+      setThreadInsight({
+        summary: mem.summary,
+        tone: (mem.tone as ReplyTone) || inferReplyToneFromSummary(mem.summary),
+      });
+    } else {
+      setThreadInsight(null);
+    }
+    setThreadInsightBusy(false);
   }, [chat.id]);
 
   useEffect(() => {
     setSenderLookup({});
     setResolvedHeaderName('');
+    if (isMailThread) return;
     let cancelled = false;
     (async () => {
       try {
@@ -1350,7 +2209,7 @@ function ChatDetail({ chat, accounts, onBack, onSend, sending }: {
       }
     })();
     return () => { cancelled = true; };
-  }, [chat.id, name]);
+  }, [chat.id, name, isMailThread]);
 
   return (
     <div className="flex flex-col h-full min-h-0">
@@ -1400,7 +2259,7 @@ function ChatDetail({ chat, accounts, onBack, onSend, sending }: {
                 <span className="text-[9px] px-1.5 py-0.5 rounded-full font-medium shrink-0" style={{
                   background: 'color-mix(in srgb, var(--primary) 12%, transparent)',
                   color: 'var(--primary)',
-                }}>Gemma 4</span>
+                }}>GPT</span>
                 <div className="flex-1" />
                 {summaryText && (
                   <>
@@ -1513,12 +2372,28 @@ function ChatDetail({ chat, accounts, onBack, onSend, sending }: {
           const senderName = fromMe ? 'You' : peerName;
           const text = msg.text || msg.body || (msg as any).content || '';
           const initialSrc = peerName !== 'Unknown Contact' ? peerName : displayHeaderName;
+          const emailSender = channel === 'email'
+            ? (msg.sender?.identifier || msg.sender?.display_name || '')
+            : '';
+          const emailDomain =
+            channel === 'email' && typeof emailSender === 'string' && emailSender.includes('@')
+              ? emailSender.split('@').pop()!.toLowerCase()
+              : '';
+          const faviconUrl =
+            emailDomain ? `https://www.google.com/s2/favicons?domain=${encodeURIComponent(emailDomain)}&sz=64` : '';
+          const renderAsHtml = isMailThread && typeof msg.body === 'string' && looksLikeHtml(msg.body);
           return (
             <div key={messageStableId(msg, idx)} className={cn('flex gap-2.5', fromMe ? 'justify-end' : 'justify-start')}>
               {!fromMe && (
-                <div className="shrink-0 h-7 w-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold mt-1"
-                  style={{ background: CHANNEL_GRADIENT[channel] }}>
-                  {initialSrc !== 'Unknown Contact' ? initials(initialSrc) : <span>?</span>}
+                <div
+                  className="shrink-0 h-7 w-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold mt-1 overflow-hidden"
+                  style={{ background: CHANNEL_GRADIENT[channel] }}
+                >
+                  {channel === 'email' && faviconUrl ? (
+                    <img src={faviconUrl} alt="" className="h-full w-full object-cover" loading="lazy" />
+                  ) : (
+                    (initialSrc !== 'Unknown Contact' ? initials(initialSrc) : <span>?</span>)
+                  )}
                 </div>
               )}
               <div className={cn('flex flex-col gap-1', fromMe ? 'items-end max-w-[72%]' : 'items-start max-w-[72%]')}>
@@ -1531,7 +2406,15 @@ function ChatDetail({ chat, accounts, onBack, onSend, sending }: {
                   style={fromMe
                     ? { background: 'var(--primary)', color: 'var(--primary-foreground)' }
                     : { background: 'var(--secondary)', color: 'var(--foreground)', border: '1px solid var(--border)' }}>
-                  {text || <em className="opacity-50">Media / attachment</em>}
+                  {renderAsHtml ? (
+                    <div
+                      className="email-html"
+                      style={{ whiteSpace: 'normal' }}
+                      dangerouslySetInnerHTML={{ __html: sanitizeEmailHtml(String(msg.body)) }}
+                    />
+                  ) : (
+                    text || <em className="opacity-50">Media / attachment</em>
+                  )}
                 </div>
               </div>
               {fromMe && (
@@ -1546,9 +2429,28 @@ function ChatDetail({ chat, accounts, onBack, onSend, sending }: {
         <div ref={bottomRef} />
       </div>
 
+      <style>{`
+        .email-html { line-height: 1.55; }
+        .email-html img { max-width: 100%; height: auto; border-radius: 10px; }
+        .email-html a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+        .email-html blockquote {
+          margin: 10px 0 0;
+          padding-left: 10px;
+          border-left: 2px solid color-mix(in srgb, var(--muted-foreground) 35%, transparent);
+          opacity: 0.95;
+        }
+        .email-html pre, .email-html code {
+          font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+          font-size: 12px;
+        }
+      `}</style>
+
       {/* Action bar — Design Foundation pattern: primary actions left, task/issue right */}
       <div
-        className="shrink-0 px-4 py-2.5 flex flex-wrap items-center justify-between gap-3"
+        className={cn(
+          'shrink-0 flex flex-wrap items-center justify-between gap-2',
+          compactActions ? 'px-3 py-1.5' : 'px-4 py-2.5',
+        )}
         style={{
           borderTop: '1px solid color-mix(in srgb, var(--border) 90%, transparent)',
           background: 'linear-gradient(0deg, color-mix(in srgb, var(--secondary) 35%, transparent), transparent)',
@@ -1557,7 +2459,8 @@ function ChatDetail({ chat, accounts, onBack, onSend, sending }: {
           <button type="button" onClick={handleToggleSummary}
             disabled={summaryLoading}
             className={cn(
-              'flex items-center gap-1.5 rounded-[10px] border px-3 py-2 text-[12px] font-semibold tracking-tight transition-all disabled:opacity-40',
+              'flex items-center gap-1.5 rounded-[10px] border font-semibold tracking-tight transition-all disabled:opacity-40',
+              compactActions ? 'px-2.5 py-1.5 text-[11px]' : 'px-3 py-2 text-[12px]',
               showSummary
                 ? 'bg-purple-500/15 border-purple-500/35 text-purple-600 dark:text-purple-300'
                 : 'hover:bg-secondary/80',
@@ -1569,28 +2472,39 @@ function ChatDetail({ chat, accounts, onBack, onSend, sending }: {
             {summaryLoading
               ? <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" style={{ color: '#a855f7' }} />
               : <Sparkles className="h-3.5 w-3.5 shrink-0" style={{ color: '#a855f7' }} />}
-            AI Summary
+            {!compactActions && 'AI Summary'}
           </button>
-          <BonsaiButton size="sm" variant="outline" className="rounded-[10px] gap-1.5 font-medium">
-            <LinkIcon className="h-3.5 w-3.5" />Link to Record
+          <BonsaiButton
+            size="sm"
+            variant="outline"
+            className={cn('rounded-[10px] gap-1.5 font-medium', compactActions && 'px-2.5 py-1.5')}
+            title="Link to Record"
+          >
+            <LinkIcon className="h-3.5 w-3.5" />{!compactActions && 'Link to Record'}
           </BonsaiButton>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
             onClick={() => setTaskModalOpen(true)}
-            className="flex items-center gap-1.5 rounded-[10px] border px-3 py-2 text-[12px] font-semibold tracking-tight transition-colors hover:bg-secondary/90"
+            className={cn(
+              'flex items-center gap-1.5 rounded-[10px] border font-semibold tracking-tight transition-colors hover:bg-secondary/90',
+              compactActions ? 'px-2.5 py-1.5 text-[11px]' : 'px-3 py-2 text-[12px]',
+            )}
             style={{ borderColor: 'var(--border)', color: 'var(--foreground)' }}>
             <ListTodo className="h-3.5 w-3.5 shrink-0 opacity-80" />
-            Create task
+            {!compactActions && 'Create task'}
           </button>
           <button
             type="button"
             onClick={() => setIssueModalOpen(true)}
-            className="flex items-center gap-1.5 rounded-[10px] border px-3 py-2 text-[12px] font-semibold tracking-tight transition-colors hover:bg-secondary/90"
+            className={cn(
+              'flex items-center gap-1.5 rounded-[10px] border font-semibold tracking-tight transition-colors hover:bg-secondary/90',
+              compactActions ? 'px-2.5 py-1.5 text-[11px]' : 'px-3 py-2 text-[12px]',
+            )}
             style={{ borderColor: 'var(--border)', color: 'var(--foreground)' }}>
             <Bug className="h-3.5 w-3.5 shrink-0 opacity-80" />
-            Create issue
+            {!compactActions && 'Create issue'}
           </button>
         </div>
       </div>
@@ -1621,6 +2535,11 @@ function ChatDetail({ chat, accounts, onBack, onSend, sending }: {
         peerLabel={displayHeaderName}
         senderLookup={senderLookup}
         channel={channel}
+        chatId={chat.id}
+        readOnly={isMailThread}
+        prefetchSummary={threadInsight?.summary}
+        prefetchTone={threadInsight?.tone}
+        insightLoading={threadInsightBusy}
       />
     </div>
   );
@@ -1669,6 +2588,14 @@ function InternalChatDetail({
 }) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const Icon = CHANNEL_ICON.internal;
+  const internalThreadKey = `internal:${thread.id}`;
+
+  const [threadInsight, setThreadInsight] = useState<{ summary: string; tone: ReplyTone } | null>(null);
+  const [threadInsightBusy, setThreadInsightBusy] = useState(false);
+  const internalMsgsRef = useRef(thread.messages);
+  useEffect(() => {
+    internalMsgsRef.current = thread.messages;
+  }, [thread.messages]);
 
   const [showSummary, setShowSummary] = useState(false);
   const [summaryText, setSummaryText] = useState('');
@@ -1699,6 +2626,12 @@ function InternalChatDetail({
       .filter(Boolean)
       .join('\n')
       .slice(0, 1200);
+  }, [thread.messages]);
+
+  const internalInsightSig = useMemo(() => {
+    if (thread.messages.length === 0) return '';
+    const last = thread.messages[thread.messages.length - 1];
+    return `${thread.messages.length}|${last?.at}|${last?.id}`;
   }, [thread.messages]);
 
   const fetchSummary = useCallback(async () => {
@@ -1733,12 +2666,89 @@ function InternalChatDetail({
       if (!resAi.ok) throw new Error(out.error || 'Summarization failed');
       setSummaryText(out.summary || 'No summary generated.');
       setSummaryThreadCount(typeof out.message_count === 'number' ? out.message_count : sorted.length);
+      const s = String(out.summary || '').trim();
+      const tone = inferReplyToneFromSummary(s);
+      saveChatMemory(internalThreadKey, { summary: s, tone, updatedAt: new Date().toISOString() });
+      setThreadInsight({ summary: s, tone });
     } catch (e: unknown) {
       setSummaryError(e instanceof Error ? e.message : 'Summarization failed');
     } finally {
       setSummaryLoading(false);
     }
-  }, [thread.messages, thread.peerName]);
+  }, [thread.messages, thread.peerName, internalThreadKey]);
+
+  const prefetchInternalInsight = useCallback(async () => {
+    const sorted = [...internalMsgsRef.current].sort(
+      (a, b) => new Date(a.at).getTime() - new Date(b.at).getTime(),
+    );
+    if (sorted.length === 0) return;
+    const msgPayload = sorted.map(m => ({
+      sender: m.fromMe ? 'You' : thread.peerName,
+      text: m.text,
+      timestamp: m.at,
+      from_me: m.fromMe,
+    }));
+
+    setThreadInsightBusy(true);
+    try {
+      const res = await fetch('/api/comm/thread-ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          thread_key: internalThreadKey,
+          messages: msgPayload,
+          chat_name: thread.peerName,
+          channel: 'internal',
+        }),
+      });
+
+      if (res.ok) {
+        const d = await res.json();
+        const summary = String(d.summary || '').trim();
+        const tone = (['professional', 'friendly', 'concise', 'detailed'].includes(String(d.tone))
+          ? d.tone
+          : 'professional') as ReplyTone;
+        if (summary.length > 12) {
+          saveChatMemory(internalThreadKey, { summary, tone, updatedAt: new Date().toISOString() });
+          setThreadInsight({ summary, tone });
+          setSummaryText((st) => (st ? st : summary));
+        }
+        return;
+      }
+
+      const prev = loadChatMemory(internalThreadKey)?.summary || '';
+      const r2 = await fetch('/api/ai/summarize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: msgPayload,
+          chat_name: thread.peerName,
+          channel: 'internal',
+          previous_summary: prev,
+        }),
+      });
+      const out = await r2.json();
+      if (r2.ok && out.summary) {
+        const summary = String(out.summary).trim();
+        const tone = inferReplyToneFromSummary(summary);
+        saveChatMemory(internalThreadKey, { summary, tone, updatedAt: new Date().toISOString() });
+        setThreadInsight({ summary, tone });
+        setSummaryText((st) => (st ? st : summary));
+      }
+    } catch {
+      /* best-effort */
+    } finally {
+      setThreadInsightBusy(false);
+    }
+  }, [internalThreadKey, thread.peerName]);
+
+  useEffect(() => {
+    if (!internalInsightSig) return;
+    const t = window.setTimeout(() => {
+      void prefetchInternalInsight();
+    }, 550);
+    return () => window.clearTimeout(t);
+  }, [internalInsightSig, prefetchInternalInsight]);
 
   const copySummary = () => {
     navigator.clipboard.writeText(summaryText);
@@ -1764,7 +2774,17 @@ function InternalChatDetail({
     setSummaryError('');
     setShowSummary(false);
     setSummaryThreadCount(null);
-  }, [thread.id]);
+    const mem = loadChatMemory(internalThreadKey);
+    if (mem?.summary) {
+      setThreadInsight({
+        summary: mem.summary,
+        tone: (mem.tone as ReplyTone) || inferReplyToneFromSummary(mem.summary),
+      });
+    } else {
+      setThreadInsight(null);
+    }
+    setThreadInsightBusy(false);
+  }, [thread.id, internalThreadKey]);
 
   return (
     <div className="flex flex-col h-full min-h-0">
@@ -1809,7 +2829,7 @@ function InternalChatDetail({
                 <span className="text-[9px] px-1.5 py-0.5 rounded-full font-medium shrink-0" style={{
                   background: 'color-mix(in srgb, var(--primary) 12%, transparent)',
                   color: 'var(--primary)',
-                }}>Gemma 4</span>
+                }}>GPT</span>
                 <div className="flex-1" />
                 {summaryText && (
                   <>
@@ -1978,6 +2998,10 @@ function InternalChatDetail({
         peerLabel={thread.peerName}
         senderLookup={{}}
         channel="internal"
+        chatId={internalThreadKey}
+        prefetchSummary={threadInsight?.summary}
+        prefetchTone={threadInsight?.tone}
+        insightLoading={threadInsightBusy}
       />
     </div>
   );
@@ -1997,8 +3021,10 @@ function CommunicationInner() {
   const [connecting, setConnecting] = useState<string | null>(null);
   const [selectedAccountId, setSelectedAccountId] = useState('all');
 
-  // Chats
+  // Chats (LinkedIn / WhatsApp / etc.) + email threads (GET /emails — not /chats)
   const [chats, setChats] = useState<UnipileChat[]>([]);
+  const [emailThreads, setEmailThreads] = useState<UnipileChat[]>([]);
+  const [emailFetchError, setEmailFetchError] = useState('');
   const [chatsLoading, setChatsLoading] = useState(false);
   const [chatsError, setChatsError] = useState('');
   /** Sidebar: names/avatars from attendees when list API is sparse */
@@ -2015,24 +3041,71 @@ function CommunicationInner() {
   const [search, setSearch] = useState('');
   const [channelFilter, setChannelFilter] = useState('all');
 
+  // Compose new email (not a reply)
+  const [composeOpen, setComposeOpen] = useState(false);
+  const [composeAccountId, setComposeAccountId] = useState<string>('');
+  const [composeTo, setComposeTo] = useState('');
+  const [composeCc, setComposeCc] = useState('');
+  const [composeSubject, setComposeSubject] = useState('');
+  const [composeBody, setComposeBody] = useState('');
+  const [composeSending, setComposeSending] = useState(false);
+  const [composeError, setComposeError] = useState('');
+  const [composeSent, setComposeSent] = useState(false);
+
+  // Compose: split-menu + internal
+  const [composeMenuOpen, setComposeMenuOpen] = useState(false);
+  const composeMenuRef = useRef<HTMLDivElement>(null);
+  const [composeInternalOpen, setComposeInternalOpen] = useState(false);
+  const [composeInternalTo, setComposeInternalTo] = useState<string>(INTERNAL_TEAM[0]?.id ?? '1');
+  const [composeInternalBody, setComposeInternalBody] = useState('');
+
   const [internalThreads, setInternalThreads] = useState<InternalThread[]>(() => seedInternalThreads());
   const internalHydratedRef = useRef(false);
 
   const chatsCacheRef = useRef(new Map<string, { items: UnipileChat[]; at: number }>());
+  const accountsCacheHydratedRef = useRef(false);
+  const chatsCacheHydratedRef = useRef(false);
 
   // On mobile navigating back to list
   useEffect(() => { if (isLg) setMobileDetail(false); }, [isLg]);
 
-  const fetchAccounts = useCallback(async () => {
-    setAccountsLoading(true); setAccountsError('');
+  const fetchAccounts = useCallback(async (opts?: { force?: boolean }) => {
+    const cache = getCommNavCache();
+    const cached = cache.accounts;
+    const fresh = cached && Date.now() - cached.at < ACCOUNTS_CACHE_TTL_MS;
+
+    // Fresh cache short-circuit (skip when forcing — e.g. after disconnect).
+    if (!opts?.force && cached?.items?.length && fresh) {
+      setAccounts(cached.items);
+      setAccountsError('');
+      setAccountsLoading(false);
+      return;
+    }
+
+    // Stale or forced: keep showing last list while refetching (no blocking spinner if we have data).
+    if (cached?.items?.length) {
+      setAccounts(cached.items);
+      setAccountsError('');
+      setAccountsLoading(false);
+    } else {
+      setAccountsLoading(true);
+      setAccountsError('');
+    }
+
     try {
-      const res = await fetch('/api/unipile/accounts');
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to load accounts');
-      const items: UnipileAccount[] = Array.isArray(data) ? data : (data.items || data.accounts || []);
+      const data = await commFetchJsonWithPolicy<any>({
+        key: 'unipile:accounts',
+        url: '/api/unipile/accounts',
+        dedupe: true,
+      });
+      const rawList: unknown[] = Array.isArray(data) ? data : (data.items || data.accounts || []);
+      const items: UnipileAccount[] = rawList
+        .map((r) => (r && typeof r === 'object' ? normalizeUnipileAccount(r as Record<string, unknown>) : null))
+        .filter((a): a is UnipileAccount => a != null);
       setAccounts(items);
+      getCommNavCache().accounts = { items, at: Date.now() };
     } catch (e: any) {
-      setAccountsError(e.message);
+      if (!cached?.items?.length) setAccountsError(e.message);
     } finally {
       setAccountsLoading(false);
     }
@@ -2075,16 +3148,17 @@ function CommunicationInner() {
     try {
       const params = new URLSearchParams({ fetch_all: '1' });
       if (accountId && accountId !== 'all') params.set('account_id', accountId);
-      const res = await fetch(`/api/unipile/chats?${params}`);
-      const data = await res.json();
-      if (!res.ok) {
-        const err = data.error;
-        const msg = typeof err === 'string' ? err : (err?.detail || err?.title || JSON.stringify(err || data));
-        throw new Error(msg || 'Failed to load chats');
-      }
+      const data = await commFetchJsonWithPolicy<any>({
+        key: `unipile:chats:${key}`,
+        url: `/api/unipile/chats?${params}`,
+        dedupe: true,
+      });
       const items: UnipileChat[] = Array.isArray(data) ? data : (data.items || data.chats || []);
       chatsCacheRef.current.set(key, { items, at: Date.now() });
       setChats(items);
+      const cache = getCommNavCache();
+      cache.chats = cache.chats || {};
+      cache.chats[key] = { items, at: Date.now() };
       if (!opts?.background) setChatsError('');
     } catch (e: any) {
       if (!opts?.background) setChatsError(e.message);
@@ -2093,13 +3167,62 @@ function CommunicationInner() {
     }
   }, []);
 
+  const fetchEmailThreads = useCallback(
+    async (accountFilter?: string) => {
+      const key = !accountFilter || accountFilter === 'all' ? 'all' : accountFilter;
+      const emailAccounts = accounts.filter((a) => {
+        if (providerToChannel(a.type) !== 'email') return false;
+        if (key === 'all') return true;
+        return a.id === key;
+      });
+      if (!emailAccounts.length) {
+        setEmailThreads([]);
+        setEmailFetchError('');
+        return;
+      }
+      setEmailFetchError('');
+      try {
+        const combined: UnipileChat[] = [];
+        const errs: string[] = [];
+        for (const acc of emailAccounts) {
+          // Omit meta_only — Unipile's 0_ref rows lack subject/from; we need 1_meta for the inbox list.
+          const res = await fetch(
+            `/api/unipile/emails?account_id=${encodeURIComponent(acc.id)}&fetch_all=1&limit=100`,
+            { credentials: 'include' },
+          );
+          const data = (await res.json().catch(() => ({}))) as { items?: unknown[]; error?: unknown };
+          if (!res.ok) {
+            const msg =
+              typeof data.error === 'string'
+                ? data.error
+                : data.error != null
+                  ? JSON.stringify(data.error)
+                  : `HTTP ${res.status}`;
+            errs.push(`${acc.name || acc.type || acc.id}: ${msg}`);
+            continue;
+          }
+          const items = Array.isArray(data.items) ? data.items : [];
+          combined.push(...groupRawEmailsToChats(items, acc.id));
+        }
+        combined.sort((a, b) => chatSortTimestampMs(b) - chatSortTimestampMs(a));
+        setEmailThreads(combined);
+        if (errs.length) setEmailFetchError(errs.join(' · '));
+      } catch (e: unknown) {
+        setEmailThreads([]);
+        setEmailFetchError(e instanceof Error ? e.message : 'Failed to load email');
+      }
+    },
+    [accounts],
+  );
+
   // After Unipile OAuth redirect
   useEffect(() => {
     const connected = searchParams?.get('connected');
     if (!connected) return;
     fetchAccounts();
     fetchChats(undefined, { force: true });
-  }, [searchParams, fetchAccounts, fetchChats]);
+    void fetchEmailThreads('all');
+  }, [searchParams, fetchAccounts, fetchChats, fetchEmailThreads]);
 
   useEffect(() => {
     if (internalHydratedRef.current) return;
@@ -2119,6 +3242,7 @@ function CommunicationInner() {
 
   const requestChatListEnrichment = useCallback((chat: UnipileChat) => {
     if (chat.account_id === INTERNAL_LOCAL_ACCOUNT) return;
+    if (chat.id.startsWith('mail:')) return;
     const id = chat.id;
     if (listEnrichLoadedRef.current.has(id) || listEnrichInFlightRef.current.has(id)) return;
     const baseName = chatName(chat);
@@ -2162,10 +3286,36 @@ function CommunicationInner() {
       });
   }, [accounts]);
 
+  // Hydrate from global cache instantly on revisit (fast page switching).
+  useEffect(() => {
+    if (accountsCacheHydratedRef.current) return;
+    accountsCacheHydratedRef.current = true;
+    const cache = getCommNavCache();
+    if (cache.accounts?.items?.length) {
+      setAccounts(cache.accounts.items);
+      setAccountsLoading(false);
+    }
+  }, []);
+
   useEffect(() => { fetchAccounts(); }, [fetchAccounts]);
   useEffect(() => {
+    // Seed chats cache from global cache on first mount.
+    if (!chatsCacheHydratedRef.current) {
+      chatsCacheHydratedRef.current = true;
+      const cache = getCommNavCache();
+      if (cache.chats) {
+        Object.entries(cache.chats).forEach(([k, v]) => {
+          if (v?.items?.length) chatsCacheRef.current.set(k, v);
+        });
+      }
+    }
     if (!accountsLoading) fetchChats(selectedAccountId);
   }, [accountsLoading, selectedAccountId, fetchChats]);
+
+  useEffect(() => {
+    if (accountsLoading) return;
+    void fetchEmailThreads(selectedAccountId);
+  }, [accountsLoading, selectedAccountId, fetchEmailThreads]);
 
   const handleConnect = async (provider: string) => {
     setConnecting(provider);
@@ -2174,29 +3324,50 @@ function CommunicationInner() {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ provider }),
       });
-      const data = await res.json();
+      const data = (await res.json().catch(() => ({}))) as { url?: string; error?: string; code?: string };
       if (!res.ok || !data.url) {
-        const msg = typeof data.error === 'string' ? data.error : JSON.stringify(data.error || data);
+        const msg =
+          typeof data.error === 'string'
+            ? data.error
+            : res.status === 503
+              ? 'Unipile is not configured or the API URL is invalid. Check .env.local (UNIPILE_API_URL with real host:port, UNIPILE_ACCESS_TOKEN).'
+              : JSON.stringify(data.error || data);
         throw new Error(msg);
       }
       // Open hosted auth in same tab — Unipile will redirect back on success
       window.location.href = data.url;
-    } catch (e: any) {
-      alert(`Connection error: ${e.message}`);
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'Connection failed';
+      console.error(`Connection error: ${message}`);
       setConnecting(null);
     }
-  };
-
-  const handleAccountSelect = (id: string) => {
-    setSelectedAccountId(id);
-    setSelectedChat(null);
-    fetchChats(id);
   };
 
   const handleSelectChat = (chat: UnipileChat) => {
     setSelectedChat(chat);
     if (!isLg) setMobileDetail(true);
   };
+
+  const startInternalThread = useCallback(async () => {
+    const person = INTERNAL_TEAM.find((p) => String(p.id) === String(composeInternalTo)) ?? INTERNAL_TEAM[0];
+    const peerName = person?.name || 'Teammate';
+    const now = new Date().toISOString();
+    const tid = `internal-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const firstText = composeInternalBody.trim();
+    const thread: InternalThread = {
+      id: tid,
+      peerId: String(person?.id || '1'),
+      peerName,
+      peerRole: person?.role,
+      messages: firstText ? [{ id: `im-${Date.now()}`, text: firstText, fromMe: true, at: now }] : [],
+      updatedAt: now,
+    };
+    setInternalThreads((prev) => [thread, ...prev]);
+    setComposeInternalBody('');
+    setComposeInternalOpen(false);
+    setComposeMenuOpen(false);
+    handleSelectChat(internalThreadToChat(thread));
+  }, [composeInternalTo, composeInternalBody, handleSelectChat]);
 
   const handleSend = async (text: string) => {
     if (!selectedChat) return;
@@ -2243,7 +3414,7 @@ function CommunicationInner() {
       setSelectedChat(c => c ? { ...c, last_message: { text, from_me: true, timestamp: ts }, updated_at: ts, timestamp: ts } : c);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Send failed';
-      alert(`Send error: ${msg}`);
+      console.error(`Send error: ${msg}`);
       throw e;
     } finally {
       setSending(false);
@@ -2254,6 +3425,56 @@ function CommunicationInner() {
     () => internalThreads.map(internalThreadToChat),
     [internalThreads],
   );
+
+  const connectedAccountIds = useMemo(() => new Set(accounts.map((a) => String(a.id))), [accounts]);
+  const connectedIntegrationChannels = useMemo(() => channelsFromAccounts(accounts), [accounts]);
+  const emailAccounts = useMemo(() => accounts.filter(isEmailAccount), [accounts]);
+
+  useEffect(() => {
+    if (!composeOpen) return;
+    if (!composeAccountId && emailAccounts[0]?.id) setComposeAccountId(String(emailAccounts[0].id));
+  }, [composeOpen, composeAccountId, emailAccounts]);
+
+  const sendComposedEmail = useCallback(async () => {
+    if (!composeAccountId || !composeTo.trim() || !composeBody.trim() || composeSending) return;
+    setComposeSending(true);
+    setComposeError('');
+    try {
+      const res = await fetch('/api/unipile/emails/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          account_id: composeAccountId,
+          to: composeTo.trim(),
+          cc: composeCc.trim() || undefined,
+          subject: composeSubject.trim() || '(no subject)',
+          body: composeBody.trim(),
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Failed to send email');
+      setComposeSent(true);
+      setTimeout(() => setComposeSent(false), 2500);
+      setComposeBody('');
+      setComposeSubject('');
+      setComposeCc('');
+      setComposeTo('');
+      setComposeOpen(false);
+      // Refresh inbox (non-blocking)
+      void fetchEmailThreads(selectedAccountId);
+    } catch (e: unknown) {
+      setComposeError(e instanceof Error ? e.message : 'Failed to send email');
+    } finally {
+      setComposeSending(false);
+    }
+  }, [composeAccountId, composeTo, composeCc, composeSubject, composeBody, composeSending, fetchEmailThreads, selectedAccountId]);
+
+  const listChats = useMemo(() => [...chats, ...emailThreads], [chats, emailThreads]);
+
+  useEffect(() => {
+    const allowed = new Set<string>(['all', 'internal', ...connectedIntegrationChannels]);
+    if (!allowed.has(channelFilter)) setChannelFilter('all');
+  }, [channelFilter, connectedIntegrationChannels]);
 
   // Filtered chats
   const filteredChats = useMemo(() => {
@@ -2267,11 +3488,19 @@ function CommunicationInner() {
       channelFilter === 'internal'
         ? [
           ...internalChatsAsUnipile,
-          ...chats.filter(c => channelFromAccountId(c.account_id, accounts) === 'internal'),
+          ...listChats.filter(c => channelFromAccountId(c.account_id, accounts) === 'internal'),
         ]
-        : chats;
+        : channelFilter === 'all'
+          ? [...internalChatsAsUnipile, ...listChats]
+          : listChats;
 
     return basePool.filter(chat => {
+      if (
+        chat.account_id !== INTERNAL_LOCAL_ACCOUNT &&
+        !connectedAccountIds.has(String(chat.account_id))
+      ) {
+        return false;
+      }
       if (channelFilter !== 'all' && channelFilter !== 'internal') {
         const ch = channelFromAccountId(chat.account_id, accounts);
         if (ch !== channelFilter) return false;
@@ -2285,7 +3514,7 @@ function CommunicationInner() {
       }
       return true;
     });
-  }, [chats, channelFilter, search, accounts, chatEnrichment, internalChatsAsUnipile]);
+  }, [listChats, channelFilter, search, accounts, chatEnrichment, internalChatsAsUnipile, connectedAccountIds]);
 
   const sortedFilteredChats = useMemo(() => {
     return [...filteredChats].sort((a, b) => {
@@ -2298,7 +3527,66 @@ function CommunicationInner() {
 
   const showList = isLg || !mobileDetail;
   const showDetail = isLg || mobileDetail;
-  const hasAccounts = accounts.length > 0;
+  const hasUnipileAccounts = accounts.length > 0;
+  /** After accounts fetch: show inbox even if Unipile is down or unset (internal threads still work). */
+  const showInboxShell = !accountsLoading;
+
+  const disconnectAccount = useCallback(async (accountId: string) => {
+    setAccountsError('');
+    try {
+      const res = await fetch(`/api/unipile/accounts/${encodeURIComponent(accountId)}`, { method: 'DELETE' });
+      const data = await res.json().catch(() => ({} as Record<string, unknown>));
+      if (!res.ok) {
+        const err =
+          typeof data.error === 'string'
+            ? data.error
+            : data.error && typeof data.error === 'object'
+              ? JSON.stringify(data.error)
+              : `Failed to disconnect (${res.status})`;
+        throw new Error(err);
+      }
+
+      const nextSelected = selectedAccountId === accountId ? 'all' : selectedAccountId;
+      if (nextSelected === 'all') setSelectedAccountId('all');
+
+      const remaining = accounts.filter((a) => a.id !== accountId);
+      setAccounts(remaining);
+      getCommNavCache().accounts = {
+        items: remaining,
+        at: Date.now() - ACCOUNTS_CACHE_TTL_MS - 1,
+      };
+
+      chatsCacheRef.current.clear();
+      getCommNavCache().chats = {};
+
+      await fetchAccounts({ force: true });
+      await fetchChats(nextSelected, { force: true });
+    } catch (e: unknown) {
+      setAccountsError(e instanceof Error ? e.message : 'Failed to disconnect account');
+      await fetchAccounts({ force: true });
+    }
+  }, [accounts, fetchAccounts, fetchChats, selectedAccountId]);
+
+  useEffect(() => {
+    const h = (e: Event) => {
+      const ce = e as CustomEvent;
+      const id = ce.detail?.accountId;
+      if (id) void disconnectAccount(String(id));
+    };
+    window.addEventListener('hub:unipile-disconnect', h as any);
+    return () => window.removeEventListener('hub:unipile-disconnect', h as any);
+  }, [disconnectAccount]);
+
+  // Drive in-page search from the top header search bar when present.
+  useEffect(() => {
+    const h = (e: Event) => {
+      const ce = e as CustomEvent;
+      const q = String(ce.detail?.q ?? '');
+      setSearch(q);
+    };
+    window.addEventListener('hub:global-search', h as any);
+    return () => window.removeEventListener('hub:global-search', h as any);
+  }, []);
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden" style={{ background: 'var(--background)' }}>
@@ -2317,76 +3605,242 @@ function CommunicationInner() {
         }
       `}</style>
 
-      {/* ── Top: account bar + filters ── */}
-      {!accountsLoading && hasAccounts && (
-        <>
-          <AccountBar
-            accounts={accounts}
-            selectedId={selectedAccountId}
-            onSelect={handleAccountSelect}
-            onConnect={handleConnect}
-            onRefresh={() => { fetchAccounts(); fetchChats(selectedAccountId, { force: true }); }}
-            connecting={connecting}
-          />
-          {/* Search + channel segment (account tabs above already scope inbox) */}
-          <div
-            className="shrink-0 flex flex-col gap-2.5 px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between"
-            style={{
-              borderBottom: '1px solid color-mix(in srgb, var(--border) 92%, transparent)',
-              background: 'linear-gradient(180deg, color-mix(in srgb, var(--secondary) 40%, transparent), transparent)',
-            }}>
-            <div className="flex items-center gap-1.5 rounded-xl border px-3 py-2 min-w-0 flex-1 sm:max-w-md shadow-sm"
-              style={{
-                background: 'color-mix(in srgb, var(--background) 70%, var(--secondary))',
-                borderColor: 'var(--border)',
-                boxShadow: '0 1px 0 color-mix(in srgb, var(--foreground) 4%, transparent)',
-              }}>
-              <Search className="h-3.5 w-3.5 shrink-0" style={{ color: 'var(--muted-foreground)' }} />
-              <input
-                className="min-w-0 flex-1 bg-transparent text-[13px] outline-none placeholder:opacity-60"
-                style={{ color: 'var(--foreground)' }}
-                placeholder="Search conversations…"
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-              />
-            </div>
-            <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-              <ChannelSegmented value={channelFilter} onChange={setChannelFilter} />
-              <span className="text-[11px] tabular-nums whitespace-nowrap px-1" style={{ color: 'var(--muted-foreground)' }}>
-                {sortedFilteredChats.length} thread{sortedFilteredChats.length !== 1 ? 's' : ''}
-              </span>
-            </div>
-          </div>
-        </>
-      )}
+      {/* ── Toolbar: search + connect/manage + channel filters (single glass strip) ── */}
+      {!accountsLoading && showInboxShell && (
+        <div
+          className="shrink-0 hub-surface border-b border-border/70"
+          style={{ borderBottomWidth: 1 }}
+        >
+            <div className="px-4 py-2">
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Left: channel switcher */}
+              <div className="min-w-0">
+                <ChannelSegmented
+                  value={channelFilter}
+                  onChange={setChannelFilter}
+                  connectedChannels={connectedIntegrationChannels}
+                />
+              </div>
 
-      {/* ── Loading accounts ── */}
-      {accountsLoading && (
-        <div className="flex flex-1 items-center justify-center gap-3">
-          <Loader2 className="h-5 w-5 animate-spin" style={{ color: 'var(--muted-foreground)' }} />
-          <span className="text-[13px]" style={{ color: 'var(--muted-foreground)' }}>Connecting to Unipile…</span>
+              {/* Middle: search state chip (driven by header global search) */}
+              <div className="min-w-0 flex items-center gap-2 flex-1">
+                {search.trim() ? (
+                  <div
+                    className="flex min-w-0 items-center gap-2 rounded-[12px] px-2.5 py-1.5"
+                    style={{
+                      background: 'color-mix(in srgb, var(--foreground) 5%, transparent)',
+                      border: '1px solid color-mix(in srgb, var(--border) 80%, transparent)',
+                    }}
+                  >
+                    <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    <span className="min-w-0 truncate text-[11px]" style={{ color: 'var(--foreground)' }}>
+                      <span className="font-semibold">{search.trim()}</span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setSearch('')}
+                      className="shrink-0 rounded-lg p-1 transition-colors hover:bg-secondary/80"
+                      style={{ color: 'var(--muted-foreground)' }}
+                      title="Clear"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <span className="text-[11px] text-muted-foreground truncate">
+                    Search from the top bar to filter conversations.
+                  </span>
+                )}
+              </div>
+
+              {/* Right: actions */}
+              <div className="flex items-center gap-2 shrink-0">
+                {/* Compose appears only on Email tab */}
+                {channelFilter === 'email' && emailAccounts.length > 0 && (
+                  <div className="relative" ref={composeMenuRef}>
+                    <button
+                      type="button"
+                      onClick={() => setComposeMenuOpen((v) => !v)}
+                      className="flex items-center gap-1.5 rounded-[10px] px-3 py-2 text-[12px] font-semibold transition-colors hover:bg-secondary/80"
+                      style={{ border: '1px solid var(--border)', color: 'var(--foreground)' }}
+                      title="Compose"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      Compose
+                      <ChevronDown className="h-3.5 w-3.5 opacity-60" />
+                    </button>
+
+                    <AnimatePresence>
+                      {composeMenuOpen && (
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.98, y: 6 }}
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.98, y: 6 }}
+                          transition={{ duration: 0.14, ease: [0.16, 1, 0.3, 1] }}
+                          className="absolute right-0 top-full mt-2 w-60 overflow-hidden rounded-2xl shadow-2xl"
+                          style={{
+                            background: 'var(--popover)',
+                            border: '1px solid color-mix(in srgb, var(--border) 85%, transparent)',
+                            backdropFilter: 'saturate(180%) blur(12px)',
+                          }}
+                        >
+                          <div className="px-4 pt-3 pb-2" style={{ borderBottom: '1px solid var(--border)' }}>
+                            <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: 'var(--muted-foreground)' }}>
+                              Compose
+                            </p>
+                            <p className="text-[12px] mt-0.5" style={{ color: 'var(--foreground)' }}>
+                              Start a new message
+                            </p>
+                          </div>
+                          <div className="p-2 space-y-0.5">
+                            <button
+                              type="button"
+                              onClick={() => { setComposeOpen(true); setComposeMenuOpen(false); }}
+                              className="w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-muted/60"
+                              style={{ color: 'var(--foreground)' }}
+                            >
+                              <Mail className="h-4 w-4" style={{ color: CHANNEL_COLOR.email }} />
+                              <div className="min-w-0 flex-1">
+                                <p className="text-[13px] font-semibold leading-tight">Email</p>
+                                <p className="text-[11px] mt-0.5" style={{ color: 'var(--muted-foreground)' }}>New outbound email</p>
+                              </div>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => { setComposeInternalOpen(true); setComposeMenuOpen(false); }}
+                              className="w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-muted/60"
+                              style={{ color: 'var(--foreground)' }}
+                            >
+                              <StickyNote className="h-4 w-4" style={{ color: CHANNEL_COLOR.internal }} />
+                              <div className="min-w-0 flex-1">
+                                <p className="text-[13px] font-semibold leading-tight">Internal</p>
+                                <p className="text-[11px] mt-0.5" style={{ color: 'var(--muted-foreground)' }}>Message a teammate</p>
+                              </div>
+                            </button>
+                            <button
+                              type="button"
+                              disabled
+                              className="w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-left opacity-50"
+                              style={{ color: 'var(--foreground)' }}
+                              title="LinkedIn compose coming soon"
+                            >
+                              <MessageCircle className="h-4 w-4" style={{ color: CHANNEL_COLOR.linkedin }} />
+                              <div className="min-w-0 flex-1">
+                                <p className="text-[13px] font-semibold leading-tight">LinkedIn</p>
+                                <p className="text-[11px] mt-0.5" style={{ color: 'var(--muted-foreground)' }}>Coming soon</p>
+                              </div>
+                            </button>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                )}
+
+                <AccountBar accounts={accounts} onConnect={handleConnect} connecting={connecting} />
+
+                <span className="text-[11px] tabular-nums whitespace-nowrap text-muted-foreground">
+                  {sortedFilteredChats.length} thread{sortedFilteredChats.length !== 1 ? 's' : ''}
+                </span>
+              </div>
+            </div>
+
+            {accountsError && (
+              <div
+                className="flex flex-wrap items-start gap-2 rounded-[10px] border px-3 py-2 text-[11px] leading-snug"
+                style={{
+                  borderColor: 'color-mix(in srgb, var(--destructive) 35%, var(--border))',
+                  background: 'color-mix(in srgb, var(--destructive) 8%, transparent)',
+                  color: 'var(--muted-foreground)',
+                }}
+              >
+                <WifiOff className="h-3.5 w-3.5 shrink-0 text-red-500 mt-0.5" />
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-foreground">Could not load Unipile accounts</p>
+                  <p className="mt-0.5 break-words">{accountsError}</p>
+                  <BonsaiButton size="sm" className="mt-2" onClick={() => void fetchAccounts({ force: true })}>
+                    <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+                    Retry
+                  </BonsaiButton>
+                </div>
+              </div>
+            )}
+            {emailFetchError && (
+              <div
+                className="flex flex-wrap items-start gap-2 rounded-[10px] border px-3 py-2 text-[11px] leading-snug"
+                style={{
+                  borderColor: 'color-mix(in srgb, #d97706 35%, var(--border))',
+                  background: 'color-mix(in srgb, #d97706 8%, transparent)',
+                  color: 'var(--muted-foreground)',
+                }}
+              >
+                <Mail className="h-3.5 w-3.5 shrink-0 mt-0.5" style={{ color: '#d97706' }} />
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-foreground">Could not load email from Unipile</p>
+                  <p className="mt-0.5 break-words">{emailFetchError}</p>
+                  <BonsaiButton
+                    size="sm"
+                    className="mt-2"
+                    onClick={() => void fetchEmailThreads(selectedAccountId)}
+                  >
+                    <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+                    Retry email sync
+                  </BonsaiButton>
+                </div>
+              </div>
+            )}
+            {!hasUnipileAccounts && !accountsError && (
+              <p className="text-[11px] leading-snug" style={{ color: 'var(--muted-foreground)' }}>
+                No email, LinkedIn, or WhatsApp connected yet — use <span className="font-medium text-foreground">Connect</span> to add integrations.
+                Internal threads below work without Unipile.
+              </p>
+            )}
+          </div>
         </div>
       )}
 
-      {/* ── Error loading accounts ── */}
-      {!accountsLoading && accountsError && (
-        <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8">
-          <WifiOff className="h-8 w-8 text-red-500" />
-          <div className="text-center">
-            <p className="text-[14px] font-semibold mb-1" style={{ color: 'var(--foreground)' }}>Could not reach Unipile</p>
-            <p className="text-[12px] mb-4" style={{ color: 'var(--muted-foreground)' }}>{accountsError}</p>
-            <BonsaiButton size="sm" onClick={fetchAccounts}><RefreshCw className="h-3.5 w-3.5 mr-1.5" />Retry</BonsaiButton>
+      {/* ── Loading accounts (non-blocking skeleton) ── */}
+      {accountsLoading && accounts.length === 0 && (
+        <div className="flex flex-1 min-h-0 overflow-hidden">
+          <div className={cn('flex flex-col border-r min-h-0 overflow-hidden', isLg ? 'w-[360px] min-w-[300px] max-w-[420px]' : 'w-full')}
+            style={{ borderColor: 'var(--border)' }}>
+            <div className="shrink-0 px-4 py-3" style={{ borderBottom: '1px solid var(--border)' }}>
+              <div className="flex items-center gap-2">
+                <div className="h-8 w-8 rounded-xl animate-pulse" style={{ background: 'color-mix(in srgb, var(--foreground) 6%, transparent)' }} />
+                <div className="flex-1 min-w-0">
+                  <div className="h-3.5 w-40 rounded animate-pulse" style={{ background: 'color-mix(in srgb, var(--foreground) 6%, transparent)' }} />
+                  <div className="h-3 w-24 rounded mt-2 animate-pulse" style={{ background: 'color-mix(in srgb, var(--foreground) 5%, transparent)' }} />
+                </div>
+                <Loader2 className="h-4 w-4 animate-spin" style={{ color: 'var(--muted-foreground)' }} />
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              {Array.from({ length: 9 }).map((_, i) => (
+                <div key={i} className="px-4 py-3 border-b" style={{ borderColor: 'var(--border)' }}>
+                  <div className="flex items-start gap-3">
+                    <div className="h-9 w-9 rounded-full animate-pulse" style={{ background: 'color-mix(in srgb, var(--foreground) 6%, transparent)' }} />
+                    <div className="flex-1 min-w-0">
+                      <div className="h-3.5 w-40 rounded animate-pulse" style={{ background: 'color-mix(in srgb, var(--foreground) 6%, transparent)' }} />
+                      <div className="h-3 w-56 rounded mt-2 animate-pulse" style={{ background: 'color-mix(in srgb, var(--foreground) 5%, transparent)' }} />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="hidden lg:flex flex-1 min-h-0 min-w-0 flex-col overflow-hidden">
+            <div className="flex flex-1 items-center justify-center">
+              <div className="text-center">
+                <Loader2 className="h-6 w-6 animate-spin mx-auto" style={{ color: 'var(--muted-foreground)' }} />
+                <p className="text-[12px] mt-2" style={{ color: 'var(--muted-foreground)' }}>Loading Communication…</p>
+              </div>
+            </div>
           </div>
         </div>
       )}
 
-      {/* ── No accounts connected ── */}
-      {!accountsLoading && !accountsError && !hasAccounts && (
-        <ConnectPanel onConnect={handleConnect} connecting={connecting} />
-      )}
-
-      {/* ── Main 2-col layout ── */}
-      {!accountsLoading && !accountsError && hasAccounts && (
+      {/* ── Main 2-col layout (internal always; Unipile when connected or chats load) ── */}
+      {showInboxShell && (
         <div className="flex flex-1 min-h-0 overflow-hidden">
           {/* Chat List */}
           {showList && (
@@ -2399,15 +3853,15 @@ function CommunicationInner() {
                   <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin" style={{ color: 'var(--muted-foreground)' }} /></div>
                 )}
 
-                {!chatsLoading && chatsError && (
+                {!chatsLoading && chatsError && hasUnipileAccounts && (
                   <div className="p-4 text-center text-[12px]" style={{ color: 'var(--muted-foreground)' }}>
                     <AlertCircle className="h-5 w-5 mx-auto mb-2 text-red-500" />
                     {chatsError}
-                    <button onClick={() => fetchChats(selectedAccountId)} className="block mx-auto mt-2 text-primary hover:underline">Retry</button>
+                    <button type="button" onClick={() => fetchChats(selectedAccountId)} className="block mx-auto mt-2 text-primary hover:underline">Retry</button>
                   </div>
                 )}
 
-                {!chatsLoading && !chatsError && sortedFilteredChats.length === 0 && (
+                {!chatsLoading && (!chatsError || !hasUnipileAccounts) && sortedFilteredChats.length === 0 && (
                   <div className="flex flex-col items-center justify-center py-16 gap-3 px-8 text-center">
                     <MessageSquare className="h-8 w-8" style={{ color: 'var(--muted-foreground)' }} />
                     <p className="text-[13px] font-medium" style={{ color: 'var(--foreground)' }}>No conversations yet</p>
@@ -2474,6 +3928,259 @@ function CommunicationInner() {
           )}
         </div>
       )}
+
+      {/* Compose new email modal */}
+      <AnimatePresence>
+        {composeOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+            style={{ background: 'rgba(0,0,0,0.45)' }}
+            onMouseDown={(e) => {
+              if (e.target === e.currentTarget) setComposeOpen(false);
+            }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.98, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.98, y: 8 }}
+              transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
+              className="hub-modal-solid w-full max-w-2xl overflow-hidden rounded-2xl shadow-2xl"
+              style={{ border: '1px solid var(--border)' }}
+              onMouseDown={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between gap-2 px-4 py-3" style={{ borderBottom: '1px solid var(--border)' }}>
+                <div className="min-w-0">
+                  <p className="text-[13px] font-semibold truncate" style={{ color: 'var(--foreground)' }}>Compose email</p>
+                  <p className="text-[11px] mt-0.5 truncate" style={{ color: 'var(--muted-foreground)' }}>
+                    New message · choose an email account
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="rounded-lg p-2 transition-colors hover:bg-secondary/80"
+                  style={{ color: 'var(--muted-foreground)' }}
+                  onClick={() => setComposeOpen(false)}
+                  aria-label="Close compose"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="px-4 py-3 space-y-2.5">
+                {composeError && (
+                  <div className="flex items-start gap-2 rounded-xl px-3 py-2 text-[11px]"
+                    style={{
+                      background: 'color-mix(in srgb, #ef4444 8%, var(--background))',
+                      border: '1px solid color-mix(in srgb, #ef4444 18%, var(--border))',
+                      color: '#ef4444',
+                    }}>
+                    <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                    <div className="min-w-0 flex-1 break-words">{composeError}</div>
+                  </div>
+                )}
+                {composeSent && (
+                  <div className="flex items-center gap-2 rounded-xl px-3 py-2 text-[11px]"
+                    style={{
+                      background: 'color-mix(in srgb, #10b981 8%, var(--background))',
+                      border: '1px solid color-mix(in srgb, #10b981 18%, var(--border))',
+                      color: '#10b981',
+                    }}>
+                    <Check className="h-4 w-4" />
+                    Sent
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                  <div className="sm:col-span-1">
+                    <label className="text-[11px] font-medium" style={{ color: 'var(--muted-foreground)' }}>From</label>
+                    <select
+                      className="mt-1 w-full rounded-xl px-3 py-2 text-[12px] outline-none"
+                      style={{ background: 'var(--background)', border: '1px solid var(--border)', color: 'var(--foreground)' }}
+                      value={composeAccountId}
+                      onChange={(e) => setComposeAccountId(e.target.value)}
+                    >
+                      {emailAccounts.map((a) => (
+                        <option key={a.id} value={a.id}>
+                          {(a.username || a.name || 'Email')} · {String(a.id).slice(0, 6)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="text-[11px] font-medium" style={{ color: 'var(--muted-foreground)' }}>To</label>
+                    <input
+                      className="mt-1 w-full rounded-xl px-3 py-2 text-[12px] outline-none"
+                      style={{ background: 'var(--background)', border: '1px solid var(--border)', color: 'var(--foreground)' }}
+                      value={composeTo}
+                      onChange={(e) => setComposeTo(e.target.value)}
+                      placeholder="recipient@email.com"
+                      autoFocus
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                  <div className="sm:col-span-1">
+                    <label className="text-[11px] font-medium" style={{ color: 'var(--muted-foreground)' }}>Cc</label>
+                    <input
+                      className="mt-1 w-full rounded-xl px-3 py-2 text-[12px] outline-none"
+                      style={{ background: 'var(--background)', border: '1px solid var(--border)', color: 'var(--foreground)' }}
+                      value={composeCc}
+                      onChange={(e) => setComposeCc(e.target.value)}
+                      placeholder="cc@email.com (optional)"
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="text-[11px] font-medium" style={{ color: 'var(--muted-foreground)' }}>Subject</label>
+                    <input
+                      className="mt-1 w-full rounded-xl px-3 py-2 text-[12px] outline-none"
+                      style={{ background: 'var(--background)', border: '1px solid var(--border)', color: 'var(--foreground)' }}
+                      value={composeSubject}
+                      onChange={(e) => setComposeSubject(e.target.value)}
+                      placeholder="Subject"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-medium" style={{ color: 'var(--muted-foreground)' }}>Message</label>
+                  <textarea
+                    className="mt-1 w-full rounded-2xl px-3 py-2 text-[12px] outline-none resize-none"
+                    style={{ background: 'var(--background)', border: '1px solid var(--border)', color: 'var(--foreground)' }}
+                    rows={10}
+                    value={composeBody}
+                    onChange={(e) => setComposeBody(e.target.value)}
+                    placeholder="Write your email…"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between gap-2 px-4 py-3"
+                style={{ borderTop: '1px solid var(--border)', background: 'color-mix(in srgb, var(--secondary) 65%, transparent)' }}>
+                <span className="text-[10px]" style={{ color: 'var(--muted-foreground)' }}>
+                  Tip: use the top search to filter conversations (this modal is for new outbound email).
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setComposeOpen(false)}
+                    className="rounded-xl px-3 py-2 text-[12px] font-semibold transition-colors hover:bg-secondary/80"
+                    style={{ border: '1px solid var(--border)', color: 'var(--foreground)' }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void sendComposedEmail()}
+                    disabled={!composeAccountId || !composeTo.trim() || !composeBody.trim() || composeSending}
+                    className="rounded-xl px-4 py-2 text-[12px] font-semibold text-white disabled:opacity-40"
+                    style={{ background: 'var(--primary)' }}
+                  >
+                    {composeSending ? 'Sending…' : 'Send'}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Compose internal modal */}
+      <AnimatePresence>
+        {composeInternalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+            style={{ background: 'rgba(0,0,0,0.45)' }}
+            onMouseDown={(e) => {
+              if (e.target === e.currentTarget) setComposeInternalOpen(false);
+            }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.98, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.98, y: 8 }}
+              transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
+              className="hub-modal-solid w-full max-w-lg overflow-hidden rounded-2xl shadow-2xl"
+              style={{ border: '1px solid var(--border)' }}
+              onMouseDown={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between gap-2 px-4 py-3" style={{ borderBottom: '1px solid var(--border)' }}>
+                <div className="min-w-0">
+                  <p className="text-[13px] font-semibold truncate" style={{ color: 'var(--foreground)' }}>New internal message</p>
+                  <p className="text-[11px] mt-0.5 truncate" style={{ color: 'var(--muted-foreground)' }}>
+                    Starts a new internal thread
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="rounded-lg p-2 transition-colors hover:bg-secondary/80"
+                  style={{ color: 'var(--muted-foreground)' }}
+                  onClick={() => setComposeInternalOpen(false)}
+                  aria-label="Close internal compose"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="px-4 py-3 space-y-2.5">
+                <div>
+                  <label className="text-[11px] font-medium" style={{ color: 'var(--muted-foreground)' }}>To</label>
+                  <select
+                    className="mt-1 w-full rounded-xl px-3 py-2 text-[12px] outline-none"
+                    style={{ background: 'var(--background)', border: '1px solid var(--border)', color: 'var(--foreground)' }}
+                    value={composeInternalTo}
+                    onChange={(e) => setComposeInternalTo(e.target.value)}
+                  >
+                    {INTERNAL_TEAM.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name} · {p.role}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-medium" style={{ color: 'var(--muted-foreground)' }}>Message</label>
+                  <textarea
+                    className="mt-1 w-full rounded-2xl px-3 py-2 text-[12px] outline-none resize-none"
+                    style={{ background: 'var(--background)', border: '1px solid var(--border)', color: 'var(--foreground)' }}
+                    rows={6}
+                    value={composeInternalBody}
+                    onChange={(e) => setComposeInternalBody(e.target.value)}
+                    placeholder="Write a note…"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 px-4 py-3"
+                style={{ borderTop: '1px solid var(--border)', background: 'color-mix(in srgb, var(--secondary) 65%, transparent)' }}>
+                <button
+                  type="button"
+                  onClick={() => setComposeInternalOpen(false)}
+                  className="rounded-xl px-3 py-2 text-[12px] font-semibold transition-colors hover:bg-secondary/80"
+                  style={{ border: '1px solid var(--border)', color: 'var(--foreground)' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void startInternalThread()}
+                  className="rounded-xl px-4 py-2 text-[12px] font-semibold text-white"
+                  style={{ background: 'var(--primary)' }}
+                >
+                  Start thread
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

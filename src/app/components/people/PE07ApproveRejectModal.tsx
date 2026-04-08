@@ -24,7 +24,7 @@ export function PE07ApproveRejectModal({ isOpen, onClose, onApprove, onReject, r
 
   const handleReject = () => {
     if (!reason.trim()) {
-      alert('Please provide a reason for rejection');
+      return;
       return;
     }
     onReject(reason);

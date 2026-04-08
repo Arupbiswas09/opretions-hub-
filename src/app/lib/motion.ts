@@ -45,7 +45,10 @@ export const pageTransition = {
     transition: { duration: 0.32, ease: EASE_OUT_EXPO },
   },
   exit: {
-    opacity: 0, y: -6, filter: 'blur(1px)',
+    opacity: 0,
+    y: -6,
+    filter: 'blur(1px)',
+    pointerEvents: 'none',
     transition: { duration: 0.18, ease: EASE_IN },
   },
 };

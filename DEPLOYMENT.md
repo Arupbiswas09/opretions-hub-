@@ -1,6 +1,6 @@
-# Deployment guide — Vercel + Unipile + Ollama (Gemma)
+# Deployment guide — Vercel + Unipile + OpenAI (GPT)
 
-This app is a **Next.js** project. The **UI and API routes** can run on **Vercel**. **Unipile** and **Ollama** are configured with environment variables so testers can point at **any** hosted services.
+This app is a **Next.js** project. The **UI and API routes** can run on **Vercel**. **Unipile** and optional **Ollama** are configured with environment variables so testers can point at **any** hosted services. Summarize and smart-reply use an **OpenAI-compatible** API (`OPENAI_*`, `AI_MODEL`, default **GPT** model).
 
 ## 1. Deploy the Next.js app (free tier)
 
@@ -13,13 +13,13 @@ This app is a **Next.js** project. The **UI and API routes** can run on **Vercel
 
 **Important:** Set `NEXT_PUBLIC_APP_URL` to your production URL (used for Unipile OAuth redirects if applicable).
 
-**Function duration:** AI routes use `maxDuration = 60` (seconds). On **Vercel Hobby**, serverless functions are limited to **10s** — long Gemma runs may time out. Options:
+**Function duration:** AI routes use `maxDuration = 60` (seconds). On **Vercel Hobby**, serverless functions are limited to **10s** — very slow model calls may time out. Options:
 
 - Upgrade to **Vercel Pro** for longer limits, or  
-- Use a **smaller / faster** model (`AI_MODEL=gemma2:2b` etc.), or  
-- Run the Next app on a **VPS** (Docker) next to Ollama so there is no tight serverless cap.
+- Use a **faster** model at your OpenAI-compatible endpoint, or  
+- Run the Next app on a **VPS** (Docker) if you need long-running local inference.
 
-Check status: `GET /api/ai/health` after deploy.
+Check status: `GET /api/ai/health` after deploy (OpenAI when `OLLAMA_URL` is unset; Ollama when it is set).
 
 ### Contabo (or any VPS) — yes, it works
 
@@ -38,7 +38,7 @@ OLLAMA_URL=http://127.0.0.1:11434
 
 No public Ollama URL is required unless the app is split across machines. Optionally expose Ollama only on localhost and keep the proxy serving only Next.js.
 
-**RAM:** Pick a plan with enough memory for your Gemma/Ollama model (check [Ollama model sizes](https://ollama.com/library)); the Next.js process is light compared to the LLM.
+**RAM:** If you use Ollama on the box, pick a plan with enough memory for your pulled model (check [Ollama model sizes](https://ollama.com/library)); the Next.js process is light compared to the LLM.
 
 ---
 
@@ -55,22 +55,37 @@ Same keys work for local `.env.local` and production.
 
 ---
 
-## 3. Ollama + Gemma — must be reachable from the internet
+## 3. OpenAI-compatible API (GPT) — required for summarize / smart reply
 
-Vercel’s servers **cannot** call `http://localhost:11434` on your PC. For production you need **OLLAMA_URL** pointing to an Ollama HTTP API that is:
+Set:
+
+| Variable           | Purpose |
+|--------------------|---------|
+| `OPENAI_API_KEY`   | API key for your provider. |
+| `OPENAI_BASE_URL`  | Base URL (e.g. `https://api.openai.com/v1` or your gateway). |
+| `AI_MODEL`         | Model id served at that base URL (default in code: `gpt-4.1-mini`). |
+
+Code: **`src/app/lib/ai-openai.ts`**; routes: `/api/ai/summarize`, `/api/ai/auto-reply`.  
+`/api/ai/health` reports OpenAI readiness when **`OLLAMA_URL` is not set**.
+
+---
+
+## 4. Ollama (optional) — must be reachable when enabled
+
+If you set **`OLLAMA_URL`**, Vercel (or any remote host) **cannot** use `http://localhost:11434` on your PC. Production needs an Ollama HTTP API that is:
 
 - Reachable from the public internet (or from Vercel’s regions), and  
 - Ideally **not** exposed without TLS + auth (see below).
 
-### Configuration (all environments)
+### Configuration
 
-| Variable        | Purpose |
-|----------------|---------|
-| `OLLAMA_URL`   | Base URL only, e.g. `https://ollama.example.com` (no `/api/chat` suffix). |
-| `AI_MODEL`     | Tag from `ollama list` on that server, e.g. `gemma2:9b`, `gemma4:e4b`. |
-| `OLLAMA_API_KEY` | Optional `Authorization: Bearer …` if you terminate TLS and auth in front of Ollama. |
+| Variable          | Purpose |
+|-------------------|---------|
+| `OLLAMA_URL`      | Base URL only, e.g. `https://ollama.example.com` (no `/api/chat` suffix). |
+| `OLLAMA_MODEL`    | Tag from `ollama list` on that server for **health** (default: `llama3.2:3b`). |
+| `OLLAMA_API_KEY`  | Optional `Authorization: Bearer …` if you terminate TLS and auth in front of Ollama. |
 
-Code reads these in **`src/app/lib/ai-ollama.ts`**; routes: `/api/ai/summarize`, `/api/ai/auto-reply`, `/api/ai/health`.
+Code: **`src/app/lib/ai-ollama.ts`**; route: `/api/ai/health` (Ollama branch only when `OLLAMA_URL` is set). Summarize and auto-reply still use **`ai-openai`**.
 
 ### Free or low-cost ways to host Ollama for demos
 
@@ -101,27 +116,28 @@ These are common patterns; availability/pricing change over time — verify on e
 
 ### Smaller models for speed / free tiers
 
-If inference is slow or times out, set e.g.:
+If Ollama health shows a missing model or pulls are large, set e.g.:
 
 ```bash
-AI_MODEL=gemma2:2b
+OLLAMA_MODEL=llama3.2:3b
 ```
 
-(or another small tag you have pulled on the Ollama server.)
+(and run `ollama pull` for that tag on the server.)
 
 ---
 
-## 4. Checklist before sharing the app
+## 5. Checklist before sharing the app
 
-- [ ] `OLLAMA_URL` is **https** and reachable from outside your LAN.  
-- [ ] `ollama pull <AI_MODEL>` has been run on that server.  
+- [ ] `OPENAI_API_KEY` and `OPENAI_BASE_URL` set for GPT routes.  
+- [ ] If using Ollama: `OLLAMA_URL` is **https** and reachable from outside your LAN.  
+- [ ] If using Ollama: `ollama pull <OLLAMA_MODEL>` has been run on that server.  
 - [ ] `GET /api/ai/health` returns `"status":"ready"`.  
 - [ ] Unipile vars set and a test account connects.  
 - [ ] If using OAuth redirects, `NEXT_PUBLIC_APP_URL` matches the deployed URL.
 
 ---
 
-## 5. Local development
+## 6. Local development
 
 Copy `.env.example` → `.env.local`, fill secrets, run:
 
@@ -129,4 +145,4 @@ Copy `.env.example` → `.env.local`, fill secrets, run:
 npm install && npm run dev
 ```
 
-Default Ollama: `http://127.0.0.1:11434` with Ollama running locally.
+With **`OLLAMA_URL` unset**, health checks OpenAI only. To verify a local Ollama instance, set `OLLAMA_URL=http://127.0.0.1:11434` and optional `OLLAMA_MODEL`.

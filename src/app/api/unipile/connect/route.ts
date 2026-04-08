@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getUnipileConnectEnv, UNIPILE_CONNECT_NOT_CONFIGURED } from '../../../lib/unipile-env';
 
-const API   = process.env.UNIPILE_API_URL!;
-const TOKEN = process.env.UNIPILE_ACCESS_TOKEN!;
-const DSN   = process.env.UNIPILE_DSN!;            // e.g. api36.unipile.com:16649
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
 // Map our provider slugs → Unipile provider identifiers
@@ -14,8 +12,20 @@ const PROVIDER_MAP: Record<string, string> = {
 
 export async function POST(req: NextRequest) {
   try {
-    const { provider } = await req.json();
-    const unipileProvider = PROVIDER_MAP[provider];
+    const env = getUnipileConnectEnv();
+    if (!env) {
+      return NextResponse.json({ error: UNIPILE_CONNECT_NOT_CONFIGURED, code: 'unipile_not_configured' }, { status: 503 });
+    }
+    const { api: API, token: TOKEN, dsn: DSN } = env;
+
+    let reqBody: { provider?: string };
+    try {
+      reqBody = await req.json();
+    } catch {
+      return NextResponse.json({ error: 'Expected JSON body with { "provider": "linkedin" | "whatsapp" | "gmail" }' }, { status: 400 });
+    }
+    const { provider } = reqBody;
+    const unipileProvider = provider ? PROVIDER_MAP[provider] : undefined;
     if (!unipileProvider) {
       return NextResponse.json({ error: `Unknown provider: ${provider}` }, { status: 400 });
     }
@@ -46,20 +56,25 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify(body),
     });
 
-    const data = await res.json();
+    const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
 
     if (!res.ok) {
-      console.error('[Unipile connect error]', data);
-      return NextResponse.json({ error: JSON.stringify(data) }, { status: res.status });
+      console.error('[Unipile connect error]', res.status, data);
+      return NextResponse.json(
+        { error: typeof data.detail === 'string' ? data.detail : JSON.stringify(data.error ?? data) },
+        { status: res.status },
+      );
     }
 
     const url = data.url || data.link || data.hosted_url || data.auth_url;
-    if (!url) {
-      return NextResponse.json({ error: 'No URL returned from Unipile', raw: data }, { status: 500 });
+    if (typeof url !== 'string' || !url) {
+      return NextResponse.json({ error: 'No URL returned from Unipile', raw: data }, { status: 502 });
     }
 
     return NextResponse.json({ url });
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : 'Connect failed';
+    console.error('[Unipile connect]', e);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

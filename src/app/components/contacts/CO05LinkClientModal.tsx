@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { X, Search } from 'lucide-react';
+'use client';
+import React, { useEffect, useState } from 'react';
+import { X, Search, Building2, Loader2 } from 'lucide-react';
 import { BonsaiButton } from '../bonsai/BonsaiButton';
-import { BonsaiInput } from '../bonsai/BonsaiFormFields';
 
 interface CO05LinkClientModalProps {
   isOpen: boolean;
@@ -9,21 +9,38 @@ interface CO05LinkClientModalProps {
   onLink: (clientId: string) => void;
 }
 
+interface ClientOption {
+  id: string;
+  name: string;
+  industry: string;
+}
+
 export function CO05LinkClientModal({ isOpen, onClose, onLink }: CO05LinkClientModalProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedClient, setSelectedClient] = useState<string | null>(null);
+  const [clients, setClients] = useState<ClientOption[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const clients = [
-    { id: '1', name: 'Acme Corp', industry: 'Technology', contacts: 5 },
-    { id: '2', name: 'Tech Startup', industry: 'Software', contacts: 3 },
-    { id: '3', name: 'Local Retail', industry: 'Retail', contacts: 2 },
-    { id: '4', name: 'FinTech Startup', industry: 'Finance', contacts: 4 },
-    { id: '5', name: 'Partner Agency', industry: 'Marketing', contacts: 8 },
-  ];
+  useEffect(() => {
+    if (!isOpen) return;
+    setLoading(true);
+    fetch('/api/clients?page=1&limit=100', { credentials: 'include' })
+      .then(r => r.json())
+      .then(json => {
+        if (Array.isArray(json.data)) {
+          setClients(json.data.map((r: any) => ({
+            id: String(r.id),
+            name: String(r.name || ''),
+            industry: '—',
+          })));
+        }
+      })
+      .catch(() => setClients([]))
+      .finally(() => setLoading(false));
+  }, [isOpen]);
 
   const filteredClients = clients.filter(client =>
-    client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    client.industry.toLowerCase().includes(searchQuery.toLowerCase())
+    client.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleLink = () => {
@@ -37,99 +54,85 @@ export function CO05LinkClientModal({ isOpen, onClose, onLink }: CO05LinkClientM
 
   return (
     <>
-      {/* Overlay */}
-      <div 
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 hub-modal-overlay"
-        onClick={onClose}
-      >
-        {/* Modal */}
-        <div 
-          className="hub-modal-solid rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
-          onClick={(e) => e.stopPropagation()}
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 hub-modal-overlay" onClick={onClose}>
+        <div
+          className="rounded-xl shadow-2xl w-full max-w-lg max-h-[80vh] overflow-hidden"
+          onClick={e => e.stopPropagation()}
+          style={{ background: 'var(--popover)', border: '1px solid var(--border)', backdropFilter: 'blur(24px)' }}
         >
           {/* Header */}
-          <div className="px-6 py-4 border-b border-border flex items-center justify-between">
+          <div className="px-5 py-3 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border)' }}>
             <div>
-              <h2 className="text-xl font-semibold text-foreground">Link contact to client</h2>
-              <p className="text-sm text-muted-foreground">Select a client to associate with this contact</p>
+              <h2 className="text-[14px] font-semibold" style={{ color: 'var(--foreground)' }}>Link to Client</h2>
+              <p className="text-[11px]" style={{ color: 'var(--muted-foreground)' }}>Associate this contact with a client organization</p>
             </div>
-            <button
-              type="button"
-              onClick={onClose}
-              className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-            >
-              <X className="w-5 h-5" />
+            <button onClick={onClose} className="p-1.5 rounded-lg transition-colors hover:bg-white/[0.06]" style={{ color: 'var(--muted-foreground)' }}>
+              <X className="w-4 h-4" />
             </button>
           </div>
 
           {/* Search */}
-          <div className="p-6 border-b border-border">
+          <div className="px-5 py-3" style={{ borderBottom: '1px solid var(--border)' }}>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5" style={{ color: 'var(--muted-foreground)' }} />
               <input
                 type="text"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search clients by name or industry..."
-                className="hub-field pl-10 pr-4 py-2 text-sm text-foreground placeholder:text-muted-foreground"
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder="Search clients…"
+                className="w-full rounded-lg py-[6px] pl-8 pr-3 text-[11px] focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                style={{ background: 'var(--search-bg)', border: '1px solid var(--search-border)', color: 'var(--foreground)' }}
+                autoFocus
               />
             </div>
           </div>
 
           {/* Client List */}
-          <div className="p-6 max-h-96 overflow-y-auto">
-            <div className="space-y-2">
-              {filteredClients.length > 0 ? (
-                filteredClients.map((client) => (
-                  <button
-                    key={client.id}
-                    onClick={() => setSelectedClient(client.id)}
-                    className={`w-full flex items-center justify-between p-4 rounded-lg border-2 transition-all ${
-                      selectedClient === client.id
-                        ? 'border-primary bg-primary/5'
-                        : 'border-border hover:border-primary/50'
-                    }`}
-                  >
-                    <div className="text-left">
-                      <p className="font-medium text-foreground">{client.name}</p>
-                      <p className="text-sm text-muted-foreground">{client.industry}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xs text-muted-foreground">{client.contacts} contacts</p>
-                    </div>
-                  </button>
-                ))
-              ) : (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground">No clients found</p>
-                  <p className="text-sm text-muted-foreground mt-1">Try adjusting your search</p>
-                </div>
-              )}
-            </div>
+          <div className="px-5 py-3 max-h-[320px] overflow-y-auto">
+            {loading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-5 h-5 animate-spin" style={{ color: 'var(--muted-foreground)' }} />
+              </div>
+            ) : (
+              <div className="space-y-1.5">
+                {filteredClients.length > 0 ? (
+                  filteredClients.map(client => (
+                    <button
+                      key={client.id}
+                      onClick={() => setSelectedClient(client.id)}
+                      className="w-full flex items-center gap-3 p-2.5 rounded-lg transition-all text-left"
+                      style={{
+                        background: selectedClient === client.id ? 'rgba(37,99,235,0.08)' : 'transparent',
+                        border: `1.5px solid ${selectedClient === client.id ? 'rgba(37,99,235,0.30)' : 'var(--border)'}`,
+                      }}
+                    >
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                        style={{ background: 'linear-gradient(135deg, #2563EB, #6366F1)' }}>
+                        <Building2 className="w-4 h-4 text-white" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[12px] font-medium truncate" style={{ color: 'var(--foreground)' }}>{client.name}</p>
+                        <p className="text-[10px]" style={{ color: 'var(--muted-foreground)' }}>{client.industry}</p>
+                      </div>
+                      {selectedClient === client.id && (
+                        <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: '#2563EB' }} />
+                      )}
+                    </button>
+                  ))
+                ) : (
+                  <div className="text-center py-8">
+                    <Building2 className="w-8 h-8 mx-auto mb-2" style={{ color: 'var(--muted-foreground)' }} />
+                    <p className="text-[12px]" style={{ color: 'var(--muted-foreground)' }}>No clients found</p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
-          {/* Actions */}
-          <div className="px-6 py-4 border-t border-border flex items-center justify-between">
-            <button
-              type="button"
-              onClick={onClose}
-              className="text-sm text-primary hover:underline"
-            >
-              + Create new client
-            </button>
-            <div className="flex items-center gap-3">
-              <BonsaiButton variant="ghost" onClick={onClose} type="button">
-                Cancel
-              </BonsaiButton>
-              <BonsaiButton 
-                variant="primary" 
-                onClick={handleLink}
-                disabled={!selectedClient}
-                type="button"
-              >
-                Link Client
-              </BonsaiButton>
-            </div>
+          {/* Footer */}
+          <div className="px-5 py-3 flex items-center justify-end gap-2" style={{ borderTop: '1px solid var(--border)' }}>
+            <BonsaiButton variant="ghost" onClick={onClose} type="button">Cancel</BonsaiButton>
+            <BonsaiButton variant="primary" onClick={handleLink} disabled={!selectedClient} type="button">Link Client</BonsaiButton>
           </div>
         </div>
       </div>

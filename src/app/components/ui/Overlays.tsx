@@ -30,7 +30,7 @@ export function SlideDrawer({
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            exit={{ opacity: 0, pointerEvents: 'none' }}
             transition={{ duration: 0.15 }}
             onClick={onClose}
             className="fixed inset-0 z-50"
@@ -121,7 +121,7 @@ export function ConfirmModal({
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            exit={{ opacity: 0, pointerEvents: 'none' }}
             transition={{ duration: 0.12 }}
             onClick={onClose}
             className="fixed inset-0 z-[60]"

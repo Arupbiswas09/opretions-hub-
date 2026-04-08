@@ -33,7 +33,7 @@ export function PR09ApproveRejectTimesheet({ timesheet, onBack, onApprove, onRej
 
   const handleReject = () => {
     if (!rejectReason.trim()) {
-      alert('Please provide a reason for rejection');
+      return;
       return;
     }
     onReject(rejectReason);

@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
-import { X } from 'lucide-react';
-import { BonsaiButton } from '../bonsai/BonsaiButton';
-import { BonsaiInput } from '../bonsai/BonsaiFormFields';
+'use client';
+import React, { useState, useEffect } from 'react';
+import { X, Loader2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { useHubData } from '../../lib/hub/use-hub-data';
+import { type ClientRow } from '../../lib/api/hub-api';
 
 interface PR02ProjectDrawerProps {
   isOpen: boolean;
@@ -10,253 +12,225 @@ interface PR02ProjectDrawerProps {
   initialProject?: any;
 }
 
+const STATUS_OPTIONS = [
+  { value: 'planning', label: 'Planning' },
+  { value: 'active', label: 'Active' },
+  { value: 'on_hold', label: 'On Hold' },
+  { value: 'completed', label: 'Completed' },
+  { value: 'cancelled', label: 'Cancelled' },
+];
+
 export function PR02ProjectDrawer({ isOpen, onClose, onSave, initialProject }: PR02ProjectDrawerProps) {
-  const [formData, setFormData] = useState(initialProject || {
+  const { data: clients } = useHubData<ClientRow[]>(isOpen ? '/api/clients' : null);
+  const [saving, setSaving] = useState(false);
+
+  const [formData, setFormData] = useState({
     name: '',
-    client: '',
-    status: 'Planning',
-    projectManager: '',
+    client_id: '',
+    status: 'planning',
     description: '',
     startDate: '',
     endDate: '',
-    budget: '',
-    billingType: 'Fixed Price',
-    hourlyRate: '',
-    estimatedHours: '',
-    tags: '',
-    // Settings
-    requireTimesheets: true,
-    clientTimesheetApproval: false,
-    clientApprover: '',
+    budgetHours: '',
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Populate for edit mode
+  useEffect(() => {
+    if (initialProject) {
+      setFormData({
+        name: initialProject.name ?? '',
+        client_id: initialProject.client_id ?? '',
+        status: initialProject.status ?? 'planning',
+        description: initialProject.description ?? '',
+        startDate: initialProject.start_date ?? initialProject.startDate ?? '',
+        endDate: initialProject.end_date ?? initialProject.endDate ?? '',
+        budgetHours: initialProject.budget_hours ?? initialProject.budgetHours ?? '',
+      });
+    } else {
+      setFormData({
+        name: '', client_id: '', status: 'planning', description: '',
+        startDate: '', endDate: '', budgetHours: '',
+      });
+    }
+  }, [initialProject, isOpen]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formData);
-    onClose();
+    if (!formData.name.trim()) return;
+    setSaving(true);
+    await onSave({
+      name: formData.name.trim(),
+      client_id: formData.client_id || null,
+      status: formData.status,
+      description: formData.description || null,
+      start_date: formData.startDate || null,
+      end_date: formData.endDate || null,
+      budget_hours: formData.budgetHours ? Number(formData.budgetHours) : null,
+    });
+    setSaving(false);
   };
 
-  if (!isOpen) return null;
+  const inputStyle: React.CSSProperties = {
+    background: 'var(--background)',
+    border: '1px solid var(--border)',
+    color: 'var(--foreground)',
+  };
+
+  const labelClass = "block text-[12px] font-medium mb-1.5";
 
   return (
-    <>
-      <div className="fixed inset-0 z-40 hub-modal-overlay" onClick={onClose} aria-hidden />
-
-      <div className="hub-modal-solid fixed right-0 top-0 bottom-0 z-50 w-full max-w-2xl overflow-y-auto shadow-2xl">
-        <div className="sticky top-0 flex items-center justify-between border-b border-border px-6 py-4 hub-modal-solid">
-          <div>
-            <h2 className="text-xl font-semibold text-foreground">
-              {initialProject ? 'Edit project' : 'New project'}
-            </h2>
-            <p className="text-sm text-muted-foreground">Details &amp; billing</p>
-          </div>
-          <button
-            type="button"
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-40"
+            style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(2px)' }}
             onClick={onClose}
-            className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+          />
+
+          {/* Drawer */}
+          <motion.div
+            initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
+            transition={{ type: 'spring', stiffness: 400, damping: 35 }}
+            className="fixed right-0 top-0 bottom-0 z-50 w-full max-w-lg overflow-y-auto"
+            style={{ background: 'var(--popover)', borderLeft: '1px solid var(--border)' }}
           >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
+            {/* Header */}
+            <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4"
+              style={{ background: 'var(--popover)', borderBottom: '1px solid var(--border)' }}>
+              <div>
+                <h2 className="text-[16px] font-semibold" style={{ color: 'var(--foreground)' }}>
+                  {initialProject ? 'Edit Project' : 'New Project'}
+                </h2>
+                <p className="text-[11px] mt-0.5" style={{ color: 'var(--muted-foreground)' }}>
+                  {initialProject ? 'Update project details' : 'Set up a new project'}
+                </p>
+              </div>
+              <button onClick={onClose} className="p-2 rounded-lg transition-colors hover:bg-white/[0.05]"
+                style={{ color: 'var(--muted-foreground)' }}>
+                <X className="w-4 h-4" />
+              </button>
+            </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* Basic Information */}
-          <div>
-            <h3 className="mb-4 font-semibold text-foreground">Basics</h3>
-            <div className="space-y-4">
-              <BonsaiInput
-                label="Project Name"
-                required
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Website Redesign"
-              />
-
-              <div className="grid grid-cols-2 gap-4">
-                <BonsaiInput
-                  label="Client"
-                  required
-                  value={formData.client}
-                  onChange={(e) => setFormData({ ...formData, client: e.target.value })}
-                  placeholder="Select client"
+            <form onSubmit={handleSubmit} className="p-5 space-y-5">
+              {/* Name */}
+              <div>
+                <label className={labelClass} style={{ color: 'var(--foreground)' }}>
+                  Project Name <span style={{ color: 'var(--destructive)' }}>*</span>
+                </label>
+                <input
+                  type="text" required autoFocus
+                  value={formData.name}
+                  onChange={e => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="Website Redesign"
+                  className="w-full rounded-lg px-3 py-2 text-[13px] outline-none transition-all focus:ring-2 focus:ring-blue-500/20"
+                  style={inputStyle}
                 />
+              </div>
+
+              {/* Client + Status */}
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-foreground">Status *</label>
+                  <label className={labelClass} style={{ color: 'var(--foreground)' }}>Client</label>
+                  <select
+                    value={formData.client_id}
+                    onChange={e => setFormData({ ...formData, client_id: e.target.value })}
+                    className="w-full rounded-lg px-3 py-2 text-[13px] outline-none transition-all focus:ring-2 focus:ring-blue-500/20"
+                    style={inputStyle}
+                  >
+                    <option value="">No client</option>
+                    {(clients ?? []).map(c => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className={labelClass} style={{ color: 'var(--foreground)' }}>Status</label>
                   <select
                     value={formData.status}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                    required
+                    onChange={e => setFormData({ ...formData, status: e.target.value })}
+                    className="w-full rounded-lg px-3 py-2 text-[13px] outline-none transition-all focus:ring-2 focus:ring-blue-500/20"
+                    style={inputStyle}
                   >
-                    <option value="Planning">Planning</option>
-                    <option value="In Progress">In Progress</option>
-                    <option value="On Hold">On Hold</option>
-                    <option value="Completed">Completed</option>
-                    <option value="Cancelled">Cancelled</option>
+                    {STATUS_OPTIONS.map(s => (
+                      <option key={s.value} value={s.value}>{s.label}</option>
+                    ))}
                   </select>
                 </div>
               </div>
 
-              <BonsaiInput
-                label="Project Manager"
-                required
-                value={formData.projectManager}
-                onChange={(e) => setFormData({ ...formData, projectManager: e.target.value })}
-                placeholder="Select team member"
-              />
-            </div>
-          </div>
-
-          {/* Project Description - PROMINENT */}
-          <div className="rounded-xl border border-border bg-muted/30 p-4">
-            <label className="mb-2 block text-sm font-semibold text-foreground">
-              Description *
-            </label>
-            <textarea
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              rows={6}
-              className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
-              placeholder="Scope, deliverables, milestones…"
-              required
-            />
-          </div>
-
-          {/* Timeline */}
-          <div>
-            <h3 className="mb-4 font-semibold text-foreground">Timeline</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <BonsaiInput
-                label="Start Date"
-                type="date"
-                required
-                value={formData.startDate}
-                onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-              />
-              <BonsaiInput
-                label="End Date"
-                type="date"
-                required
-                value={formData.endDate}
-                onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-              />
-            </div>
-          </div>
-
-          {/* Budget & Billing */}
-          <div>
-            <h3 className="mb-4 font-semibold text-foreground">Budget &amp; billing</h3>
-            <div className="space-y-4">
+              {/* Description */}
               <div>
-                <label className="mb-2 block text-sm font-medium text-foreground">Billing type *</label>
-                <select
-                  value={formData.billingType}
-                  onChange={(e) => setFormData({ ...formData, billingType: e.target.value })}
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                  required
-                >
-                  <option value="Fixed Price">Fixed Price</option>
-                  <option value="Time & Materials">Time & Materials</option>
-                  <option value="Retainer">Retainer</option>
-                </select>
+                <label className={labelClass} style={{ color: 'var(--foreground)' }}>Description</label>
+                <textarea
+                  value={formData.description}
+                  onChange={e => setFormData({ ...formData, description: e.target.value })}
+                  rows={4}
+                  placeholder="Scope, deliverables, milestones…"
+                  className="w-full resize-none rounded-lg px-3 py-2 text-[13px] outline-none transition-all focus:ring-2 focus:ring-blue-500/20"
+                  style={inputStyle}
+                />
               </div>
 
-              {formData.billingType === 'Fixed Price' && (
-                <BonsaiInput
-                  label="Total Budget"
-                  type="number"
-                  required
-                  value={formData.budget}
-                  onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
-                  placeholder="45000"
-                />
-              )}
-
-              {formData.billingType === 'Time & Materials' && (
-                <div className="grid grid-cols-2 gap-4">
-                  <BonsaiInput
-                    label="Hourly Rate"
-                    type="number"
-                    required
-                    value={formData.hourlyRate}
-                    onChange={(e) => setFormData({ ...formData, hourlyRate: e.target.value })}
-                    placeholder="150"
-                  />
-                  <BonsaiInput
-                    label="Estimated Hours"
-                    type="number"
-                    value={formData.estimatedHours}
-                    onChange={(e) => setFormData({ ...formData, estimatedHours: e.target.value })}
-                    placeholder="300"
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Project Settings */}
-          <div>
-            <h3 className="mb-4 font-semibold text-foreground">Settings</h3>
-            <div className="space-y-3">
-              <label className="flex cursor-pointer items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={formData.requireTimesheets}
-                  onChange={(e) => setFormData({ ...formData, requireTimesheets: e.target.checked })}
-                  className="h-4 w-4 rounded border-border text-primary focus:ring-2 focus:ring-primary/20"
-                />
+              {/* Dates */}
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <span className="text-sm font-medium text-foreground">Require timesheets</span>
-                  <p className="text-xs text-muted-foreground">Time required on this project</p>
-                </div>
-              </label>
-
-              <label className="flex cursor-pointer items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={formData.clientTimesheetApproval}
-                  onChange={(e) => setFormData({ ...formData, clientTimesheetApproval: e.target.checked })}
-                  className="h-4 w-4 rounded border-border text-primary focus:ring-2 focus:ring-primary/20"
-                />
-                <div>
-                  <span className="text-sm font-medium text-foreground">Client approves timesheets</span>
-                  <p className="text-xs text-muted-foreground">Before invoicing</p>
-                </div>
-              </label>
-
-              {formData.clientTimesheetApproval && (
-                <div className="ml-6 mt-2">
-                  <BonsaiInput
-                    label="Client Approver"
-                    required
-                    value={formData.clientApprover}
-                    onChange={(e) => setFormData({ ...formData, clientApprover: e.target.value })}
-                    placeholder="Select client user"
+                  <label className={labelClass} style={{ color: 'var(--foreground)' }}>Start Date</label>
+                  <input
+                    type="date"
+                    value={formData.startDate}
+                    onChange={e => setFormData({ ...formData, startDate: e.target.value })}
+                    className="w-full rounded-lg px-3 py-2 text-[13px] outline-none transition-all focus:ring-2 focus:ring-blue-500/20"
+                    style={inputStyle}
                   />
                 </div>
-              )}
-            </div>
-          </div>
+                <div>
+                  <label className={labelClass} style={{ color: 'var(--foreground)' }}>End Date</label>
+                  <input
+                    type="date"
+                    value={formData.endDate}
+                    onChange={e => setFormData({ ...formData, endDate: e.target.value })}
+                    className="w-full rounded-lg px-3 py-2 text-[13px] outline-none transition-all focus:ring-2 focus:ring-blue-500/20"
+                    style={inputStyle}
+                  />
+                </div>
+              </div>
 
-          {/* Tags */}
-          <BonsaiInput
-            label="Tags (comma-separated)"
-            value={formData.tags}
-            onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-            placeholder="Website, Design, Development"
-          />
+              {/* Budget */}
+              <div>
+                <label className={labelClass} style={{ color: 'var(--foreground)' }}>Budget Hours</label>
+                <input
+                  type="number" min="0" step="1"
+                  value={formData.budgetHours}
+                  onChange={e => setFormData({ ...formData, budgetHours: e.target.value })}
+                  placeholder="e.g. 200"
+                  className="w-full rounded-lg px-3 py-2 text-[13px] outline-none transition-all focus:ring-2 focus:ring-blue-500/20"
+                  style={inputStyle}
+                />
+              </div>
 
-          {/* Actions */}
-          <div className="flex items-center justify-end gap-3 border-t border-border pt-4">
-            <BonsaiButton variant="ghost" onClick={onClose} type="button">
-              Cancel
-            </BonsaiButton>
-            <BonsaiButton variant="primary" type="submit">
-              {initialProject ? 'Save Changes' : 'Create Project'}
-            </BonsaiButton>
-          </div>
-        </form>
-      </div>
-    </>
+              {/* Actions */}
+              <div className="flex items-center justify-end gap-3 pt-3"
+                style={{ borderTop: '1px solid var(--border)' }}>
+                <button type="button" onClick={onClose}
+                  className="px-4 py-2 text-[13px] font-medium rounded-lg transition-colors"
+                  style={{ color: 'var(--muted-foreground)' }}>
+                  Cancel
+                </button>
+                <button type="submit" disabled={saving || !formData.name.trim()}
+                  className="flex items-center gap-2 px-4 py-2 text-[13px] font-medium rounded-lg text-white transition-all disabled:opacity-50"
+                  style={{ background: '#2563EB' }}>
+                  {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  {initialProject ? 'Save Changes' : 'Create Project'}
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
   );
 }

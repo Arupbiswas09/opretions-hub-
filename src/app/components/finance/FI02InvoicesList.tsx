@@ -5,6 +5,8 @@ import { BonsaiButton } from '../bonsai/BonsaiButton';
 import { BonsaiStatusPill } from '../bonsai/BonsaiStatusPill';
 import { EnhancedTable } from '../operations/EnhancedTable';
 import { HubStatTile } from '../ops';
+import { useHubData } from '../../lib/hub/use-hub-data';
+import { type InvoiceRow } from '../../lib/api/hub-api';
 
 interface Invoice {
   id: string;
@@ -24,23 +26,22 @@ interface FI02InvoicesListProps {
 }
 
 export function FI02InvoicesList({ onInvoiceClick, onCreate, onGenerateFromTimesheets }: FI02InvoicesListProps) {
-  const invoices: Invoice[] = [
-    {
-      id: '1', number: 'INV-2026-001', client: 'Acme Corporation',
-      date: 'Jan 15, 2026', dueDate: 'Feb 14, 2026', amount: 28500,
-      status: 'Sent', lastReminder: 'Jan 22',
-    },
-    {
-      id: '2', number: 'INV-2026-002', client: 'Tech Startup Inc',
-      date: 'Jan 10, 2026', dueDate: 'Jan 20, 2026', amount: 5200,
-      status: 'Overdue', lastReminder: 'Jan 25',
-    },
-    {
-      id: '3', number: 'INV-2025-098', client: 'Local Retail Co',
-      date: 'Dec 28, 2025', dueDate: 'Jan 27, 2026', amount: 14800,
-      status: 'Paid',
-    },
-  ];
+  const { data: rawInvoices, loading } = useHubData<InvoiceRow[]>('/api/invoices');
+
+  const invoices: Invoice[] = (rawInvoices ?? []).map(inv => ({
+    id: inv.id,
+    number: inv.number ?? '—',
+    client: (inv as unknown as Record<string, unknown>).client_name as string ?? '—',
+    date: inv.issue_date ? new Date(inv.issue_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—',
+    dueDate: inv.due_date ? new Date(inv.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—',
+    amount: Number(inv.total ?? 0),
+    status: (
+      inv.status === 'paid' ? 'Paid' :
+      inv.status === 'sent' ? 'Sent' :
+      inv.status === 'overdue' ? 'Overdue' :
+      inv.status === 'cancelled' ? 'Cancelled' : 'Draft'
+    ) as Invoice['status'],
+  }));
 
   const getStatusColor = (status: string): 'active' | 'pending' | 'inactive' | 'archived' => {
     switch (status) {

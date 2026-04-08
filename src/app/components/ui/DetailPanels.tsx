@@ -1,5 +1,9 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useUserRole } from '../../lib/UserRoleContext';
+import { useTheme } from '../../lib/theme';
+import { useToast } from '../bonsai/ToastSystem';
+import { isSupabaseBrowserConfigured } from '../../lib/supabase/client';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   X, Mail, Phone, Globe, MapPin, Building2, Clock,
@@ -340,30 +344,108 @@ export function DealDetailPanel({ open, onClose, deal }: {
    ═══════════════════════════════════════ */
 export function SettingsDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [tab, setTab] = useState('Account');
+  const { persona, refreshPersona, source } = useUserRole();
+  const { theme, setTheme } = useTheme();
+  const { addToast } = useToast();
+  const [displayName, setDisplayName] = useState(persona.name);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (open) setDisplayName(persona.name);
+  }, [open, persona.name]);
+
+  async function saveProfile() {
+    if (!isSupabaseBrowserConfigured() || source !== 'live') {
+      addToast('Sign in with Supabase to save profile', 'info');
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await fetch('/api/auth/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ display_name: displayName }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Save failed');
+      addToast('Profile updated', 'success');
+      await refreshPersona();
+      await fetch('/api/auth/warm-session', { method: 'POST', credentials: 'include' });
+    } catch (e) {
+      addToast(e instanceof Error ? e.message : 'Save failed', 'error');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function onAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !isSupabaseBrowserConfigured()) return;
+    const fd = new FormData();
+    fd.append('file', file);
+    try {
+      const res = await fetch('/api/auth/avatar', { method: 'POST', body: fd, credentials: 'include' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Upload failed');
+      addToast('Photo updated', 'success');
+      await refreshPersona();
+      await fetch('/api/auth/warm-session', { method: 'POST', credentials: 'include' });
+    } catch (err) {
+      addToast(err instanceof Error ? err.message : 'Upload failed', 'error');
+    }
+    e.target.value = '';
+  }
+
   return (
     <SlideDrawer open={open} onClose={onClose} title="Settings" subtitle="Manage your preferences" width="480px">
       <DetailTabs tabs={['Account', 'Appearance', 'Notifications', 'Workspace']} active={tab} onChange={setTab} />
 
       {tab === 'Account' && (
         <>
-          {/* Profile card */}
           <div className="flex items-center gap-4 p-4 rounded-xl mb-5"
             style={{ background: 'var(--glass-bg)', border: '1px solid var(--border)' }}>
-            <div className="w-14 h-14 rounded-full flex items-center justify-center text-[16px] font-bold"
-              style={{ background: '#2563EB', color: '#FFF' }}>
-              JD
+            <div className="relative w-14 h-14 rounded-full overflow-hidden flex items-center justify-center text-[16px] font-bold shrink-0"
+              style={{ background: persona.avatarUrl ? 'transparent' : persona.avatarColor, color: '#FFF' }}>
+              {persona.avatarUrl ? (
+                <img src={persona.avatarUrl} alt="" className="h-full w-full object-cover" />
+              ) : (
+                persona.initials
+              )}
             </div>
-            <div>
-              <p className="text-[15px] font-semibold" style={{ color: 'var(--foreground)' }}>John Doe</p>
-              <p className="text-[12px]" style={{ color: 'var(--muted-foreground)' }}>john@operationshub.com</p>
-              <p className="text-[11px] mt-0.5" style={{ color: '#2563EB' }}>Admin</p>
+            <div className="min-w-0 flex-1">
+              <p className="text-[15px] font-semibold truncate" style={{ color: 'var(--foreground)' }}>{persona.name}</p>
+              <p className="text-[12px] truncate" style={{ color: 'var(--muted-foreground)' }}>{persona.email}</p>
+              <p className="text-[11px] mt-0.5 capitalize" style={{ color: 'var(--primary)' }}>{persona.role}</p>
+              {isSupabaseBrowserConfigured() && source === 'live' && (
+                <label className="mt-2 inline-block text-[11px] font-medium cursor-pointer text-primary hover:underline">
+                  Change photo
+                  <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="sr-only" onChange={onAvatarChange} />
+                </label>
+              )}
             </div>
           </div>
-          <InfoRow label="Full Name" value="John Doe" icon={User} />
-          <InfoRow label="Email" value="john@operationshub.com" icon={Mail} />
-          <InfoRow label="Phone" value="+1 (555) 123-4567" icon={Phone} />
-          <InfoRow label="Time Zone" value="EST (UTC-5)" icon={Clock} />
-          <InfoRow label="Language" value="English (US)" icon={Globe} />
+          <div className="mb-4">
+            <label className="block text-[11px] font-medium mb-1.5" style={{ color: 'var(--muted-foreground)' }}>Display name</label>
+            <input
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              className="hub-field w-full rounded-lg px-3 py-2 text-[13px]"
+              disabled={source !== 'live' || !isSupabaseBrowserConfigured()}
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => void saveProfile()}
+            disabled={saving || source !== 'live' || !isSupabaseBrowserConfigured()}
+            className="mb-5 w-full rounded-lg px-4 py-2 text-[13px] font-medium transition-opacity disabled:opacity-50"
+            style={{ background: 'var(--primary)', color: 'var(--primary-foreground)' }}
+          >
+            {saving ? 'Saving…' : 'Save profile'}
+          </button>
+          <InfoRow label="Email" value={persona.email} icon={Mail} />
+          <InfoRow label="Organization" value={persona.orgName || '—'} icon={Building2} />
+          <InfoRow label="Time Zone" value="Browser local" icon={Clock} />
         </>
       )}
 
@@ -373,26 +455,28 @@ export function SettingsDrawer({ open, onClose }: { open: boolean; onClose: () =
             Choose how Operations Hub looks for you.
           </p>
           <div className="grid grid-cols-2 gap-3 mb-5">
-            {[
-              { label: 'Dark', active: true },
-              { label: 'Light', active: false },
-            ].map(t => (
-              <button key={t.label}
-                className="p-4 rounded-xl text-center transition-all"
-                style={{
-                  background: t.active ? 'rgba(37,99,235,0.10)' : 'var(--glass-bg)',
-                  border: `1px solid ${t.active ? '#2563EB' : 'var(--border)'}`,
-                  color: 'var(--foreground)',
-                }}>
-                <div className="w-full h-16 rounded-lg mb-2"
-                  style={{ background: t.label === 'Dark' ? '#0B0D12' : '#FFFFFF', border: '1px solid var(--border)' }} />
-                <span className="text-[12px] font-medium">{t.label}</span>
-              </button>
-            ))}
+            {(['dark', 'light'] as const).map((t) => {
+              const active = theme === t;
+              return (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setTheme(t)}
+                  className="p-4 rounded-xl text-center transition-all"
+                  style={{
+                    background: active ? 'rgba(37,99,235,0.10)' : 'var(--glass-bg)',
+                    border: `1px solid ${active ? '#2563EB' : 'var(--border)'}`,
+                    color: 'var(--foreground)',
+                  }}
+                >
+                  <div className="w-full h-16 rounded-lg mb-2"
+                    style={{ background: t === 'dark' ? '#0B0D12' : '#FFFFFF', border: '1px solid var(--border)' }} />
+                  <span className="text-[12px] font-medium capitalize">{t}</span>
+                </button>
+              );
+            })}
           </div>
-          <InfoRow label="Sidebar Collapsed" value="Auto" icon={Activity} />
           <InfoRow label="Density" value="Default" icon={Activity} />
-          <InfoRow label="Animations" value="Enabled" icon={Activity} />
         </>
       )}
 

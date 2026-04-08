@@ -30,7 +30,7 @@ export function BonsaiDrawer({ open, onClose, title, children, footer, width = '
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            exit={{ opacity: 0, pointerEvents: 'none' }}
             transition={{ duration: 0.2 }}
             className="fixed inset-0 z-40"
             onClick={onClose}
@@ -104,7 +104,7 @@ export function BonsaiModal({ open, onClose, title, children, footer, size = 'md
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+          exit={{ opacity: 0, pointerEvents: 'none' }}
           transition={{ duration: 0.2 }}
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
           onClick={onClose}
@@ -176,7 +176,7 @@ export function BonsaiConfirmDialog({
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+          exit={{ opacity: 0, pointerEvents: 'none' }}
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
         >
           <div className="absolute inset-0 bg-stone-900/20 backdrop-blur-[6px]" onClick={onClose} />

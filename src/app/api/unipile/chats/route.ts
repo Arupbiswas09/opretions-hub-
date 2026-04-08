@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-const API = process.env.UNIPILE_API_URL!;
-const TOKEN = process.env.UNIPILE_ACCESS_TOKEN!;
+import { getUnipileCreds } from '../../../lib/unipile-env';
 
 const PAGE_LIMIT = 100;
 /** Merge cursor pages so long lists (e.g. WhatsApp) are not cut off after first page */
@@ -13,6 +11,20 @@ export async function GET(req: NextRequest) {
   const limit = sp.get('limit') || '50';
   const cursorParam = sp.get('cursor') || '';
   const fetchAll = sp.get('fetch_all') === '1' || sp.get('fetch_all') === 'true';
+
+  const creds = getUnipileCreds();
+  if (!creds) {
+    if (fetchAll) {
+      return NextResponse.json({
+        object: 'ChatList',
+        items: [],
+        total_fetched: 0,
+        unipile_configured: false,
+      });
+    }
+    return NextResponse.json({ object: 'ChatList', items: [], unipile_configured: false });
+  }
+  const { api: API, token: TOKEN } = creds;
 
   try {
     if (fetchAll) {

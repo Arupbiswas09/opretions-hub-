@@ -185,7 +185,7 @@ export function CommandPalette() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+          exit={{ opacity: 0, pointerEvents: 'none' }}
           transition={{ duration: 0.18 }}
           className="fixed inset-0 z-[100] flex items-start justify-center pt-[18vh]"
           onClick={() => setOpen(false)}

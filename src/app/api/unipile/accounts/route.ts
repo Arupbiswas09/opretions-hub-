@@ -1,9 +1,13 @@
 import { NextResponse } from 'next/server';
-
-const API = process.env.UNIPILE_API_URL!;
-const TOKEN = process.env.UNIPILE_ACCESS_TOKEN!;
+import { getUnipileCreds } from '../../../lib/unipile-env';
 
 export async function GET() {
+  const creds = getUnipileCreds();
+  if (!creds) {
+    return NextResponse.json({ object: 'AccountList', items: [], unipile_configured: false });
+  }
+  const { api: API, token: TOKEN } = creds;
+
   try {
     const res = await fetch(`${API}/accounts`, {
       headers: { 'X-API-KEY': TOKEN, accept: 'application/json' },

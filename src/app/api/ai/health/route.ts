@@ -1,5 +1,11 @@
 import { NextResponse } from 'next/server';
-import { getAiModel, getOllamaBaseUrl, ollamaFetch } from '../../../lib/ai-ollama';
+import { getAiModel, normalizeOpenAiApiKey } from '../../../lib/ai-openai';
+import {
+  getOllamaBaseUrl,
+  getOllamaModel,
+  isOllamaConfigured,
+  ollamaFetch,
+} from '../../../lib/ai-ollama';
 
 /* ═══════════════════════════════════════════════════════════
    AI Health — GET /api/ai/health
@@ -8,7 +14,29 @@ import { getAiModel, getOllamaBaseUrl, ollamaFetch } from '../../../lib/ai-ollam
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const MODEL = getAiModel();
+  if (!isOllamaConfigured()) {
+    const key = normalizeOpenAiApiKey(process.env.OPENAI_API_KEY);
+    const model = getAiModel();
+    if (!key) {
+      return NextResponse.json(
+        {
+          status: 'misconfigured',
+          provider: 'openai',
+          model,
+          message: 'Set OPENAI_API_KEY (summarize / smart reply use this endpoint).',
+        },
+        { status: 503 },
+      );
+    }
+    return NextResponse.json({
+      status: 'ready',
+      provider: 'openai',
+      model,
+      message: `AI ready — ${model} (OpenAI-compatible)`,
+    });
+  }
+
+  const MODEL = getOllamaModel();
   const base = getOllamaBaseUrl();
 
   try {
@@ -17,6 +45,7 @@ export async function GET() {
     if (!pingRes.ok) {
       return NextResponse.json({
         status: 'error',
+        provider: 'ollama',
         ollama: false,
         model: MODEL,
         ollama_url: base,
@@ -33,12 +62,13 @@ export async function GET() {
 
     return NextResponse.json({
       status: hasModel ? 'ready' : 'model_missing',
+      provider: 'ollama',
       ollama: true,
       model: MODEL,
       ollama_url: base,
       available_models: models.map((m: { name: string }) => m.name),
       message: hasModel
-        ? `AI ready — ${MODEL}`
+        ? `AI ready — ${MODEL} (Ollama)`
         : `Ollama reachable but ${MODEL} not found. Pull: ollama pull ${MODEL}`,
     });
   } catch (e: unknown) {
@@ -49,6 +79,7 @@ export async function GET() {
     return NextResponse.json(
       {
         status: 'error',
+        provider: 'ollama',
         ollama: false,
         model: MODEL,
         ollama_url: base,

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+'use client';
+import React, { useEffect, useState } from 'react';
 import { Plus, List, LayoutGrid, Columns3 } from 'lucide-react';
 import { BonsaiButton } from '../bonsai/BonsaiButton';
 import { BonsaiStatusPill } from '../bonsai/BonsaiStatusPill';
@@ -21,68 +22,52 @@ interface Deal {
 interface SA02DealsListProps {
   onDealClick: (deal: Deal) => void;
   onCreateDeal: () => void;
+  dataRefreshVersion?: number;
 }
 
-export function SA02DealsList({ onDealClick, onCreateDeal }: SA02DealsListProps) {
-  const [viewMode, setViewMode] = useState<'list' | 'grid' | 'kanban'>('list');
+function formatMoney(n: unknown) {
+  if (n == null || n === '') return '—';
+  const num = Number(n);
+  if (!Number.isFinite(num)) return '—';
+  return `$${num.toLocaleString()}`;
+}
 
-  const deals: Deal[] = [
-    {
-      id: '1',
-      name: 'Website Redesign Project',
-      client: 'Acme Corp',
-      type: 'Project',
-      value: '$45,000',
-      stage: 'Proposal Sent',
-      owner: 'John Doe',
-      nextStep: 'Follow up on proposal',
-      closeDate: 'Jan 25, 2026',
-    },
-    {
-      id: '2',
-      name: 'Senior Designer Placement',
-      client: 'Tech Startup',
-      type: 'Talent',
-      value: '$28,000',
-      stage: 'Interviewing',
-      owner: 'Jane Smith',
-      nextStep: 'Schedule final interview',
-      closeDate: 'Jan 30, 2026',
-    },
-    {
-      id: '3',
-      name: 'Brand Identity Package',
-      client: 'Local Retail',
-      type: 'Project',
-      value: '$15,000',
-      stage: 'Discovery Scheduled',
-      owner: 'Mike Johnson',
-      nextStep: 'Discovery call on Jan 12',
-      closeDate: 'Feb 5, 2026',
-    },
-    {
-      id: '4',
-      name: 'React Developer Search',
-      client: 'SaaS Company',
-      type: 'Talent',
-      value: '$35,000',
-      stage: 'Profiles Shared',
-      owner: 'Sarah Lee',
-      nextStep: 'Await client feedback',
-      closeDate: 'Jan 28, 2026',
-    },
-    {
-      id: '5',
-      name: 'Mobile App Development',
-      client: 'FinTech Startup',
-      type: 'Project',
-      value: '$85,000',
-      stage: 'Negotiation',
-      owner: 'John Doe',
-      nextStep: 'Contract review',
-      closeDate: 'Jan 20, 2026',
-    },
-  ];
+function mapDealFromApi(r: Record<string, unknown>): Deal {
+  const stage = String(r.stage ?? '').replace(/_/g, ' ');
+  return {
+    id: String(r.id),
+    name: String(r.title ?? 'Deal'),
+    client: String(r.client_name ?? '—'),
+    type: 'Project',
+    value: formatMoney(r.value),
+    stage: stage || '—',
+    owner: '—',
+    nextStep: '—',
+    closeDate: r.close_date ? String(r.close_date) : '—',
+  };
+}
+
+export function SA02DealsList({ onDealClick, onCreateDeal, dataRefreshVersion = 0 }: SA02DealsListProps) {
+  const [viewMode, setViewMode] = useState<'list' | 'grid' | 'kanban'>('list');
+  const [deals, setDeals] = useState<Deal[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/deals?page=1&limit=200', { credentials: 'include' });
+        const json = await res.json();
+        if (cancelled) return;
+        if (res.ok && Array.isArray(json.data)) setDeals(json.data.map(mapDealFromApi));
+        else setDeals([]);
+      } catch {
+        if (!cancelled) setDeals([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [dataRefreshVersion]);
 
   return (
     <div className="px-3 py-6 sm:p-8">

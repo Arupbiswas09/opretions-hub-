@@ -6,6 +6,8 @@ import { BonsaiStatusPill } from '../bonsai/BonsaiStatusPill';
 import { EnhancedTable } from '../operations/EnhancedTable';
 import { BonsaiGridCards } from '../bonsai/BonsaiGridCards';
 import { HubStatTile, OpsAvatar } from '../ops';
+import { useHubData } from '../../lib/hub/use-hub-data';
+import { type PersonRow } from '../../lib/api/hub-api';
 
 interface Person {
   id: string;
@@ -32,80 +34,25 @@ export function PE01PeopleDirectory({ onPersonClick, onCreatePerson, onBulkActio
   const [showFilters, setShowFilters] = useState(false);
   const [showColumnChooser, setShowColumnChooser] = useState(false);
 
-  const people: Person[] = [
-    {
-      id: '1',
-      name: 'John Doe',
-      type: 'Employee',
-      role: 'Senior Project Manager',
-      department: 'Operations',
-      status: 'Active',
-      email: 'john.doe@company.com',
-      skills: ['Project Management', 'Agile', 'Leadership'],
-      availability: 'Available',
-      startDate: 'Jan 15, 2024',
-    },
-    {
-      id: '2',
-      name: 'Jane Smith',
-      type: 'Employee',
-      role: 'Lead Designer',
-      department: 'Design',
-      status: 'Active',
-      email: 'jane.smith@company.com',
-      skills: ['UI/UX Design', 'Figma', 'Branding'],
-      availability: 'Busy',
-      startDate: 'Mar 1, 2023',
-    },
-    {
-      id: '3',
-      name: 'Sarah Johnson',
-      type: 'Freelancer',
-      role: 'Senior Designer',
-      department: 'Design',
-      status: 'Active',
-      email: 'sarah.j@freelance.com',
-      skills: ['UI Design', 'Illustration', 'Animation'],
-      availability: 'Available',
-      startDate: 'Nov 10, 2025',
-    },
-    {
-      id: '4',
-      name: 'Mike Chen',
-      type: 'Employee',
-      role: 'Software Engineer',
-      department: 'Engineering',
-      status: 'On Leave',
-      email: 'mike.chen@company.com',
-      skills: ['React', 'Node.js', 'TypeScript'],
-      availability: 'On Leave',
-      startDate: 'Jun 1, 2022',
-    },
-    {
-      id: '5',
-      name: 'Priya Patel',
-      type: 'Employee',
-      role: 'Marketing Lead',
-      department: 'Marketing',
-      status: 'Active',
-      email: 'priya.p@company.com',
-      skills: ['SEO', 'Content Strategy', 'Analytics'],
-      availability: 'Available',
-      startDate: 'Aug 20, 2023',
-    },
-    {
-      id: '6',
-      name: 'Alex Rivera',
-      type: 'Freelancer',
-      role: 'Backend Developer',
-      department: 'Engineering',
-      status: 'Active',
-      email: 'alex.r@freelance.com',
-      skills: ['Python', 'Django', 'PostgreSQL'],
-      availability: 'Busy',
-      startDate: 'Dec 5, 2025',
-    },
-  ];
+  const { data: rawPeople, loading } = useHubData<PersonRow[]>('/api/hub/people');
+
+  const people: Person[] = (rawPeople ?? []).map(p => ({
+    id: p.id,
+    name: p.full_name,
+    type: (p.employment_type === 'freelancer' || p.employment_type === 'contractor' ? 'Freelancer' : 'Employee') as Person['type'],
+    role: p.role ?? '—',
+    department: p.department ?? '—',
+    status: (
+      p.status === 'active' ? 'Active' :
+      p.status === 'on_leave' ? 'On Leave' : 'Inactive'
+    ) as Person['status'],
+    email: p.email ?? '—',
+    skills: [],
+    availability: (
+      p.status === 'on_leave' ? 'On Leave' : 'Available'
+    ) as Person['availability'],
+    startDate: p.start_date ? new Date(p.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—',
+  }));
 
   const availableColumns = [
     { key: 'name', label: 'Name', visible: true },

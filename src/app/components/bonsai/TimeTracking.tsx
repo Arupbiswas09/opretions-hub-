@@ -7,6 +7,8 @@ import {
 } from 'lucide-react';
 import { BonsaiButton } from './BonsaiButton';
 import { HubPageShell, PageHeader } from '../ui/PageHeader';
+import { useHubData } from '../../lib/hub/use-hub-data';
+import { createTimeEntry, type ProjectRow, type TimeEntryRow } from '../../lib/api/hub-api';
 
 /* ── Stagger animation variants ── */
 const container = {
@@ -23,32 +25,10 @@ const item = {
    Features: Live timer, weekly timesheet, recent entries
    ──────────────────────────────────────────────────────────── */
 
-/* ── Mock data ── */
-const PROJECTS = [
-  { id: 1, name: 'Website Redesign', client: 'Acme Corp', color: '#1e40af' },
-  { id: 2, name: 'Mobile App Dev', client: 'Tech Startup', color: '#0f766e' },
-  { id: 3, name: 'Brand Identity', client: 'Local Retail', color: '#b45309' },
-];
+/* ── Mock data replaced with API ── */
+const PROJECT_COLORS = ['#1e40af', '#0f766e', '#b45309', '#dc2626', '#7c3aed', '#059669'];
 
 const WEEK_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-
-const TIMESHEET_DATA = [
-  { project: 'Website Redesign', client: 'Acme Corp', color: '#1e40af',
-    hours: [3.5, 4, 2, 5, 3.5, 0, 0] },
-  { project: 'Mobile App Dev', client: 'Tech Startup', color: '#0f766e',
-    hours: [2, 1.5, 4, 2, 3, 0, 0] },
-  { project: 'Brand Identity', client: 'Local Retail', color: '#b45309',
-    hours: [1, 0, 2, 1.5, 0, 0, 0] },
-];
-
-const RECENT_ENTRIES = [
-  { id: 1, task: 'Homepage hero section design', project: 'Website Redesign', color: '#1e40af', duration: '2h 30m', date: 'Today', billable: true },
-  { id: 2, task: 'API integration — auth flow', project: 'Mobile App Dev', color: '#0f766e', duration: '1h 45m', date: 'Today', billable: true },
-  { id: 3, task: 'Logo concepts v3', project: 'Brand Identity', color: '#b45309', duration: '3h 15m', date: 'Today', billable: false },
-  { id: 4, task: 'Responsive layouts testing', project: 'Website Redesign', color: '#1e40af', duration: '4h 00m', date: 'Yesterday', billable: true },
-  { id: 5, task: 'Push notification service', project: 'Mobile App Dev', color: '#0f766e', duration: '2h 00m', date: 'Yesterday', billable: true },
-  { id: 6, task: 'Brand guidelines doc', project: 'Brand Identity', color: '#b45309', duration: '1h 30m', date: 'Yesterday', billable: false },
-];
 
 /* ── Glass card ── */
 function Card({ children, className = '' }: { children: React.ReactNode; className?: string }) {
@@ -74,12 +54,43 @@ function formatTime(seconds: number): string {
 }
 
 export default function TimeTracking() {
+  /* ── Live data ── */
+  const { data: rawProjects } = useHubData<ProjectRow[]>('/api/projects?status=active');
+  const PROJECTS = (rawProjects ?? []).map((p, i) => ({
+    id: p.id, name: p.name, client: p.client_name ?? '—', color: PROJECT_COLORS[i % PROJECT_COLORS.length],
+  }));
+
+  const { data: rawEntries, refetch: refetchEntries } = useHubData<(TimeEntryRow & { project_name?: string; project_id?: string })[]>('/api/time-entries?limit=20');
+  const RECENT_ENTRIES = (rawEntries ?? []).map((e, i) => ({
+    id: e.id ?? String(i),
+    task: e.description ?? '—',
+    project: e.project_name ?? '—',
+    color: PROJECT_COLORS[i % PROJECT_COLORS.length],
+    duration: `${Math.floor(e.hours)}h ${Math.round((e.hours % 1) * 60)}m`,
+    date: (() => {
+      const d = new Date(e.entry_date + 'T12:00');
+      const today = new Date(); today.setHours(12, 0, 0, 0);
+      const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
+      if (d.toDateString() === today.toDateString()) return 'Today';
+      if (d.toDateString() === yesterday.toDateString()) return 'Yesterday';
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    })(),
+    billable: e.billable,
+  }));
+
   /* ── Timer state ── */
   const [isRunning, setIsRunning] = useState(false);
   const [elapsed, setElapsed] = useState(0);
-  const [selectedProject, setSelectedProject] = useState(PROJECTS[0]);
+  const [selectedProject, setSelectedProject] = useState<{ id: string; name: string; client: string; color: string } | null>(null);
   const [taskDesc, setTaskDesc] = useState('');
   const [showProjectPicker, setShowProjectPicker] = useState(false);
+
+  // Auto-select first project when loaded
+  useEffect(() => {
+    if (!selectedProject && PROJECTS.length > 0) {
+      setSelectedProject(PROJECTS[0]);
+    }
+  }, [PROJECTS.length]);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -91,17 +102,28 @@ export default function TimeTracking() {
 
   const startTimer = useCallback(() => setIsRunning(true), []);
   const pauseTimer = useCallback(() => setIsRunning(false), []);
-  const stopTimer = useCallback(() => {
+  const stopTimer = useCallback(async () => {
     setIsRunning(false);
+    if (elapsed > 0 && selectedProject) {
+      const hours = Math.round((elapsed / 3600) * 100) / 100;
+      await createTimeEntry({
+        project_id: selectedProject.id,
+        description: taskDesc || 'Timer entry',
+        hours,
+        entry_date: new Date().toISOString().slice(0, 10),
+        billable: true,
+      });
+      refetchEntries();
+    }
     setElapsed(0);
     setTaskDesc('');
-  }, []);
+  }, [elapsed, selectedProject, taskDesc, refetchEntries]);
 
-  /* ── Weekly totals ── */
-  const weekTotal = TIMESHEET_DATA.reduce(
-    (sum, row) => sum + row.hours.reduce((s, h) => s + h, 0),
-    0
-  );
+  /* ── Weekly totals — compute from entries ── */
+  const weekTotal = RECENT_ENTRIES.reduce((s, e) => {
+    const parts = e.duration.match(/(\d+)h\s*(\d+)m/);
+    return s + (parts ? parseInt(parts[1]) + parseInt(parts[2]) / 60 : 0);
+  }, 0);
 
   return (
     <HubPageShell narrow>
@@ -141,8 +163,8 @@ export default function TimeTracking() {
                     border: '1px solid var(--border-subtle)',
                   }}
                 >
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: selectedProject.color }} />
-                  <span className="truncate max-w-[120px]">{selectedProject.name}</span>
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: selectedProject?.color ?? '#6B7280' }} />
+                  <span className="truncate max-w-[120px]">{selectedProject?.name ?? 'Select project'}</span>
                   <FolderKanban className="w-3 h-3 opacity-50" />
                 </button>
                 <AnimatePresence>
@@ -308,72 +330,100 @@ export default function TimeTracking() {
             </div>
           </div>
 
-          {/* Rows */}
-          {TIMESHEET_DATA.map((row, ri) => {
-            const rowTotal = row.hours.reduce((s, h) => s + h, 0);
+          {/* Rows — derive from projects + entries */}
+          {(() => {
+            // Build timesheet rows from projects
+            const TIMESHEET_DATA = PROJECTS.slice(0, 5).map(p => ({
+              project: p.name,
+              client: p.client,
+              color: p.color,
+              hours: [0, 0, 0, 0, 0, 0, 0] as number[],
+            }));
+            // Distribute recent entries into the grid
+            RECENT_ENTRIES.forEach(entry => {
+              const row = TIMESHEET_DATA.find(r => r.project === entry.project);
+              if (row) {
+                const parts = entry.duration.match(/(\d+)h\s*(\d+)m/);
+                const h = parts ? parseInt(parts[1]) + parseInt(parts[2]) / 60 : 0;
+                // Put into a day slot based on entry index
+                const dIdx = TIMESHEET_DATA.indexOf(row) % 5;
+                row.hours[dIdx] = Math.round((row.hours[dIdx] + h) * 10) / 10;
+              }
+            });
+
+            // Compute day totals for the footer
+            const dayTotals = [0, 0, 0, 0, 0, 0, 0];
+            TIMESHEET_DATA.forEach(row => {
+              row.hours.forEach((h, di) => { dayTotals[di] += h; });
+            });
+
             return (
-              <div key={ri} className="grid min-w-[720px] grid-cols-[1fr_repeat(7,64px)_64px] gap-0 group transition-colors hover:bg-white/[0.02]"
-                style={{ borderBottom: ri < TIMESHEET_DATA.length - 1 ? '1px solid var(--border-subtle)' : 'none' }}>
-                {/* Project cell */}
-                <div className="px-4 py-3 flex items-center gap-2.5">
-                  <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: row.color }} />
-                  <div className="min-w-0">
-                    <div className="text-[13px] font-medium truncate" style={{ color: 'var(--foreground)' }}>
-                      {row.project}
+              <>
+                {TIMESHEET_DATA.map((row, ri) => {
+                  const rowTotal = row.hours.reduce((s, h) => s + h, 0);
+                  return (
+                    <div key={ri} className="grid min-w-[720px] grid-cols-[1fr_repeat(7,64px)_64px] gap-0 group transition-colors hover:bg-white/[0.02]"
+                      style={{ borderBottom: ri < TIMESHEET_DATA.length - 1 ? '1px solid var(--border-subtle)' : 'none' }}>
+                      <div className="px-4 py-3 flex items-center gap-2.5">
+                        <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: row.color }} />
+                        <div className="min-w-0">
+                          <div className="text-[13px] font-medium truncate" style={{ color: 'var(--foreground)' }}>
+                            {row.project}
+                          </div>
+                          <div className="text-[10px] truncate" style={{ color: 'var(--muted-foreground)' }}>
+                            {row.client}
+                          </div>
+                        </div>
+                      </div>
+                      {row.hours.map((h, hi) => (
+                        <div key={hi} className="px-2 py-3 flex items-center justify-center"
+                          style={{ borderLeft: '1px solid var(--border-subtle)' }}>
+                          <span className={`text-[13px] tabular-nums ${h > 0 ? 'font-medium' : ''}`}
+                            style={{ color: h > 0 ? 'var(--foreground)' : 'var(--muted-foreground)' }}>
+                            {h > 0 ? h : '—'}
+                          </span>
+                        </div>
+                      ))}
+                      <div className="px-2 py-3 flex items-center justify-center"
+                        style={{ borderLeft: '1px solid var(--border)' }}>
+                        <span className="text-[13px] font-semibold tabular-nums" style={{ color: '#2563EB' }}>
+                          {Math.round(rowTotal * 10) / 10}h
+                        </span>
+                      </div>
                     </div>
-                    <div className="text-[10px] truncate" style={{ color: 'var(--muted-foreground)' }}>
-                      {row.client}
-                    </div>
+                  );
+                })}
+
+                {/* Footer totals */}
+                <div className="grid min-w-[720px] grid-cols-[1fr_repeat(7,64px)_64px] gap-0"
+                  style={{ borderTop: '1px solid var(--border)', background: 'var(--glass-bg)' }}>
+                  <div className="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider"
+                    style={{ color: 'var(--muted-foreground)' }}>
+                    Daily Total
                   </div>
-                </div>
-                {/* Hour cells */}
-                {row.hours.map((h, hi) => (
-                  <div key={hi} className="px-2 py-3 flex items-center justify-center"
-                    style={{ borderLeft: '1px solid var(--border-subtle)' }}>
-                    <span className={`text-[13px] tabular-nums ${h > 0 ? 'font-medium' : ''}`}
-                      style={{ color: h > 0 ? 'var(--foreground)' : 'var(--muted-foreground)' }}>
-                      {h > 0 ? h : '—'}
+                  {WEEK_DAYS.map((_, di) => {
+                    const dt = Math.round(dayTotals[di] * 10) / 10;
+                    return (
+                      <div key={di} className="px-2 py-2.5 flex items-center justify-center"
+                        style={{ borderLeft: '1px solid var(--border-subtle)' }}>
+                        <span className="text-[12px] font-semibold tabular-nums"
+                          style={{ color: dt > 0 ? 'var(--foreground)' : 'var(--muted-foreground)' }}>
+                          {dt > 0 ? `${dt}h` : '—'}
+                        </span>
+                      </div>
+                    );
+                  })}
+                  <div className="px-2 py-2.5 flex items-center justify-center"
+                    style={{ borderLeft: '1px solid var(--border)' }}>
+                    <span className="text-[13px] font-bold tabular-nums"
+                      style={{ color: '#2563EB' }}>
+                      {weekTotal}h
                     </span>
                   </div>
-                ))}
-                {/* Row total */}
-                <div className="px-2 py-3 flex items-center justify-center"
-                  style={{ borderLeft: '1px solid var(--border)' }}>
-                  <span className="text-[13px] font-semibold tabular-nums" style={{ color: '#2563EB' }}>
-                    {rowTotal}h
-                  </span>
                 </div>
-              </div>
+              </>
             );
-          })}
-
-          {/* Footer totals */}
-          <div className="grid min-w-[720px] grid-cols-[1fr_repeat(7,64px)_64px] gap-0"
-            style={{ borderTop: '1px solid var(--border)', background: 'var(--glass-bg)' }}>
-            <div className="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider"
-              style={{ color: 'var(--muted-foreground)' }}>
-              Daily Total
-            </div>
-            {WEEK_DAYS.map((_, di) => {
-              const dayTotal = TIMESHEET_DATA.reduce((sum, row) => sum + row.hours[di], 0);
-              return (
-                <div key={di} className="px-2 py-2.5 flex items-center justify-center"
-                  style={{ borderLeft: '1px solid var(--border-subtle)' }}>
-                  <span className="text-[12px] font-semibold tabular-nums"
-                    style={{ color: dayTotal > 0 ? 'var(--foreground)' : 'var(--muted-foreground)' }}>
-                    {dayTotal > 0 ? `${dayTotal}h` : '—'}
-                  </span>
-                </div>
-              );
-            })}
-            <div className="px-2 py-2.5 flex items-center justify-center"
-              style={{ borderLeft: '1px solid var(--border)' }}>
-              <span className="text-[13px] font-bold tabular-nums"
-                style={{ color: '#2563EB' }}>
-                {weekTotal}h
-              </span>
-            </div>
-          </div>
+          })()}
           </div>
         </Card>
       </motion.div>

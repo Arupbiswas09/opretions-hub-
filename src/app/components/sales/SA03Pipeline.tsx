@@ -1,7 +1,9 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Plus, Filter, MoreHorizontal } from 'lucide-react';
 import { motion } from 'motion/react';
+import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-pangea/dnd';
+import { dispatchDataInvalidation } from '../../lib/hub-events';
 
 /* ─── Types ─── */
 interface DealCard {
@@ -50,12 +52,20 @@ function TagChip({ label }: { label: string }) {
 /* ─── Deal card ─── */
 function DealCardView({ card, onClick }: { card: DealCard; onClick: () => void }) {
   return (
-    <motion.button
+    <motion.div
+      role="button"
+      tabIndex={0}
       initial={{ opacity: 0, y: 4 }}
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ y: -1 }}
       onClick={onClick}
-      className="w-full text-left rounded-lg p-3 transition-all group"
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClick();
+        }
+      }}
+      className="w-full text-left rounded-lg p-3 transition-all group cursor-pointer"
       style={{
         background: 'var(--glass-bg)',
         border: '1px solid var(--border)',
@@ -78,8 +88,25 @@ function DealCardView({ card, onClick }: { card: DealCard; onClick: () => void }
           ${(card.value / 1000).toFixed(0)}K
         </span>
       </div>
-    </motion.button>
+    </motion.div>
   );
+}
+
+function moveCard(
+  columns: Column[],
+  sourceColId: string,
+  destColId: string,
+  sourceIndex: number,
+  destIndex: number
+): Column[] {
+  const cols = columns.map((c) => ({ ...c, cards: [...c.cards] }));
+  const sCol = cols.find((c) => c.id === sourceColId);
+  const dCol = cols.find((c) => c.id === destColId);
+  if (!sCol || !dCol) return columns;
+  const [card] = sCol.cards.splice(sourceIndex, 1);
+  if (!card) return columns;
+  dCol.cards.splice(destIndex, 0, card);
+  return cols;
 }
 
 /* ─── Column ─── */
@@ -130,17 +157,100 @@ function PipelineColumn({
   );
 }
 
+function PipelineColumnDnd({
+  column,
+  onCardClick,
+  onAddCard,
+}: {
+  column: Column;
+  onCardClick: (card: DealCard) => void;
+  onAddCard: () => void;
+}) {
+  const total = column.cards.reduce((s, c) => s + c.value, 0);
+  const totalStr = total === 0 ? '$0' : total >= 1000 ? `$${(total / 1000).toFixed(0)}K` : `$${total}`;
+
+  return (
+    <div className="w-[min(260px,85vw)] shrink-0 sm:min-w-[200px] sm:max-w-[260px] sm:flex-1">
+      <div className="flex items-center gap-2 mb-3 px-1">
+        <div className="w-[3px] h-4 rounded-full flex-shrink-0" style={{ background: column.color }} />
+        <span className="text-[12px] font-semibold" style={{ color: 'var(--foreground)' }}>
+          {column.title}
+        </span>
+        <span className="text-[11px]" style={{ color: 'var(--muted-foreground)' }}>
+          {column.cards.length}
+        </span>
+        <span className="text-[11px] ml-auto" style={{ color: 'var(--muted-foreground)' }}>
+          {totalStr}
+        </span>
+      </div>
+
+      <Droppable droppableId={column.id}>
+        {(provided) => (
+          <div
+            ref={provided.innerRef}
+            {...provided.droppableProps}
+            className="space-y-2 min-h-[60px]"
+          >
+            {column.cards.map((card, index) => (
+              <Draggable key={card.id} draggableId={card.id} index={index}>
+                {(dragProvided) => (
+                  <div
+                    ref={dragProvided.innerRef}
+                    {...dragProvided.draggableProps}
+                    {...dragProvided.dragHandleProps}
+                  >
+                    <DealCardView card={card} onClick={() => onCardClick(card)} />
+                  </div>
+                )}
+              </Draggable>
+            ))}
+            {provided.placeholder}
+            <button
+              type="button"
+              onClick={onAddCard}
+              className="w-full flex items-center gap-1.5 px-3 py-2 rounded-lg text-[12px] transition-colors"
+              style={{ color: 'var(--muted-foreground)' }}
+            >
+              <Plus className="w-3.5 h-3.5" />
+              New Deal
+            </button>
+          </div>
+        )}
+      </Droppable>
+    </div>
+  );
+}
+
 /* ══════════════════════════════════════════════════════════
    SA03 PIPELINE — Bonsai-style: columns with count + $value
 ══════════════════════════════════════════════════════════ */
 interface SA03PipelineProps {
   onDealClick: (deal: any) => void;
   onCreateDeal: () => void;
+  dataRefreshVersion?: number;
 }
 
-export function SA03Pipeline({ onDealClick, onCreateDeal }: SA03PipelineProps) {
+export function SA03Pipeline({ onDealClick, onCreateDeal, dataRefreshVersion = 0 }: SA03PipelineProps) {
   const [pipelineType, setPipelineType] = useState<'project' | 'talent'>('project');
   const [activeSort, setActiveSort] = useState<number>(0); // for "Sort 1" badge demo
+  const [liveProjectColumns, setLiveProjectColumns] = useState<Column[] | null>(null);
+
+  useEffect(() => {
+    if (pipelineType !== 'project') {
+      setLiveProjectColumns(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const res = await fetch('/api/pipeline', { credentials: 'include' });
+      const json = await res.json();
+      if (cancelled || !res.ok || !Array.isArray(json.columns)) return;
+      setLiveProjectColumns(json.columns as Column[]);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [pipelineType, dataRefreshVersion]);
 
   const projectColumns: Column[] = [
     {
@@ -239,9 +349,36 @@ export function SA03Pipeline({ onDealClick, onCreateDeal }: SA03PipelineProps) {
     },
   ];
 
-  const columns = pipelineType === 'project' ? projectColumns : talentColumns;
+  const columns = pipelineType === 'project' ? (liveProjectColumns ?? projectColumns) : talentColumns;
   const totalValue = columns.reduce((s, col) => s + col.cards.reduce((cs, c) => cs + c.value, 0), 0);
   const totalDeals = columns.reduce((s, col) => s + col.cards.length, 0);
+  const useProjectDnd = pipelineType === 'project' && liveProjectColumns !== null;
+
+  const onDragEnd = async (result: DropResult) => {
+    const { destination, source, draggableId } = result;
+    if (!destination || !liveProjectColumns) return;
+    if (destination.droppableId === source.droppableId && destination.index === source.index) return;
+
+    const prev = liveProjectColumns.map((c) => ({ ...c, cards: [...c.cards] }));
+    const next = moveCard(prev, source.droppableId, destination.droppableId, source.index, destination.index);
+    setLiveProjectColumns(next);
+
+    if (source.droppableId === destination.droppableId) return;
+
+    const res = await fetch(`/api/deals/${draggableId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ stage: destination.droppableId }),
+    });
+    if (!res.ok) {
+      setLiveProjectColumns(prev);
+      return;
+    }
+    dispatchDataInvalidation('pipeline');
+    dispatchDataInvalidation('deals');
+    dispatchDataInvalidation('sales');
+  };
 
   return (
     <div className="min-w-0 px-3 py-4 sm:p-6">
@@ -353,19 +490,47 @@ export function SA03Pipeline({ onDealClick, onCreateDeal }: SA03PipelineProps) {
 
       {/* ── Kanban board ── */}
       <div className="-mx-1 flex gap-4 overflow-x-auto pb-6 px-1 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {columns.map(col => (
-          <PipelineColumn
-            key={col.id}
-            column={col}
-            onCardClick={(card) => onDealClick({
-              id: card.id, name: card.title, client: card.client,
-              type: pipelineType === 'project' ? 'Project' : 'Talent',
-              value: `$${(card.value / 1000).toFixed(0)}K`,
-              stage: col.title, owner: card.owner,
-            })}
-            onAddCard={onCreateDeal}
-          />
-        ))}
+        {useProjectDnd ? (
+          <DragDropContext onDragEnd={onDragEnd}>
+            {columns.map((col) => (
+              <PipelineColumnDnd
+                key={col.id}
+                column={col}
+                onCardClick={(card) =>
+                  onDealClick({
+                    id: card.id,
+                    name: card.title,
+                    client: card.client,
+                    type: 'Project',
+                    value: `$${(card.value / 1000).toFixed(0)}K`,
+                    stage: col.title,
+                    owner: card.owner,
+                  })
+                }
+                onAddCard={onCreateDeal}
+              />
+            ))}
+          </DragDropContext>
+        ) : (
+          columns.map((col) => (
+            <PipelineColumn
+              key={col.id}
+              column={col}
+              onCardClick={(card) =>
+                onDealClick({
+                  id: card.id,
+                  name: card.title,
+                  client: card.client,
+                  type: pipelineType === 'project' ? 'Project' : 'Talent',
+                  value: `$${(card.value / 1000).toFixed(0)}K`,
+                  stage: col.title,
+                  owner: card.owner,
+                })
+              }
+              onAddCard={onCreateDeal}
+            />
+          ))
+        )}
       </div>
     </div>
   );

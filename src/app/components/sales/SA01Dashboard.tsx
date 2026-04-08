@@ -52,7 +52,27 @@ function ChartTooltip({ active, payload, label, formatter }: any) {
   );
 }
 
+type SalesKpiPayload = {
+  totalPipelineK: number;
+  activeDeals: number;
+  winRatePct: number;
+  avgCloseDays: number;
+  funnel: { stage: string; count: number; valueK: number; widthPct: number }[];
+  monthly: { month: string; won: number; lost: number; valueK: number }[];
+  recent: {
+    name: string;
+    client: string;
+    value: string;
+    stage: string;
+    hot: boolean;
+    type: 'Project' | 'Talent';
+  }[];
+  leadToClosePct: number;
+  avgDealK: number;
+};
+
 interface SA01DashboardProps {
+  dataRefreshVersion?: number;
   onNavigateToDeals: () => void;
   onNavigateToPipeline: () => void;
   onCreateDeal: () => void;
@@ -91,8 +111,30 @@ const RECENT_DEALS = [
   { name: 'React Developer Search',     client: 'SaaS Co.',     value: '$35,000', stage: 'Profiles Shared',      hot: false, type: 'Talent'  },
 ];
 
-export function SA01Dashboard({ onNavigateToDeals, onNavigateToPipeline, onCreateDeal }: SA01DashboardProps) {
+export function SA01Dashboard({
+  dataRefreshVersion = 0,
+  onNavigateToDeals,
+  onNavigateToPipeline,
+  onCreateDeal,
+}: SA01DashboardProps) {
   const { isDark } = useTheme();
+  const [kpi, setKpi] = useState<SalesKpiPayload | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const res = await fetch('/api/kpi/sales', { credentials: 'include' });
+      const json = await res.json();
+      if (cancelled || !res.ok || json?.error) return;
+      const { cached: _c, ...rest } = json;
+      if (typeof rest.totalPipelineK === 'number' && Array.isArray(rest.funnel)) {
+        setKpi(rest as SalesKpiPayload);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [dataRefreshVersion]);
 
   const wonColor   = isDark ? 'rgba(251,191,36,0.85)' : 'rgba(37,99,235,0.85)';
   const lostColor  = isDark ? 'rgba(255,255,255,0.18)' : 'rgba(15,23,42,0.08)';
@@ -116,6 +158,60 @@ export function SA01Dashboard({ onNavigateToDeals, onNavigateToPipeline, onCreat
     WebkitBackdropFilter: 'blur(24px) saturate(180%)',
     border: '1px solid var(--border)',
   };
+
+  const statsRow = kpi
+    ? [
+        {
+          label: 'Total Pipeline',
+          val: kpi.totalPipelineK,
+          pre: '$',
+          suf: 'K',
+          delta: 'Live',
+          up: true,
+          sub: 'Open deals (excl. won/lost)',
+        },
+        {
+          label: 'Active Deals',
+          val: kpi.activeDeals,
+          pre: '',
+          suf: '',
+          delta: 'Live',
+          up: true,
+          sub: 'In pipeline',
+        },
+        {
+          label: 'Win Rate',
+          val: kpi.winRatePct,
+          pre: '',
+          suf: '%',
+          delta: 'won / (won+lost)',
+          up: true,
+          sub: 'Closed outcomes',
+        },
+        {
+          label: 'Avg Close Time',
+          val: kpi.avgCloseDays,
+          pre: '',
+          suf: 'd',
+          delta: 'Live',
+          up: true,
+          sub: 'Won deals',
+        },
+      ]
+    : STATS;
+
+  const funnelData = kpi
+    ? kpi.funnel.map((f) => ({
+        stage: f.stage,
+        count: f.count,
+        value: f.valueK,
+        width: f.widthPct,
+        type: 'mixed' as const,
+      }))
+    : PIPELINE_STAGES;
+
+  const monthlyData = kpi ? kpi.monthly : MONTHLY_PERFORMANCE;
+  const recentDeals = kpi?.recent?.length ? kpi.recent : RECENT_DEALS;
 
   return (
     <motion.div
@@ -147,7 +243,7 @@ export function SA01Dashboard({ onNavigateToDeals, onNavigateToPipeline, onCreat
         initial="hidden"
         animate="visible"
       >
-        {STATS.map((s) => (
+        {statsRow.map((s) => (
           <StatCard
             key={s.label}
             label={s.label}
@@ -187,7 +283,7 @@ export function SA01Dashboard({ onNavigateToDeals, onNavigateToPipeline, onCreat
           {/* Horizontal bar funnel */}
           <DashboardScrollPanel size="md" className="px-5 py-5">
             <div className="space-y-3">
-              {PIPELINE_STAGES.map((stage, i) => (
+              {funnelData.map((stage, i) => (
                 <motion.div
                   key={stage.stage}
                   initial={{ opacity: 0, x: -8 }}
@@ -229,11 +325,16 @@ export function SA01Dashboard({ onNavigateToDeals, onNavigateToPipeline, onCreat
               <div className="flex items-center gap-1.5">
                 <Zap className="w-3 h-3 text-muted-foreground" />
                 <span className="text-[11px] text-muted-foreground">Lead → Close:</span>
-                <span className="text-[11px] font-bold text-foreground">25.6%</span>
+                <span className="text-[11px] font-bold text-foreground">
+                  {kpi ? `${kpi.leadToClosePct}%` : '25.6%'}
+                </span>
               </div>
               <span className="text-muted-foreground/40">·</span>
               <div className="text-[11px] text-muted-foreground">
-                Avg deal: <span className="font-bold text-foreground">$21.1K</span>
+                Avg deal:{' '}
+                <span className="font-bold text-foreground">
+                  {kpi ? `$${kpi.avgDealK}K` : '$21.1K'}
+                </span>
               </div>
             </div>
         </motion.div>
@@ -253,7 +354,7 @@ export function SA01Dashboard({ onNavigateToDeals, onNavigateToPipeline, onCreat
 
           <div className="px-2 pb-2">
             <ResponsiveContainer width="100%" height={110}>
-              <BarChart data={MONTHLY_PERFORMANCE} barSize={10} barCategoryGap="30%">
+              <BarChart data={monthlyData} barSize={10} barCategoryGap="30%">
                 <XAxis
                   dataKey="month" tickLine={false} axisLine={false}
                   tick={{ fontSize: 9, fill: tickColor, fontWeight: 500 }} dy={4}
@@ -273,7 +374,7 @@ export function SA01Dashboard({ onNavigateToDeals, onNavigateToPipeline, onCreat
             <p className="text-[10px] font-semibold uppercase tracking-[0.08em] pt-3 mb-1
                           text-muted-foreground">Value (\$K)</p>
             <ResponsiveContainer width="100%" height={60}>
-              <LineChart data={MONTHLY_PERFORMANCE}>
+              <LineChart data={monthlyData}>
                 <CartesianGrid strokeDasharray="2 4" stroke={gridColor} vertical={false} />
                 <XAxis dataKey="month" hide />
                 <Tooltip
@@ -329,11 +430,13 @@ export function SA01Dashboard({ onNavigateToDeals, onNavigateToPipeline, onCreat
 
         <DashboardScrollPanel size="md" className="pb-1">
           <div>
-            {RECENT_DEALS.map((deal, i) => (
+            {recentDeals.map((deal, i) => (
               <motion.button
-                key={deal.name}
+                key={`${deal.name}-${i}`}
                 className="group flex w-full items-center gap-3 px-3 py-4 text-left transition-colors sm:gap-4 sm:px-6"
-                style={{ borderBottom: i < RECENT_DEALS.length - 1 ? '1px solid var(--border)' : 'none' }}
+                style={{
+                  borderBottom: i < recentDeals.length - 1 ? '1px solid var(--border)' : 'none',
+                }}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.38 + i * 0.05 }}

@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-const API = process.env.UNIPILE_API_URL!;
-const TOKEN = process.env.UNIPILE_ACCESS_TOKEN!;
+import { getUnipileCreds } from '../../../lib/unipile-env';
 
 const PAGE_LIMIT = 250;
 /** Safety cap: 20 pages × 250 = 5000 messages max per chat */
@@ -14,6 +12,20 @@ export async function GET(req: NextRequest) {
   const fetchAll = sp.get('fetch_all') === '1' || sp.get('fetch_all') === 'true';
 
   if (!chat_id) return NextResponse.json({ error: 'chat_id required' }, { status: 400 });
+
+  const creds = getUnipileCreds();
+  if (!creds) {
+    if (fetchAll) {
+      return NextResponse.json({
+        object: 'MessageList',
+        items: [],
+        total_fetched: 0,
+        unipile_configured: false,
+      });
+    }
+    return NextResponse.json({ object: 'MessageList', items: [], unipile_configured: false });
+  }
+  const { api: API, token: TOKEN } = creds;
 
   try {
     if (fetchAll) {
