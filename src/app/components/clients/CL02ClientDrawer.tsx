@@ -1,327 +1,136 @@
-import React, { useState } from 'react';
-import { X } from 'lucide-react';
-import { BonsaiButton } from '../bonsai/BonsaiButton';
-import { BonsaiInput, BonsaiSelect } from '../bonsai/BonsaiFormFields';
+'use client';
+
+import React, { useEffect, useState, useCallback } from 'react';
+import { Check } from 'lucide-react';
+import { SlideDrawer, FormField, GlassInput, GlassTextarea, GlassSelect } from '../ui/Overlays';
 
 interface CL02ClientDrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (client: any) => void;
-  initialClient?: any;
+  onSave: (client: Record<string, unknown>) => void | Promise<void>;
+  initialClient?: unknown;
 }
 
+type ProfileOpt = { id: string; display_name: string };
+
 export function CL02ClientDrawer({ isOpen, onClose, onSave, initialClient }: CL02ClientDrawerProps) {
-  const [formData, setFormData] = useState(initialClient || {
-    name: '',
-    industry: 'Technology',
-    status: 'Onboarding',
-    website: '',
-    phone: '',
-    email: '',
-    address: '',
-    city: '',
-    state: '',
-    zip: '',
-    country: 'United States',
-    accountOwner: '',
-    tags: '',
-    notes: '',
-    // Billing
-    billingEmail: '',
-    billingAddress: '',
-    billingCity: '',
-    billingState: '',
-    billingZip: '',
-    taxId: '',
-    // Settings
-    portalAccess: true,
-    autoInvoicing: false,
-    paymentTerms: 'Net 30',
-  });
+  const [name, setName] = useState('');
+  const [paymentTerms, setPaymentTerms] = useState('Net 30');
+  const [billingAddress, setBillingAddress] = useState('');
+  const [accountManagerId, setAccountManagerId] = useState('');
+  const [profiles, setProfiles] = useState<ProfileOpt[]>([]);
+  const [saving, setSaving] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSave(formData);
-    onClose();
-  };
+  useEffect(() => {
+    if (!isOpen) return;
+    let cancelled = false;
+    fetch('/api/hub/quick-options', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((j) => {
+        if (!cancelled && Array.isArray(j.profiles)) setProfiles(j.profiles);
+      })
+      .catch(() => {
+        if (!cancelled) setProfiles([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen]);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (!isOpen) return;
+    if (!initialClient) {
+      setName('');
+      setPaymentTerms('Net 30');
+      setBillingAddress('');
+      setAccountManagerId('');
+      return;
+    }
+    const c = initialClient as Record<string, unknown>;
+    setName(String(c.name ?? ''));
+    setPaymentTerms(String(c.payment_terms ?? 'Net 30'));
+    const ba = c.billing_address;
+    if (ba && typeof ba === 'object' && ba !== null && 'raw' in ba) {
+      setBillingAddress(String((ba as { raw?: string }).raw ?? ''));
+    } else if (typeof ba === 'string') {
+      setBillingAddress(ba);
+    } else {
+      setBillingAddress('');
+    }
+    setAccountManagerId(typeof c.account_manager_id === 'string' ? c.account_manager_id : '');
+  }, [isOpen, initialClient]);
+
+  const submit = useCallback(async () => {
+    if (!name.trim()) return;
+    setSaving(true);
+    try {
+      await onSave({
+        name: name.trim(),
+        paymentTerms: paymentTerms.trim(),
+        payment_terms: paymentTerms.trim(),
+        billing_address: billingAddress.trim(),
+        account_manager_id: accountManagerId || null,
+      });
+    } finally {
+      setSaving(false);
+    }
+  }, [name, paymentTerms, billingAddress, accountManagerId, onSave]);
 
   return (
-    <>
-      {/* Overlay */}
-      <div 
-        className="fixed inset-0 z-40 hub-overlay-backdrop"
-        onClick={onClose}
-      />
-      
-      {/* Drawer */}
-      <div className="fixed right-0 top-0 bottom-0 w-full max-w-2xl shadow-2xl z-50 overflow-y-auto"
-        style={{ background: 'var(--background-2)' }}>
-        {/* Header */}
-        <div className="sticky top-0 px-6 py-4 flex items-center justify-between"
-          style={{ background: 'var(--background-2)', borderBottom: '1px solid var(--border)' }}>
-          <div>
-            <h2 className="text-xl font-semibold" style={{ color: 'var(--foreground)' }}>
-              {initialClient ? 'Edit Client' : 'Add New Client'}
-            </h2>
-            <p className="text-sm" style={{ color: 'var(--muted-foreground)' }}>Fill in client organization details</p>
-          </div>
+    <SlideDrawer
+      open={isOpen}
+      onClose={onClose}
+      wide
+      title={initialClient ? 'Edit client' : 'New client'}
+      subtitle="Company name, billing, and terms — matches /api/clients"
+      footer={
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <button
+            type="button"
             onClick={onClose}
-            className="p-2 rounded-lg transition-colors"
-            style={{ color: 'var(--muted-foreground)' }}
-            onMouseEnter={(e) => e.currentTarget.style.background = 'var(--muted)'}
-            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+            disabled={saving}
+            className="rounded-lg border px-4 py-2 text-[13px] font-medium transition-colors disabled:opacity-50"
+            style={{ background: 'var(--glass-bg)', color: 'var(--foreground)', borderColor: 'var(--border)' }}
           >
-            <X className="w-5 h-5" />
+            Cancel
+          </button>
+          <button
+            type="button"
+            disabled={saving}
+            onClick={() => void submit()}
+            className="flex items-center justify-center gap-2 rounded-lg px-5 py-2 text-[13px] font-medium text-white transition-all disabled:opacity-50"
+            style={{ background: '#2563EB' }}
+          >
+            <Check className="h-3.5 w-3.5" />
+            {saving ? 'Saving…' : initialClient ? 'Save' : 'Create client'}
           </button>
         </div>
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* Basic Information */}
-          <div>
-            <h3 className="font-semibold text-foreground mb-4">Basic Information</h3>
-            <div className="space-y-4">
-              <BonsaiInput
-                label="Company Name"
-                required
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Acme Corporation"
-              />
-
-              <div className="grid grid-cols-2 gap-4">
-                <BonsaiSelect
-                  label="Industry *"
-                  value={formData.industry}
-                  onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
-                  options={[
-                    { value: 'Technology', label: 'Technology' },
-                    { value: 'Finance', label: 'Finance' },
-                    { value: 'Healthcare', label: 'Healthcare' },
-                    { value: 'Retail', label: 'Retail' },
-                    { value: 'Manufacturing', label: 'Manufacturing' },
-                    { value: 'Marketing', label: 'Marketing' },
-                    { value: 'Education', label: 'Education' },
-                    { value: 'Other', label: 'Other' },
-                  ]}
-                  required
-                />
-
-                <BonsaiSelect
-                  label="Status *"
-                  value={formData.status}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                  options={[
-                    { value: 'Onboarding', label: 'Onboarding' },
-                    { value: 'Active', label: 'Active' },
-                    { value: 'Inactive', label: 'Inactive' },
-                    { value: 'Archived', label: 'Archived' },
-                  ]}
-                  required
-                />
-              </div>
-
-            <div className="grid grid-cols-2 gap-4">
-                <BonsaiInput
-                  label="Website"
-                  type="url"
-                  value={formData.website}
-                  onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                  placeholder="https://acmecorp.com"
-                />
-                <BonsaiInput
-                  label="Phone"
-                  type="tel"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  placeholder="(555) 123-4567"
-                />
-              </div>
-
-              <BonsaiInput
-                label="Email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="contact@acmecorp.com"
-              />
-            </div>
-          </div>
-
-          {/* Address */}
-          <div>
-            <h3 className="font-semibold text-foreground mb-4">Address</h3>
-            <div className="space-y-4">
-              <BonsaiInput
-                label="Street Address"
-                value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                placeholder="123 Main Street"
-              />
-
-              <div className="grid grid-cols-2 gap-4">
-                <BonsaiInput
-                  label="City"
-                  value={formData.city}
-                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                  placeholder="San Francisco"
-                />
-                <BonsaiInput
-                  label="State/Province"
-                  value={formData.state}
-                  onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                  placeholder="CA"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <BonsaiInput
-                  label="ZIP/Postal Code"
-                  value={formData.zip}
-                  onChange={(e) => setFormData({ ...formData, zip: e.target.value })}
-                  placeholder="94102"
-                />
-                <BonsaiSelect
-                  label="Country"
-                  value={formData.country}
-                  onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                  options={[
-                    { value: 'United States', label: 'United States' },
-                    { value: 'Canada', label: 'Canada' },
-                    { value: 'United Kingdom', label: 'United Kingdom' },
-                    { value: 'Australia', label: 'Australia' },
-                    { value: 'Other', label: 'Other' },
-                  ]}
-                />
-                </div>
-              </div>
-            </div>
-
-          {/* Billing Information */}
-          <div>
-            <h3 className="font-semibold text-foreground mb-4">Billing Information</h3>
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="sameBilling"
-                  className="w-4 h-4 rounded border-border text-primary focus:ring-2 focus:ring-ring/30"
-                />
-                <label htmlFor="sameBilling" className="text-sm text-foreground">
-                  Same as company address
-                </label>
-              </div>
-
-              <BonsaiInput
-                label="Billing Email"
-                type="email"
-                value={formData.billingEmail}
-                onChange={(e) => setFormData({ ...formData, billingEmail: e.target.value })}
-                placeholder="billing@acmecorp.com"
-              />
-
-              <BonsaiInput
-                label="Tax ID / VAT Number"
-                value={formData.taxId}
-                onChange={(e) => setFormData({ ...formData, taxId: e.target.value })}
-                placeholder="XX-XXXXXXX"
-              />
-
-              <BonsaiSelect
-                label="Payment Terms"
-                value={formData.paymentTerms}
-                onChange={(e) => setFormData({ ...formData, paymentTerms: e.target.value })}
-                options={[
-                  { value: 'Due on Receipt', label: 'Due on Receipt' },
-                  { value: 'Net 15', label: 'Net 15' },
-                  { value: 'Net 30', label: 'Net 30' },
-                  { value: 'Net 60', label: 'Net 60' },
-                  { value: 'Net 90', label: 'Net 90' },
-                ]}
-              />
-            </div>
-          </div>
-
-          {/* Account Management */}
-          <div>
-            <h3 className="font-semibold text-foreground mb-4">Account Management</h3>
-            <div className="space-y-4">
-              <BonsaiInput
-                label="Account Owner"
-                value={formData.accountOwner}
-                onChange={(e) => setFormData({ ...formData, accountOwner: e.target.value })}
-                placeholder="Select team member"
-              />
-
-              <BonsaiInput
-                label="Tags (comma-separated)"
-                value={formData.tags}
-                onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-                placeholder="Enterprise, VIP, Strategic"
-              />
-            </div>
-          </div>
-
-          {/* Settings */}
-          <div>
-            <h3 className="font-semibold text-foreground mb-4">Settings</h3>
-            <div className="space-y-3">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={formData.portalAccess}
-                  onChange={(e) => setFormData({ ...formData, portalAccess: e.target.checked })}
-                  className="w-4 h-4 rounded border-border text-primary focus:ring-2 focus:ring-ring/30"
-                />
-                <div>
-                  <span className="text-sm font-medium text-foreground">Enable Client Portal Access</span>
-                  <p className="text-xs text-muted-foreground">Allow client users to access their portal</p>
-                </div>
-              </label>
-
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={formData.autoInvoicing}
-                  onChange={(e) => setFormData({ ...formData, autoInvoicing: e.target.checked })}
-                  className="w-4 h-4 rounded border-border text-primary focus:ring-2 focus:ring-ring/30"
-                />
-                <div>
-                  <span className="text-sm font-medium text-foreground">Automatic Invoicing</span>
-                  <p className="text-xs text-muted-foreground">Generate invoices automatically based on project milestones</p>
-                </div>
-              </label>
-            </div>
-          </div>
-
-          {/* Notes */}
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              Notes
-            </label>
-            <textarea
-              value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              rows={4}
-              className="hub-field px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground resize-none"
-              placeholder="Additional notes about this client..."
-            />
-          </div>
-
-          {/* Actions */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
-            <BonsaiButton variant="ghost" onClick={onClose} type="button">
-              Cancel
-            </BonsaiButton>
-            <BonsaiButton variant="primary" type="submit">
-              {initialClient ? 'Save Changes' : 'Create Client'}
-            </BonsaiButton>
-          </div>
-        </form>
-      </div>
-    </>
+      }
+    >
+      <FormField label="Company name" required>
+        <GlassInput value={name} onChange={(e) => setName(e.target.value)} placeholder="Acme Inc." />
+      </FormField>
+      <FormField label="Payment terms">
+        <GlassInput value={paymentTerms} onChange={(e) => setPaymentTerms(e.target.value)} placeholder="Net 30" />
+      </FormField>
+      <FormField label="Billing address">
+        <GlassTextarea
+          rows={3}
+          value={billingAddress}
+          onChange={(e) => setBillingAddress(e.target.value)}
+          placeholder="Street, city, region, postal code…"
+        />
+      </FormField>
+      <FormField label="Account manager">
+        <GlassSelect value={accountManagerId} onChange={(e) => setAccountManagerId(e.target.value)}>
+          <option value="">None</option>
+          {profiles.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.display_name}
+            </option>
+          ))}
+        </GlassSelect>
+      </FormField>
+    </SlideDrawer>
   );
 }

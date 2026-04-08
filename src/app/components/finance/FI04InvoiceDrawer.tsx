@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
+'use client';
+
+import React, { useEffect, useState } from 'react';
 import { X, Plus, Trash2 } from 'lucide-react';
 import { BonsaiButton } from '../bonsai/BonsaiButton';
 import { BonsaiInput } from '../bonsai/BonsaiFormFields';
+import { BodyPortal } from '../ui/Overlays';
 
 interface LineItem {
   id: string;
@@ -62,30 +65,43 @@ export function FI04InvoiceDrawer({ isOpen, onClose, onSave, initialInvoice }: F
     onClose();
   };
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   return (
-    <>
-      <div className="fixed inset-0 z-40 hub-overlay-backdrop" onClick={onClose} />
-      
-      <div className="fixed right-0 top-0 bottom-0 w-full max-w-3xl hub-modal-solid shadow-2xl z-50 overflow-y-auto">
-        <div className="sticky top-0 bg-[var(--background-2)] border-b border-border px-6 py-4 flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-semibold text-foreground">
-              {initialInvoice ? 'Edit Invoice' : 'Create Invoice'}
-            </h2>
-            <p className="text-sm text-muted-foreground">Add invoice details and line items</p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+    <BodyPortal>
+      <>
+        <div className="fixed inset-0 z-[100] hub-overlay-backdrop" onClick={onClose} aria-hidden />
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <div
+          className="fixed right-0 top-0 z-[101] flex h-[100dvh] max-h-[100dvh] min-h-0 w-full max-w-3xl flex-col overflow-hidden shadow-2xl hub-modal-solid"
+        >
+          <div className="flex flex-shrink-0 items-center justify-between border-b border-border bg-[var(--background-2)] px-6 py-4">
+            <div>
+              <h2 className="text-xl font-semibold text-foreground">
+                {initialInvoice ? 'Edit Invoice' : 'Create Invoice'}
+              </h2>
+              <p className="text-sm text-muted-foreground">Add invoice details and line items</p>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+
+          <div className="custom-scrollbar min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]">
+            <form onSubmit={handleSubmit} className="space-y-6 p-6">
           {/* Invoice Info */}
           <div>
             <h3 className="font-semibold text-foreground mb-4">Invoice information</h3>
@@ -234,17 +250,19 @@ export function FI04InvoiceDrawer({ isOpen, onClose, onSave, initialInvoice }: F
             />
           </div>
 
-          {/* Actions */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
-            <BonsaiButton variant="ghost" onClick={onClose} type="button">
-              Cancel
-            </BonsaiButton>
-            <BonsaiButton variant="primary" type="submit">
-              {initialInvoice ? 'Save Changes' : 'Create Invoice'}
-            </BonsaiButton>
+              {/* Actions */}
+              <div className="flex items-center justify-end gap-3 border-t border-border pt-4">
+                <BonsaiButton variant="ghost" onClick={onClose} type="button">
+                  Cancel
+                </BonsaiButton>
+                <BonsaiButton variant="primary" type="submit">
+                  {initialInvoice ? 'Save Changes' : 'Create Invoice'}
+                </BonsaiButton>
+              </div>
+            </form>
           </div>
-        </form>
-      </div>
-    </>
+        </div>
+      </>
+    </BodyPortal>
   );
 }

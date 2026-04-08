@@ -1,5 +1,6 @@
 'use client';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { useRouter } from 'next/navigation';
 import { X, FileText, Clock, Users, CheckCircle, AlertTriangle, ArrowUpRight, Bell } from 'lucide-react';
@@ -105,6 +106,9 @@ export function NotificationDrawer({ open, onClose }: NotificationDrawerProps) {
   const router = useRouter();
   const [notifications, setNotifications] = useState<UiNotification[]>([]);
   const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
 
   // Fetch from API when drawer opens
   useEffect(() => {
@@ -122,6 +126,15 @@ export function NotificationDrawer({ open, onClose }: NotificationDrawerProps) {
     return () => { cancelled = true; };
   }, [open]);
 
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
+
   const unreadCount = notifications.filter(n => !n.read).length;
 
   const markAllRead = async () => {
@@ -136,7 +149,7 @@ export function NotificationDrawer({ open, onClose }: NotificationDrawerProps) {
     await markNotificationRead(id);
   };
 
-  return (
+  const panel = (
     <AnimatePresence>
       {open && (
         <>
@@ -156,7 +169,7 @@ export function NotificationDrawer({ open, onClose }: NotificationDrawerProps) {
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 320 }}
-            className="fixed right-0 top-0 h-full z-[81] w-full max-w-[400px] flex flex-col"
+            className="fixed right-0 top-0 z-[81] flex h-[100dvh] max-h-[100dvh] min-h-0 w-full max-w-[400px] flex-col overflow-hidden"
             style={{
               background: 'var(--notif-drawer-bg)',
               backdropFilter: 'blur(44px) saturate(180%)',
@@ -173,7 +186,7 @@ export function NotificationDrawer({ open, onClose }: NotificationDrawerProps) {
             />
 
             <div
-              className="px-6 py-4 flex items-center justify-between"
+              className="flex flex-shrink-0 items-center justify-between px-6 py-4"
               style={{ borderBottom: '1px solid var(--border)' }}
             >
               <div className="flex items-center gap-3">
@@ -206,8 +219,11 @@ export function NotificationDrawer({ open, onClose }: NotificationDrawerProps) {
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto">
-              {notifications.map((notif, i) => {
+            <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]">
+              {loading && (
+                <p className="px-6 py-8 text-center text-[12px] text-stone-500 dark:text-stone-400">Loading…</p>
+              )}
+              {!loading && notifications.map((notif, i) => {
                 const styles = typeStyles[notif.type];
                 const Icon = notif.icon;
                 return (
@@ -262,7 +278,7 @@ export function NotificationDrawer({ open, onClose }: NotificationDrawerProps) {
             </div>
 
             <div
-              className="px-6 py-3"
+              className="flex-shrink-0 px-6 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
               style={{
                 borderTop: '1px solid var(--border)',
                 background: 'var(--table-header-bg)',
@@ -284,4 +300,7 @@ export function NotificationDrawer({ open, onClose }: NotificationDrawerProps) {
       )}
     </AnimatePresence>
   );
+
+  if (!mounted) return null;
+  return createPortal(panel, document.body);
 }

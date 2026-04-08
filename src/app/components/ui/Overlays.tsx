@@ -1,5 +1,6 @@
 'use client';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { X } from 'lucide-react';
 
@@ -14,38 +15,71 @@ interface SlideDrawerProps {
   onClose: () => void;
   title: string;
   subtitle?: string;
-  width?: string;       // e.g. '480px', '540px'
+  /** Panel width. Use `wide` for entity forms (contacts, people) to match hub chrome. */
+  width?: string;
+  wide?: boolean;
   children: React.ReactNode;
   footer?: React.ReactNode;
 }
 
+/** z-index for portaled hub drawers (above module chrome, below command palette if any). */
+const DRAWER_BACKDROP_Z = 100;
+const DRAWER_PANEL_Z = 101;
+
 export function SlideDrawer({
-  open, onClose, title, subtitle, width = '480px', children, footer,
+  open,
+  onClose,
+  title,
+  subtitle,
+  width,
+  wide = false,
+  children,
+  footer,
 }: SlideDrawerProps) {
-  return (
+  const [mounted, setMounted] = useState(false);
+  const resolvedWidth = width ?? (wide ? 'min(640px, 92vw)' : '480px');
+
+  useEffect(() => setMounted(true), []);
+
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
+
+  const drawer = (
     <AnimatePresence>
       {open && (
         <>
-          {/* Backdrop */}
+          {/* Backdrop — portaled so `position:fixed` is viewport-relative (not clipped by hub page `filter` / transforms). */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, pointerEvents: 'none' }}
             transition={{ duration: 0.15 }}
             onClick={onClose}
-            className="fixed inset-0 z-50"
-            style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(2px)' }}
+            className="fixed inset-0"
+            style={{
+              zIndex: DRAWER_BACKDROP_Z,
+              background: 'rgba(0,0,0,0.5)',
+              backdropFilter: 'blur(2px)',
+            }}
           />
-          {/* Panel */}
+          {/* Panel — full viewport height; body scrolls inside flex middle */}
           <motion.aside
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-            className="fixed right-0 top-0 bottom-0 z-50 flex flex-col"
+            className="fixed right-0 top-0 flex max-h-[100dvh] min-h-0 flex-col"
             style={{
-              width,
-              maxWidth: '90vw',
+              zIndex: DRAWER_PANEL_Z,
+              width: resolvedWidth,
+              maxWidth: 'min(92vw, 100%)',
+              height: '100dvh',
               background: 'var(--sidebar-glass)',
               backdropFilter: 'blur(24px) saturate(1.6)',
               WebkitBackdropFilter: 'blur(24px) saturate(1.6)',
@@ -54,36 +88,41 @@ export function SlideDrawer({
             }}
           >
             {/* Header */}
-            <div className="px-6 py-4 flex items-center justify-between flex-shrink-0"
-              style={{ borderBottom: '1px solid var(--border)' }}>
-              <div>
+            <div
+              className="flex flex-shrink-0 items-center justify-between px-6 py-4"
+              style={{ borderBottom: '1px solid var(--border)' }}
+            >
+              <div className="min-w-0 pr-2">
                 <h2 className="text-[16px] font-semibold" style={{ color: 'var(--foreground)' }}>
                   {title}
                 </h2>
                 {subtitle && (
-                  <p className="text-[12px] mt-0.5" style={{ color: 'var(--muted-foreground)' }}>
+                  <p className="mt-0.5 text-[12px]" style={{ color: 'var(--muted-foreground)' }}>
                     {subtitle}
                   </p>
                 )}
               </div>
               <button
+                type="button"
                 onClick={onClose}
-                className="p-1.5 rounded-lg transition-colors hover:bg-white/[0.06]"
+                className="flex-shrink-0 rounded-lg p-1.5 transition-colors hover:bg-white/[0.06]"
                 style={{ color: 'var(--muted-foreground)' }}
               >
-                <X className="w-4 h-4" />
+                <X className="h-4 w-4" />
               </button>
             </div>
 
-            {/* Content */}
-            <div className="flex-1 overflow-y-auto px-6 py-5 custom-scrollbar">
+            {/* Scrollable body — min-h-0 is required for flex overflow scrolling */}
+            <div className="custom-scrollbar min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain px-6 py-5 [-webkit-overflow-scrolling:touch]">
               {children}
             </div>
 
             {/* Footer */}
             {footer && (
-              <div className="px-6 py-4 flex-shrink-0"
-                style={{ borderTop: '1px solid var(--border)' }}>
+              <div
+                className="flex-shrink-0 px-6 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4"
+                style={{ borderTop: '1px solid var(--border)' }}
+              >
                 {footer}
               </div>
             )}
@@ -92,6 +131,20 @@ export function SlideDrawer({
       )}
     </AnimatePresence>
   );
+
+  if (!mounted) return null;
+  return createPortal(drawer, document.body);
+}
+
+/**
+ * Renders into `document.body` so fixed overlays escape filtered/transformed hub layout ancestors.
+ * Use for custom drawer UIs that do not use `SlideDrawer`.
+ */
+export function BodyPortal({ children }: { children: React.ReactNode }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  if (!mounted) return null;
+  return createPortal(children, document.body);
 }
 
 /* ═══════════════════════════════════════════════════════════════

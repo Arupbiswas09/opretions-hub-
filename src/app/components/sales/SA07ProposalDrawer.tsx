@@ -1,215 +1,130 @@
-import React, { useState } from 'react';
-import { X } from 'lucide-react';
-import { BonsaiButton } from '../bonsai/BonsaiButton';
-import { BonsaiInput } from '../bonsai/BonsaiFormFields';
+'use client';
+
+import React, { useCallback, useEffect, useState } from 'react';
+import { Check } from 'lucide-react';
+import { SlideDrawer, FormField, GlassInput, GlassSelect, GlassTextarea } from '../ui/Overlays';
+
+/** Matches POST /api/proposals — no line items in schema; keep form honest. */
+const PROPOSAL_STATUSES = [
+  { v: 'draft', l: 'Draft' },
+  { v: 'sent', l: 'Sent' },
+  { v: 'viewed', l: 'Viewed' },
+  { v: 'accepted', l: 'Accepted' },
+  { v: 'declined', l: 'Declined' },
+];
 
 interface SA07ProposalDrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (proposal: any) => void;
+  onSave: (proposal: Record<string, unknown>) => void | Promise<void>;
+  /** Linked deal title for default proposal name */
+  dealLabel?: string;
 }
 
-export function SA07ProposalDrawer({ isOpen, onClose, onSave }: SA07ProposalDrawerProps) {
-  const [formData, setFormData] = useState({
-    name: '',
-    version: '1.0',
-    amount: '',
-    validUntil: '',
-    status: 'Draft',
-    items: [
-      { description: '', quantity: '1', rate: '', amount: '' }
-    ],
-    notes: '',
-  });
+export function SA07ProposalDrawer({ isOpen, onClose, onSave, dealLabel }: SA07ProposalDrawerProps) {
+  const [title, setTitle] = useState('');
+  const [value, setValue] = useState('');
+  const [status, setStatus] = useState('draft');
+  const [sentDate, setSentDate] = useState('');
+  const [notes, setNotes] = useState('');
+  const [saving, setSaving] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSave(formData);
-    onClose();
-  };
+  useEffect(() => {
+    if (!isOpen) return;
+    const fallback = dealLabel ? `Proposal — ${dealLabel}` : '';
+    setTitle(fallback);
+    setValue('');
+    setStatus('draft');
+    setSentDate('');
+    setNotes('');
+  }, [isOpen, dealLabel]);
 
-  const addLineItem = () => {
-    setFormData({
-      ...formData,
-      items: [...formData.items, { description: '', quantity: '1', rate: '', amount: '' }]
-    });
-  };
-
-  if (!isOpen) return null;
+  const submit = useCallback(async () => {
+    const t = title.trim();
+    if (!t) return;
+    setSaving(true);
+    try {
+      await Promise.resolve(
+        onSave({
+          title: t,
+          value: value.trim() || null,
+          status,
+          sent_date: sentDate || null,
+          /** Not persisted by API today — kept for future / local notes */
+          notes: notes.trim() || null,
+        }),
+      );
+    } finally {
+      setSaving(false);
+    }
+  }, [title, value, status, sentDate, notes, onSave]);
 
   return (
-    <>
-      {/* Overlay */}
-      <div 
-        className="fixed inset-0 z-40 hub-overlay-backdrop"
-        onClick={onClose}
-      />
-      
-      {/* Drawer */}
-      <div className="fixed right-0 top-0 bottom-0 w-full max-w-3xl hub-modal-solid shadow-2xl z-50 overflow-y-auto">
-        {/* Header */}
-        <div className="sticky top-0 bg-[var(--background-2)] border-b border-border px-6 py-4 flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-semibold text-foreground">Create proposal</h2>
-            <p className="text-sm text-muted-foreground">Build a detailed proposal</p>
-          </div>
+    <SlideDrawer
+      open={isOpen}
+      onClose={onClose}
+      wide
+      title="Create proposal"
+      subtitle="Title, value, and status sync to proposals"
+      footer={
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
           <button
             type="button"
             onClick={onClose}
-            className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            disabled={saving}
+            className="rounded-lg border px-4 py-2 text-[13px] font-medium transition-colors disabled:opacity-50"
+            style={{ background: 'var(--glass-bg)', color: 'var(--foreground)', borderColor: 'var(--border)' }}
           >
-            <X className="w-5 h-5" />
+            Cancel
+          </button>
+          <button
+            type="button"
+            disabled={saving || !title.trim()}
+            onClick={() => void submit()}
+            className="flex items-center justify-center gap-2 rounded-lg px-5 py-2 text-[13px] font-medium text-white transition-all disabled:opacity-50"
+            style={{ background: '#2563EB' }}
+          >
+            <Check className="h-3.5 w-3.5" />
+            {saving ? 'Saving…' : 'Create proposal'}
           </button>
         </div>
+      }
+    >
+      <p className="mb-5 text-[12px] leading-relaxed" style={{ color: 'var(--muted-foreground)' }}>
+        Line-item breakdowns are not stored by the API yet; use description for internal context.
+      </p>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* Basic Information */}
-          <div>
-            <h3 className="font-semibold text-foreground mb-4">Basic information</h3>
-            <div className="space-y-4">
-              <BonsaiInput
-                label="Proposal Name"
-                required
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="e.g., Website Redesign Proposal"
-              />
-
-              <div className="grid grid-cols-3 gap-4">
-                <BonsaiInput
-                  label="Version"
-                  required
-                  value={formData.version}
-                  onChange={(e) => setFormData({ ...formData, version: e.target.value })}
-                  placeholder="1.0"
-                />
-
-                <BonsaiInput
-                  label="Total Amount"
-                  required
-                  value={formData.amount}
-                  onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                  placeholder="$45,000"
-                />
-
-                <BonsaiInput
-                  label="Valid Until"
-                  type="date"
-                  required
-                  value={formData.validUntil}
-                  onChange={(e) => setFormData({ ...formData, validUntil: e.target.value })}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Status *
-                </label>
-                <select
-                  value={formData.status}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                  className="hub-field px-3 py-2 text-sm bg-background text-foreground"
-                  required
-                >
-                  <option value="Draft">Draft</option>
-                  <option value="Sent">Sent</option>
-                  <option value="Viewed">Viewed</option>
-                  <option value="Accepted">Accepted</option>
-                  <option value="Declined">Declined</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          {/* Line Items */}
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-foreground">Line items</h3>
-              <button
-                type="button"
-                onClick={addLineItem}
-                className="text-sm text-primary hover:underline"
-              >
-                + Add Item
-              </button>
-            </div>
-            
-            <div className="space-y-3">
-              {formData.items.map((item, index) => (
-                <div key={index} className="p-4 bg-muted/25 border border-border rounded-lg space-y-3">
-                  <BonsaiInput
-                    label="Description"
-                    value={item.description}
-                    onChange={(e) => {
-                      const newItems = [...formData.items];
-                      newItems[index].description = e.target.value;
-                      setFormData({ ...formData, items: newItems });
-                    }}
-                    placeholder="Website design and development"
-                  />
-                  <div className="grid grid-cols-3 gap-3">
-                    <BonsaiInput
-                      label="Quantity"
-                      type="number"
-                      value={item.quantity}
-                      onChange={(e) => {
-                        const newItems = [...formData.items];
-                        newItems[index].quantity = e.target.value;
-                        setFormData({ ...formData, items: newItems });
-                      }}
-                    />
-                    <BonsaiInput
-                      label="Rate"
-                      value={item.rate}
-                      onChange={(e) => {
-                        const newItems = [...formData.items];
-                        newItems[index].rate = e.target.value;
-                        setFormData({ ...formData, items: newItems });
-                      }}
-                      placeholder="$5,000"
-                    />
-                    <BonsaiInput
-                      label="Amount"
-                      value={item.amount}
-                      onChange={(e) => {
-                        const newItems = [...formData.items];
-                        newItems[index].amount = e.target.value;
-                        setFormData({ ...formData, items: newItems });
-                      }}
-                      placeholder="$5,000"
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Notes */}
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              Notes & Terms
-            </label>
-            <textarea
-              value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              rows={4}
-              className="hub-field px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground resize-none"
-              placeholder="Payment terms, deliverables, timeline..."
-            />
-          </div>
-
-          {/* Actions */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
-            <BonsaiButton variant="ghost" onClick={onClose} type="button">
-              Cancel
-            </BonsaiButton>
-            <BonsaiButton variant="primary" type="submit">
-              Create Proposal
-            </BonsaiButton>
-          </div>
-        </form>
+      <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--muted-foreground)' }}>
+        Proposal
+      </h3>
+      <FormField label="Title" required>
+        <GlassInput value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Q2 implementation proposal" />
+      </FormField>
+      <FormField label="Value">
+        <GlassInput value={value} onChange={(e) => setValue(e.target.value)} placeholder="45000" />
+      </FormField>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <FormField label="Status">
+          <GlassSelect value={status} onChange={(e) => setStatus(e.target.value)}>
+            {PROPOSAL_STATUSES.map((s) => (
+              <option key={s.v} value={s.v}>
+                {s.l}
+              </option>
+            ))}
+          </GlassSelect>
+        </FormField>
+        <FormField label="Sent / valid date">
+          <GlassInput type="date" value={sentDate} onChange={(e) => setSentDate(e.target.value)} />
+        </FormField>
       </div>
-    </>
+      <FormField label="Internal notes">
+        <GlassTextarea
+          rows={4}
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          placeholder="Terms, scope — for your team only until the API stores them"
+        />
+      </FormField>
+    </SlideDrawer>
   );
 }

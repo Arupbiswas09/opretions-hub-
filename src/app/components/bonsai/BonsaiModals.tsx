@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X } from 'lucide-react';
 import { cn } from '../ui/utils';
+import { BodyPortal } from '../ui/Overlays';
 
 interface BonsaiDrawerProps {
   open: boolean;
@@ -23,60 +24,65 @@ export function BonsaiDrawer({ open, onClose, title, children, footer, width = '
   }, [open]);
 
   return (
-    <AnimatePresence>
-      {open && (
-        <>
-          {/* Glassmorphic backdrop — deep frosted */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0, pointerEvents: 'none' }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-40"
-            onClick={onClose}
-          >
-            <div className="absolute inset-0 bg-stone-900/20 backdrop-blur-[6px]" />
-            {/* Subtle noise texture overlay */}
-            <div className="absolute inset-0 opacity-[0.015]" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\'/%3E%3C/svg%3E")' }} />
-          </motion.div>
+    <BodyPortal>
+      <AnimatePresence>
+        {open && (
+          <>
+            {/* Glassmorphic backdrop — deep frosted */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0, pointerEvents: 'none' }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-[100]"
+              onClick={onClose}
+            >
+              <div className="absolute inset-0 bg-stone-900/20 backdrop-blur-[6px]" />
+              {/* Subtle noise texture overlay */}
+              <div className="absolute inset-0 opacity-[0.015]" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\'/%3E%3C/svg%3E")' }} />
+            </motion.div>
 
-          {/* Drawer panel */}
-          <motion.div
-            initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
-            transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-            className={cn(
-              "fixed right-0 top-0 h-full z-50 flex flex-col w-full",
-              "bg-white/80 backdrop-blur-2xl backdrop-saturate-150",
-              "border-l border-white/40 shadow-[-8px_0_32px_rgba(0,0,0,0.08)]",
-              widthClass
-            )}
-          >
-            {/* Gradient shimmer top edge */}
-            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-stone-300/40 to-transparent" />
+            {/* Drawer panel — viewport height, scroll middle */}
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+              className={cn(
+                'fixed right-0 top-0 z-[101] flex h-[100dvh] max-h-[100dvh] min-h-0 w-full flex-col overflow-hidden',
+                'bg-white/80 backdrop-blur-2xl backdrop-saturate-150',
+                'border-l border-white/40 shadow-[-8px_0_32px_rgba(0,0,0,0.08)]',
+                widthClass,
+              )}
+            >
+              {/* Gradient shimmer top edge */}
+              <div className="pointer-events-none absolute left-0 right-0 top-0 h-px bg-gradient-to-r from-transparent via-stone-300/40 to-transparent" />
 
-            {title && (
-              <div className="px-6 py-4 border-b border-stone-200/30 flex items-center justify-between">
-                <h2 className="text-[15px] font-medium text-stone-800 tracking-[-0.01em]">{title}</h2>
-                <button
-                  onClick={onClose}
-                  className="p-1.5 text-stone-400 hover:text-stone-600 hover:bg-stone-100/50 rounded-lg transition-all active:scale-95"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+              {title && (
+                <div className="flex flex-shrink-0 items-center justify-between border-b border-stone-200/30 px-6 py-4">
+                  <h2 className="text-[15px] font-medium tracking-[-0.01em] text-stone-800">{title}</h2>
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="rounded-lg p-1.5 text-stone-400 transition-all hover:bg-stone-100/50 hover:text-stone-600 active:scale-95"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
+              <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain px-6 py-5 [-webkit-overflow-scrolling:touch]">
+                {children}
               </div>
-            )}
-            <div className="flex-1 overflow-y-auto px-6 py-5">{children}</div>
-            {footer && (
-              <div className="px-6 py-4 border-t border-stone-200/30 flex items-center justify-end gap-2 bg-stone-50/30 backdrop-blur-lg">
-                {footer}
-              </div>
-            )}
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+              {footer && (
+                <div className="flex flex-shrink-0 items-center justify-end gap-2 border-t border-stone-200/30 bg-stone-50/30 px-6 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur-lg">
+                  {footer}
+                </div>
+              )}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </BodyPortal>
   );
 }
 

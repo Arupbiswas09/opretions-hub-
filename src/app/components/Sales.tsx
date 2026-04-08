@@ -60,6 +60,7 @@ export default function Sales({ initialScreen = 'dashboard', hideNav = false }: 
           stage: deal.stage || 'lead',
           owner_id: deal.ownerId || deal.owner_id || null,
           close_date: deal.closeDate || deal.close_date || null,
+          probability: deal.probability != null ? Number(deal.probability) : null,
           description: deal.description || null,
         }),
       });
@@ -91,17 +92,22 @@ export default function Sales({ initialScreen = 'dashboard', hideNav = false }: 
     }
   };
 
-  const handleSaveProposal = async (data?: any) => {
+  const handleSaveProposal = async (data?: Record<string, unknown>) => {
     try {
+      const rawValue =
+        data?.value != null && String(data.value).trim() !== ''
+          ? String(data.value)
+          : selectedDeal?.value?.replace(/[^0-9.]/g, '') || null;
       const res = await fetch('/api/proposals', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          title: data?.title || `Proposal for ${selectedDeal?.name || 'Deal'}`,
+          title: (data?.title as string) || `Proposal for ${selectedDeal?.name || 'Deal'}`,
           deal_id: selectedDeal?.id || null,
-          value: data?.value || selectedDeal?.value?.replace(/[^0-9.]/g, '') || null,
-          status: 'draft',
+          value: rawValue,
+          status: (data?.status as string) || 'draft',
+          sent_date: (data?.sent_date as string) || null,
         }),
       });
       if (res.ok) {
@@ -229,7 +235,12 @@ export default function Sales({ initialScreen = 'dashboard', hideNav = false }: 
       </AnimatePresence>
 
       <SA05DealDrawer isOpen={showDealDrawer} onClose={() => setShowDealDrawer(false)} onSave={handleSaveDeal} initialDeal={dealToEdit} />
-      <SA07ProposalDrawer isOpen={showProposalDrawer} onClose={() => setShowProposalDrawer(false)} onSave={handleSaveProposal} />
+      <SA07ProposalDrawer
+        isOpen={showProposalDrawer}
+        onClose={() => setShowProposalDrawer(false)}
+        onSave={handleSaveProposal}
+        dealLabel={selectedDeal?.name}
+      />
       <SA09WonLostModal isOpen={showWonLostModal} onClose={() => setShowWonLostModal(false)} onSave={handleWonLostSave} dealName={selectedDeal?.name || 'Deal'} />
     </div>
   );

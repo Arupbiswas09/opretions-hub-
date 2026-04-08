@@ -1,8 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X } from 'lucide-react';
+import { BodyPortal } from '../ui/Overlays';
 
 interface DetailDrawerProps {
   open: boolean;
@@ -15,31 +16,41 @@ interface DetailDrawerProps {
 }
 
 export function DetailDrawer({ open, onClose, title, subtitle, icon, children, footer }: DetailDrawerProps) {
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
+
   return (
-    <AnimatePresence>
-      {open && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
-            className="fixed inset-0 z-[80]"
-            style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)' }}
-            onClick={onClose}
-          />
-          <motion.aside
-            initial={{ x: '100%', opacity: 0.8 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: '100%', opacity: 0.6 }}
-            transition={{ duration: 0.28, ease: [0.32, 0.72, 0, 1] }}
-            className="fixed right-0 top-0 bottom-0 z-[81] flex w-full max-w-md flex-col overflow-hidden"
-            style={{
-              background: 'var(--popover)',
-              borderLeft: '1px solid var(--border)',
-              boxShadow: '-8px 0 40px rgba(0,0,0,0.2)',
-            }}
-          >
+    <BodyPortal>
+      <AnimatePresence>
+        {open && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="fixed inset-0 z-[100]"
+              style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)' }}
+              onClick={onClose}
+            />
+            <motion.aside
+              initial={{ x: '100%', opacity: 0.8 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: '100%', opacity: 0.6 }}
+              transition={{ duration: 0.28, ease: [0.32, 0.72, 0, 1] }}
+              className="fixed right-0 top-0 z-[101] flex h-[100dvh] max-h-[100dvh] min-h-0 w-full max-w-md flex-col overflow-hidden"
+              style={{
+                background: 'var(--popover)',
+                borderLeft: '1px solid var(--border)',
+                boxShadow: '-8px 0 40px rgba(0,0,0,0.2)',
+              }}
+            >
             {/* Header */}
             <div
               className="flex items-start gap-3 px-5 pt-5 pb-4"
@@ -73,13 +84,15 @@ export function DetailDrawer({ open, onClose, title, subtitle, icon, children, f
               </button>
             </div>
 
-            {/* Body */}
-            <div className="flex-1 overflow-y-auto px-5 py-4">{children}</div>
+            {/* Body — min-h-0 so flex child can scroll */}
+            <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain px-5 py-4 [-webkit-overflow-scrolling:touch]">
+              {children}
+            </div>
 
             {/* Footer */}
             {footer && (
               <div
-                className="flex items-center gap-2 px-5 py-3"
+                className="flex flex-shrink-0 items-center gap-2 px-5 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3"
                 style={{ borderTop: '1px solid var(--border)' }}
               >
                 {footer}
@@ -89,6 +102,7 @@ export function DetailDrawer({ open, onClose, title, subtitle, icon, children, f
         </>
       )}
     </AnimatePresence>
+    </BodyPortal>
   );
 }
 

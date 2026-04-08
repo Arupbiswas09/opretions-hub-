@@ -1,225 +1,235 @@
-import React, { useState } from 'react';
-import { X } from 'lucide-react';
-import { BonsaiButton } from '../bonsai/BonsaiButton';
-import { BonsaiInput, BonsaiSelect } from '../bonsai/BonsaiFormFields';
+'use client';
+
+import React, { useCallback, useEffect, useState } from 'react';
+import { Check } from 'lucide-react';
+import { SlideDrawer, FormField, GlassInput, GlassTextarea, GlassSelect } from '../ui/Overlays';
+
+const DEAL_STAGES = [
+  { v: 'lead', l: 'Lead' },
+  { v: 'qualified', l: 'Qualified' },
+  { v: 'proposal_sent', l: 'Proposal sent' },
+  { v: 'negotiation', l: 'Negotiation' },
+  { v: 'won', l: 'Won' },
+  { v: 'lost', l: 'Lost' },
+];
+
+type QuickOpts = {
+  clients: { id: string; name: string }[];
+  profiles: { id: string; display_name: string }[];
+};
+
+function useQuickOptions(open: boolean) {
+  const [data, setData] = useState<QuickOpts | null>(null);
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    fetch('/api/hub/quick-options', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((j) => {
+        if (!cancelled)
+          setData({
+            clients: Array.isArray(j.clients) ? j.clients : [],
+            profiles: Array.isArray(j.profiles) ? j.profiles : [],
+          });
+      })
+      .catch(() => {
+        if (!cancelled) setData({ clients: [], profiles: [] });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open]);
+  return data;
+}
 
 interface SA05DealDrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (deal: any) => void;
-  initialDeal?: any;
+  onSave: (deal: Record<string, unknown>) => void | Promise<void>;
+  initialDeal?: unknown;
 }
 
 export function SA05DealDrawer({ isOpen, onClose, onSave, initialDeal }: SA05DealDrawerProps) {
-  const [formData, setFormData] = useState(initialDeal || {
-    name: '',
-    client: '',
-    type: 'Project',
-    value: '',
-    stage: 'New Lead',
-    owner: 'John Doe',
-    expectedClose: '',
-    probability: '50',
-    description: '',
-  });
+  const opts = useQuickOptions(isOpen);
+  const [title, setTitle] = useState('');
+  const [clientId, setClientId] = useState('');
+  const [value, setValue] = useState('');
+  const [stage, setStage] = useState('lead');
+  const [closeDate, setCloseDate] = useState('');
+  const [probability, setProbability] = useState('');
+  const [ownerId, setOwnerId] = useState('');
+  const [description, setDescription] = useState('');
+  const [loadingDeal, setLoadingDeal] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSave(formData);
-    onClose();
-  };
+  const editId =
+    initialDeal && typeof initialDeal === 'object' && initialDeal !== null && 'id' in initialDeal
+      ? String((initialDeal as { id: unknown }).id)
+      : '';
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (!isOpen) return;
+    if (!editId) {
+      setTitle('');
+      setClientId('');
+      setValue('');
+      setStage('lead');
+      setCloseDate('');
+      setProbability('');
+      setOwnerId('');
+      setDescription('');
+      return;
+    }
+    let cancelled = false;
+    setLoadingDeal(true);
+    fetch(`/api/deals/${editId}`, { credentials: 'include' })
+      .then((r) => r.json())
+      .then((j) => {
+        if (cancelled || !j?.data) return;
+        const d = j.data as Record<string, unknown>;
+        setTitle(String(d.title ?? ''));
+        setClientId(typeof d.client_id === 'string' ? d.client_id : '');
+        setValue(d.value != null && d.value !== '' ? String(d.value) : '');
+        setStage(String(d.stage ?? 'lead'));
+        const cd = d.close_date;
+        setCloseDate(typeof cd === 'string' && cd ? cd.slice(0, 10) : '');
+        setProbability(d.probability != null && d.probability !== '' ? String(d.probability) : '');
+        setOwnerId(typeof d.owner_id === 'string' ? d.owner_id : '');
+        setDescription(d.description != null ? String(d.description) : '');
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setLoadingDeal(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, editId]);
+
+  const submit = useCallback(async () => {
+    if (!title.trim()) return;
+    setSaving(true);
+    try {
+      await Promise.resolve(
+        onSave({
+          name: title.trim(),
+          title: title.trim(),
+          client_id: clientId || null,
+          clientId: clientId || null,
+          value,
+          stage,
+          close_date: closeDate || null,
+          closeDate: closeDate || null,
+          probability: probability.trim() ? Number(probability) : null,
+          owner_id: ownerId || null,
+          ownerId: ownerId || null,
+          description: description.trim() || null,
+        }),
+      );
+    } finally {
+      setSaving(false);
+    }
+  }, [title, clientId, value, stage, closeDate, probability, ownerId, description, onSave]);
 
   return (
-    <>
-      {/* Overlay */}
-      <div 
-        className="fixed inset-0 z-40 hub-overlay-backdrop"
-        onClick={onClose}
-      />
-      
-      {/* Drawer */}
-      <div 
-        className="fixed right-0 top-0 bottom-0 w-full max-w-2xl shadow-2xl z-50 overflow-y-auto"
-        style={{ background: 'var(--background-2)' }}
-      >
-        {/* Header */}
-        <div 
-          className="sticky top-0 px-6 py-4 flex items-center justify-between"
-          style={{ 
-            background: 'var(--background-2)',
-            borderBottom: '1px solid var(--border)' 
-          }}
-        >
-          <div>
-            <h2 className="text-xl font-semibold" style={{ color: 'var(--foreground)' }}>
-              {initialDeal ? 'Edit Deal' : 'Create New Deal'}
-            </h2>
-            <p className="text-sm" style={{ color: 'var(--muted-foreground)' }}>Fill in the details below</p>
-          </div>
+    <SlideDrawer
+      open={isOpen}
+      onClose={onClose}
+      wide
+      title={editId ? 'Edit deal' : 'Create new deal'}
+      subtitle="Values map to your pipeline and KPIs"
+      footer={
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
           <button
+            type="button"
             onClick={onClose}
-            className="p-2 rounded-lg transition-colors"
-            style={{ 
-              color: 'var(--muted-foreground)',
-              background: 'transparent'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.background = 'var(--muted)'}
-            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+            disabled={saving || loadingDeal}
+            className="rounded-lg border px-4 py-2 text-[13px] font-medium transition-colors disabled:opacity-50"
+            style={{ background: 'var(--glass-bg)', color: 'var(--foreground)', borderColor: 'var(--border)' }}
           >
-            <X className="w-5 h-5" />
+            Cancel
+          </button>
+          <button
+            type="button"
+            disabled={saving || loadingDeal || !title.trim()}
+            onClick={() => void submit()}
+            className="flex items-center justify-center gap-2 rounded-lg px-5 py-2 text-[13px] font-medium text-white transition-all disabled:opacity-50"
+            style={{ background: '#2563EB' }}
+          >
+            <Check className="h-3.5 w-3.5" />
+            {saving ? 'Saving…' : editId ? 'Save changes' : 'Create deal'}
           </button>
         </div>
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* Deal Information */}
-          <div>
-            <h3 className="font-semibold mb-4" style={{ color: 'var(--foreground)' }}>Deal Information</h3>
-            <div className="space-y-4">
-              <BonsaiInput
-                label="Deal Name"
-                required
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="e.g., Website Redesign Project"
-              />
-
-              <BonsaiInput
-                label="Client"
-                required
-                value={formData.client}
-                onChange={(e) => setFormData({ ...formData, client: e.target.value })}
-                placeholder="e.g., Acme Corp"
-              />
-
-              <div className="grid grid-cols-2 gap-4">
-                <BonsaiSelect
-                  label="Deal Type *"
-                  value={formData.type}
-                  onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                  options={[
-                    { value: 'Project', label: 'Project Deal' },
-                    { value: 'Talent', label: 'Talent Deal' }
-                  ]}
-                  required
-                />
-
-                <BonsaiInput
-                  label="Deal Value"
-                  required
-                  value={formData.value}
-                  onChange={(e) => setFormData({ ...formData, value: e.target.value })}
-                  placeholder="$45,000"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Sales Information */}
-          <div>
-            <h3 className="font-semibold mb-4" style={{ color: 'var(--foreground)' }}>Sales Information</h3>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <BonsaiSelect
-                  label="Stage *"
-                  value={formData.stage}
-                  onChange={(e) => setFormData({ ...formData, stage: e.target.value })}
-                  options={
-                    formData.type === 'Project' ? [
-                      { value: 'New Lead', label: 'New Lead' },
-                      { value: 'Qualified', label: 'Qualified' },
-                      { value: 'Discovery Scheduled', label: 'Discovery Scheduled' },
-                      { value: 'Proposal Sent', label: 'Proposal Sent' },
-                      { value: 'Negotiation', label: 'Negotiation' },
-                    ] : [
-                      { value: 'New Request', label: 'New Request' },
-                      { value: 'Qualified', label: 'Qualified' },
-                      { value: 'Profiles Shared', label: 'Profiles Shared' },
-                      { value: 'Interviewing', label: 'Interviewing' },
-                      { value: 'Placement', label: 'Placement' },
-                    ]
-                  }
-                  required
-                />
-
-                <BonsaiSelect
-                  label="Owner *"
-                  value={formData.owner}
-                  onChange={(e) => setFormData({ ...formData, owner: e.target.value })}
-                  options={[
-                    { value: 'John Doe', label: 'John Doe' },
-                    { value: 'Jane Smith', label: 'Jane Smith' },
-                    { value: 'Mike Johnson', label: 'Mike Johnson' },
-                    { value: 'Sarah Lee', label: 'Sarah Lee' },
-                  ]}
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <BonsaiInput
-                  label="Expected Close Date"
-                  type="date"
-                  value={formData.expectedClose}
-                  onChange={(e) => setFormData({ ...formData, expectedClose: e.target.value })}
-                />
-
-                <div>
-                  <label className="block text-[13px] font-medium mb-2" style={{ color: 'var(--foreground)' }}>
-                    Probability
-                  </label>
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      step="5"
-                      value={formData.probability}
-                      onChange={(e) => setFormData({ ...formData, probability: e.target.value })}
-                      className="flex-1"
-                    />
-                    <span className="text-[13px] font-medium w-12" style={{ color: 'var(--foreground)' }}>{formData.probability}%</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Description */}
-          <div>
-            <label className="block text-[13px] font-medium mb-2" style={{ color: 'var(--foreground)' }}>
-              Description
-            </label>
-            <textarea
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              rows={4}
-              className="w-full px-3.5 py-2.5 text-[13px] rounded-xl resize-none"
-              style={{
-                background: 'var(--input-background)',
-                border: '1px solid var(--border-strong)',
-                color: 'var(--foreground)',
-              }}
-              placeholder="Brief description of the opportunity..."
+      }
+    >
+      {loadingDeal ? (
+        <p className="text-sm" style={{ color: 'var(--muted-foreground)' }}>
+          Loading deal…
+        </p>
+      ) : (
+        <>
+          <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--muted-foreground)' }}>
+            Deal details
+          </h3>
+          <FormField label="Deal name" required>
+            <GlassInput
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g. Website redesign"
             />
+          </FormField>
+          <FormField label="Client">
+            <GlassSelect value={clientId} onChange={(e) => setClientId(e.target.value)}>
+              <option value="">Select client…</option>
+              {(opts?.clients ?? []).map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </GlassSelect>
+          </FormField>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <FormField label="Deal value">
+              <GlassInput value={value} onChange={(e) => setValue(e.target.value)} placeholder="25000" />
+            </FormField>
+            <FormField label="Stage">
+              <GlassSelect value={stage} onChange={(e) => setStage(e.target.value)}>
+                {DEAL_STAGES.map((s) => (
+                  <option key={s.v} value={s.v}>
+                    {s.l}
+                  </option>
+                ))}
+              </GlassSelect>
+            </FormField>
           </div>
-
-          {/* Actions */}
-          <div 
-            className="flex items-center justify-end gap-3 pt-4"
-            style={{ borderTop: '1px solid var(--border)' }}
-          >
-            <BonsaiButton variant="ghost" onClick={onClose} type="button">
-              Cancel
-            </BonsaiButton>
-            <BonsaiButton variant="primary" type="submit">
-              {initialDeal ? 'Save Changes' : 'Create Deal'}
-            </BonsaiButton>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <FormField label="Expected close">
+              <GlassInput type="date" value={closeDate} onChange={(e) => setCloseDate(e.target.value)} />
+            </FormField>
+            <FormField label="Win probability %">
+              <GlassInput value={probability} onChange={(e) => setProbability(e.target.value)} placeholder="50" />
+            </FormField>
           </div>
-        </form>
-      </div>
-    </>
+          <FormField label="Owner">
+            <GlassSelect value={ownerId} onChange={(e) => setOwnerId(e.target.value)}>
+              <option value="">Default (me)</option>
+              {(opts?.profiles ?? []).map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.display_name}
+                </option>
+              ))}
+            </GlassSelect>
+          </FormField>
+          <FormField label="Description">
+            <GlassTextarea
+              rows={4}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Context for your team…"
+            />
+          </FormField>
+        </>
+      )}
+    </SlideDrawer>
   );
 }

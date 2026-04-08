@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
+'use client';
+
+import React, { useEffect, useState } from 'react';
 import { X, Calendar } from 'lucide-react';
 import { BonsaiButton } from '../bonsai/BonsaiButton';
 import { BonsaiInput } from '../bonsai/BonsaiFormFields';
+import { BodyPortal } from '../ui/Overlays';
 
 interface PE05LeaveRequestDrawerProps {
   isOpen: boolean;
@@ -24,7 +27,14 @@ export function PE05LeaveRequestDrawer({ isOpen, onClose, onSubmit }: PE05LeaveR
     onClose();
   };
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (!isOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [isOpen]);
 
   const calculateDays = () => {
     if (!formData.startDate || !formData.endDate) return 0;
@@ -35,12 +45,15 @@ export function PE05LeaveRequestDrawer({ isOpen, onClose, onSubmit }: PE05LeaveR
     return diffDays;
   };
 
+  if (!isOpen) return null;
+
   return (
-    <>
-      <div className="fixed inset-0 bg-black/50 z-40" onClick={onClose} />
-      
-      <div className="fixed right-0 top-0 bottom-0 w-full max-w-xl bg-white shadow-2xl z-50 overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-stone-200 px-6 py-4 flex items-center justify-between">
+    <BodyPortal>
+      <>
+        <div className="fixed inset-0 z-[100] bg-black/50" onClick={onClose} aria-hidden />
+
+        <div className="fixed right-0 top-0 z-[101] flex h-[100dvh] max-h-[100dvh] min-h-0 w-full max-w-xl flex-col overflow-hidden bg-white shadow-2xl">
+          <div className="flex flex-shrink-0 items-center justify-between border-b border-stone-200 bg-white px-6 py-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-stone-100 flex items-center justify-center">
               <Calendar className="w-5 h-5 text-stone-600" />
@@ -53,9 +66,10 @@ export function PE05LeaveRequestDrawer({ isOpen, onClose, onSubmit }: PE05LeaveR
           <button onClick={onClose} className="p-2 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-lg">
             <X className="w-5 h-5" />
           </button>
-        </div>
+          </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]">
+            <form onSubmit={handleSubmit} className="space-y-6 p-6">
           {/* Leave Type */}
           <div>
             <label className="block text-sm font-medium text-stone-700 mb-2">Leave Type *</label>
@@ -134,17 +148,19 @@ export function PE05LeaveRequestDrawer({ isOpen, onClose, onSubmit }: PE05LeaveR
             </p>
           </div>
 
-          {/* Actions */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-stone-200">
-            <BonsaiButton variant="ghost" onClick={onClose} type="button">
-              Cancel
-            </BonsaiButton>
-            <BonsaiButton variant="primary" type="submit">
-              Submit Request
-            </BonsaiButton>
+              {/* Actions */}
+              <div className="flex items-center justify-end gap-3 border-t border-stone-200 pt-4">
+                <BonsaiButton variant="ghost" onClick={onClose} type="button">
+                  Cancel
+                </BonsaiButton>
+                <BonsaiButton variant="primary" type="submit">
+                  Submit Request
+                </BonsaiButton>
+              </div>
+            </form>
           </div>
-        </form>
-      </div>
-    </>
+        </div>
+      </>
+    </BodyPortal>
   );
 }

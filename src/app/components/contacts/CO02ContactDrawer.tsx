@@ -1,277 +1,155 @@
-import React, { useState } from 'react';
-import { X } from 'lucide-react';
-import { BonsaiButton } from '../bonsai/BonsaiButton';
-import { BonsaiInput, BonsaiSelect } from '../bonsai/BonsaiFormFields';
+'use client';
+
+import React, { useEffect, useState, useCallback } from 'react';
+import { Check } from 'lucide-react';
+import { SlideDrawer, FormField, GlassInput, GlassTextarea } from '../ui/Overlays';
 
 interface CO02ContactDrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (contact: any) => void;
-  initialContact?: any;
+  onSave: (contact: Record<string, unknown>) => void;
+  initialContact?: unknown;
+}
+
+function parseName(name: string): { first: string; last: string } {
+  const p = name.trim().split(/\s+/);
+  if (p.length === 0) return { first: '', last: '' };
+  if (p.length === 1) return { first: p[0], last: '' };
+  return { first: p[0], last: p.slice(1).join(' ') };
 }
 
 export function CO02ContactDrawer({ isOpen, onClose, onSave, initialContact }: CO02ContactDrawerProps) {
-  const [formData, setFormData] = useState(initialContact || {
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    company: '',
-    jobTitle: '',
-    type: 'Lead',
-    source: 'Website',
-    linkedClient: '',
-    consent: 'Pending',
-    consentDate: '',
-    tags: '',
-    notes: '',
-    // GDPR fields
-    dataProcessingBasis: 'Consent',
-    marketingOptIn: false,
-    thirdPartySharing: false,
-  });
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [company, setCompany] = useState('');
+  const [tags, setTags] = useState('');
+  const [notes, setNotes] = useState('');
+  const [saving, setSaving] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSave(formData);
-    onClose();
-  };
+  useEffect(() => {
+    if (!isOpen) return;
+    if (!initialContact) {
+      setFirstName('');
+      setLastName('');
+      setEmail('');
+      setPhone('');
+      setCompany('');
+      setTags('');
+      setNotes('');
+      return;
+    }
+    const ic = initialContact as Record<string, unknown>;
+    if (ic.first_name != null || ic.last_name != null) {
+      setFirstName(String(ic.first_name ?? ''));
+      setLastName(String(ic.last_name ?? ''));
+    } else if (ic.name != null) {
+      const { first, last } = parseName(String(ic.name));
+      setFirstName(first);
+      setLastName(last);
+    } else {
+      setFirstName('');
+      setLastName('');
+    }
+    setEmail(String(ic.email ?? ''));
+    setPhone(String(ic.phone ?? ''));
+    setCompany(String(ic.company ?? ''));
+    setTags(Array.isArray(ic.tags) ? (ic.tags as string[]).join(', ') : String(ic.tags ?? ''));
+    setNotes(String(ic.notes ?? ''));
+  }, [isOpen, initialContact]);
 
-  if (!isOpen) return null;
+  const submit = useCallback(async () => {
+    if (!firstName.trim() || !lastName.trim() || !email.trim()) return;
+    setSaving(true);
+    try {
+      await Promise.resolve(
+        onSave({
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+          email: email.trim(),
+          phone: phone.trim(),
+          company: company.trim(),
+          tags,
+          notes: notes.trim(),
+        }),
+      );
+    } finally {
+      setSaving(false);
+    }
+  }, [firstName, lastName, email, phone, company, tags, notes, onSave]);
 
   return (
-    <>
-      {/* Overlay */}
-      <div 
-        className="fixed inset-0 z-40 hub-overlay-backdrop"
-        onClick={onClose}
-      />
-      
-      {/* Drawer */}
-      <div className="fixed right-0 top-0 bottom-0 w-full max-w-2xl shadow-2xl z-50 overflow-y-auto"
-        style={{ background: 'var(--background-2)' }}>
-        {/* Header */}
-        <div className="sticky top-0 px-6 py-4 flex items-center justify-between"
-          style={{ background: 'var(--background-2)', borderBottom: '1px solid var(--border)' }}>
-          <div>
-            <h2 className="text-xl font-semibold" style={{ color: 'var(--foreground)' }}>
-              {initialContact ? 'Edit Contact' : 'Create New Contact'}
-            </h2>
-            <p className="text-sm" style={{ color: 'var(--muted-foreground)' }}>Fill in contact details</p>
-          </div>
+    <SlideDrawer
+      open={isOpen}
+      onClose={onClose}
+      wide
+      title={initialContact ? 'Edit contact' : 'Create contact'}
+      subtitle="Details synced to your workspace and search index"
+      footer={
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <button
+            type="button"
             onClick={onClose}
-            className="p-2 rounded-lg transition-colors"
-            style={{ color: 'var(--muted-foreground)' }}
-            onMouseEnter={(e) => e.currentTarget.style.background = 'var(--muted)'}
-            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+            disabled={saving}
+            className="rounded-lg border px-4 py-2 text-[13px] font-medium transition-colors disabled:opacity-50"
+            style={{ background: 'var(--glass-bg)', color: 'var(--foreground)', borderColor: 'var(--border)' }}
           >
-            <X className="w-5 h-5" />
+            Cancel
+          </button>
+          <button
+            type="button"
+            disabled={saving}
+            onClick={() => void submit()}
+            className="flex items-center justify-center gap-2 rounded-lg px-5 py-2 text-[13px] font-medium text-white transition-all disabled:opacity-50"
+            style={{ background: '#2563EB' }}
+          >
+            <Check className="h-3.5 w-3.5" />
+            {saving ? 'Saving…' : initialContact ? 'Save changes' : 'Create contact'}
           </button>
         </div>
+      }
+    >
+      <p className="mb-5 text-[12px] leading-relaxed" style={{ color: 'var(--muted-foreground)' }}>
+        Only fields below are stored. Tags and notes help your team and search.
+      </p>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* Basic Information */}
-          <div>
-            <h3 className="font-semibold text-foreground mb-4">Basic Information</h3>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <BonsaiInput
-                  label="First Name"
-                  required
-                  value={formData.firstName}
-                  onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                  placeholder="John"
-                />
-                <BonsaiInput
-                  label="Last Name"
-                  required
-                  value={formData.lastName}
-                  onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                  placeholder="Doe"
-                />
-              </div>
-
-              <BonsaiInput
-                label="Email"
-                type="email"
-                required
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="john.doe@example.com"
-              />
-
-              <BonsaiInput
-                label="Phone"
-                type="tel"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                placeholder="(555) 123-4567"
-              />
-
-              <div className="grid grid-cols-2 gap-4">
-                <BonsaiInput
-                  label="Company"
-                  value={formData.company}
-                  onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                  placeholder="Acme Corp"
-                />
-                <BonsaiInput
-                  label="Job Title"
-                  value={formData.jobTitle}
-                  onChange={(e) => setFormData({ ...formData, jobTitle: e.target.value })}
-                  placeholder="Marketing Director"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Contact Classification */}
-          <div>
-            <h3 className="font-semibold text-foreground mb-4">Classification</h3>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <BonsaiSelect
-                  label="Contact Type *"
-                  value={formData.type}
-                  onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                  options={[
-                    { value: 'Lead', label: 'Lead' },
-                    { value: 'Client', label: 'Client' },
-                    { value: 'Candidate', label: 'Candidate' },
-                    { value: 'Partner', label: 'Partner' },
-                    { value: 'Vendor', label: 'Vendor' },
-                  ]}
-                  required
-                />
-
-                <BonsaiSelect
-                  label="Source *"
-                  value={formData.source}
-                  onChange={(e) => setFormData({ ...formData, source: e.target.value })}
-                  options={[
-                    { value: 'Website', label: 'Website' },
-                    { value: 'Referral', label: 'Referral' },
-                    { value: 'LinkedIn', label: 'LinkedIn' },
-                    { value: 'Event', label: 'Event' },
-                    { value: 'Cold Outreach', label: 'Cold Outreach' },
-                    { value: 'Other', label: 'Other' },
-                  ]}
-                  required
-                />
-              </div>
-            </div>
-
-            <BonsaiInput
-              label="Linked Client (optional)"
-              value={formData.linkedClient}
-              onChange={(e) => setFormData({ ...formData, linkedClient: e.target.value })}
-              placeholder="Select or type client name"
-            />
-
-            <BonsaiInput
-              label="Tags (comma-separated)"
-              value={formData.tags}
-              onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-              placeholder="VIP, Decision Maker, Qualified"
-            />
-          </div>
-
-          {/* GDPR & Consent */}
-          <div>
-            <h3 className="font-semibold text-foreground mb-4">GDPR & Consent</h3>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <BonsaiSelect
-                  label="Consent Status *"
-                  value={formData.consent}
-                  onChange={(e) => setFormData({ ...formData, consent: e.target.value })}
-                  options={[
-                    { value: 'Given', label: 'Given' },
-                    { value: 'Pending', label: 'Pending' },
-                    { value: 'Withdrawn', label: 'Withdrawn' },
-                  ]}
-                  required
-                />
-              </div>
-
-              <BonsaiInput
-                label="Consent Date"
-                type="date"
-                value={formData.consentDate}
-                onChange={(e) => setFormData({ ...formData, consentDate: e.target.value })}
-              />
-
-              <BonsaiSelect
-                label="Data Processing Basis *"
-                value={formData.dataProcessingBasis}
-                onChange={(e) => setFormData({ ...formData, dataProcessingBasis: e.target.value })}
-                options={[
-                  { value: 'Consent', label: 'Consent' },
-                  { value: 'Contract', label: 'Contract' },
-                  { value: 'Legal Obligation', label: 'Legal Obligation' },
-                  { value: 'Legitimate Interest', label: 'Legitimate Interest' },
-                ]}
-                required
-              />
-
-              <div className="space-y-2">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.marketingOptIn}
-                    onChange={(e) => setFormData({ ...formData, marketingOptIn: e.target.checked })}
-                    className="w-4 h-4 rounded border-border text-primary focus:ring-2 focus:ring-ring/30"
-                  />
-                  <span className="text-sm text-foreground">Marketing opt-in</span>
-                </label>
-
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.thirdPartySharing}
-                    onChange={(e) => setFormData({ ...formData, thirdPartySharing: e.target.checked })}
-                    className="w-4 h-4 rounded border-border text-primary focus:ring-2 focus:ring-ring/30"
-                  />
-                  <span className="text-sm text-foreground">Third-party data sharing consent</span>
-                </label>
-              </div>
-
-              <div className="p-3 rounded-lg bg-muted/60 border border-border">
-                <p className="text-xs text-muted-foreground">
-                  <strong>GDPR Notice:</strong> Ensure you have a lawful basis for processing this contact's data. 
-                  Document the consent and keep records of when and how consent was obtained.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Notes */}
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              Notes
-            </label>
-            <textarea
-              value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              rows={4}
-              className="hub-field px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground resize-none"
-              placeholder="Additional information about this contact..."
-            />
-          </div>
-
-          {/* Actions */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
-            <BonsaiButton variant="ghost" onClick={onClose} type="button">
-              Cancel
-            </BonsaiButton>
-            <BonsaiButton variant="primary" type="submit">
-              {initialContact ? 'Save Changes' : 'Create Contact'}
-            </BonsaiButton>
-          </div>
-        </form>
+      <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--muted-foreground)' }}>
+        Name & reachability
+      </h3>
+      <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <FormField label="First name" required>
+          <GlassInput value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="Jane" autoComplete="given-name" />
+        </FormField>
+        <FormField label="Last name" required>
+          <GlassInput value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Doe" autoComplete="family-name" />
+        </FormField>
       </div>
-    </>
+      <FormField label="Email" required>
+        <GlassInput
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="jane@company.com"
+          autoComplete="email"
+        />
+      </FormField>
+      <FormField label="Phone">
+        <GlassInput type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+1 …" autoComplete="tel" />
+      </FormField>
+      <FormField label="Company">
+        <GlassInput value={company} onChange={(e) => setCompany(e.target.value)} placeholder="Organization name" />
+      </FormField>
+
+      <h3 className="mb-3 mt-6 text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--muted-foreground)' }}>
+        Organization
+      </h3>
+      <FormField label="Tags">
+        <GlassInput value={tags} onChange={(e) => setTags(e.target.value)} placeholder="VIP, decision maker (comma-separated)" />
+      </FormField>
+      <FormField label="Notes">
+        <GlassTextarea rows={4} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Context for your team…" />
+      </FormField>
+    </SlideDrawer>
   );
 }

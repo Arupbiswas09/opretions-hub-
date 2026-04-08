@@ -1,326 +1,164 @@
-import React, { useState } from 'react';
-import { X } from 'lucide-react';
-import { BonsaiButton } from '../bonsai/BonsaiButton';
-import { BonsaiInput, BonsaiSelect } from '../bonsai/BonsaiFormFields';
+'use client';
+
+import React, { useEffect, useState, useCallback } from 'react';
+import { Check } from 'lucide-react';
+import { SlideDrawer, FormField, GlassInput } from '../ui/Overlays';
+import { cn } from '../ui/utils';
 
 interface PE02PersonDrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (person: any) => void;
-  initialPerson?: any;
+  onSave: (person: Record<string, unknown>) => void | Promise<void>;
+  initialPerson?: unknown;
 }
 
+type PersonType = 'Employee' | 'Freelancer';
+
 export function PE02PersonDrawer({ isOpen, onClose, onSave, initialPerson }: PE02PersonDrawerProps) {
-  const [formData, setFormData] = useState(initialPerson || {
-    type: 'Employee',
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    role: '',
-    department: '',
-    status: 'Active',
-    startDate: '',
-    endDate: '',
-    // Employee specific
-    employeeId: '',
-    manager: '',
-    salary: '',
-    // Freelancer specific
-    hourlyRate: '',
-    company: '',
-    // Common
-    skills: '',
-    availability: 'Available',
-    location: '',
-    timezone: 'PST',
-  });
+  const [type, setType] = useState<PersonType>('Employee');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [role, setRole] = useState('');
+  const [department, setDepartment] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [saving, setSaving] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSave(formData);
-    onClose();
-  };
+  useEffect(() => {
+    if (!isOpen) return;
+    if (!initialPerson) {
+      setType('Employee');
+      setFirstName('');
+      setLastName('');
+      setEmail('');
+      setPhone('');
+      setRole('');
+      setDepartment('');
+      setStartDate('');
+      return;
+    }
+    const p = initialPerson as Record<string, unknown>;
+    const full = String(p.full_name ?? '');
+    const parts = full.trim().split(/\s+/);
+    setFirstName(parts[0] ?? '');
+    setLastName(parts.slice(1).join(' ') ?? '');
+    setEmail(String(p.email ?? ''));
+    setPhone(String(p.phone ?? ''));
+    setRole(String(p.role ?? ''));
+    setDepartment(String(p.department ?? ''));
+    setStartDate(p.start_date ? String(p.start_date).slice(0, 10) : '');
+    const et = String(p.employment_type ?? '').toLowerCase();
+    setType(et.includes('free') ? 'Freelancer' : 'Employee');
+  }, [isOpen, initialPerson]);
 
-  if (!isOpen) return null;
+  const submit = useCallback(async () => {
+    if (!firstName.trim() || !lastName.trim()) return;
+    setSaving(true);
+    try {
+      await onSave({
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        email: email.trim(),
+        phone: phone.trim(),
+        role: role.trim(),
+        department: department.trim(),
+        type,
+        employmentType: type,
+        startDate: startDate || null,
+      });
+    } finally {
+      setSaving(false);
+    }
+  }, [firstName, lastName, email, phone, role, department, type, startDate, onSave]);
 
   return (
-    <>
-      <div className="fixed inset-0 z-40 hub-overlay-backdrop" onClick={onClose} />
-      
-      <div className="fixed right-0 top-0 bottom-0 w-full max-w-2xl shadow-2xl z-50 overflow-y-auto"
-        style={{ background: 'var(--background-2)' }}>
-        <div className="sticky top-0 px-6 py-4 flex items-center justify-between"
-          style={{ background: 'var(--background-2)', borderBottom: '1px solid var(--border)' }}>
-          <div>
-            <h2 className="text-xl font-semibold" style={{ color: 'var(--foreground)' }}>
-              {initialPerson ? 'Edit Person' : 'Add New Person'}
-            </h2>
-            <p className="text-sm" style={{ color: 'var(--muted-foreground)' }}>Employee or freelancer details</p>
-          </div>
+    <SlideDrawer
+      open={isOpen}
+      onClose={onClose}
+      wide
+      title={initialPerson ? 'Edit person' : 'Add person'}
+      subtitle="Directory record — name, role, and org fields stored in hub"
+      footer={
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <button
+            type="button"
             onClick={onClose}
-            className="p-2 rounded-lg transition-colors"
-            style={{ color: 'var(--muted-foreground)' }}
-            onMouseEnter={(e) => e.currentTarget.style.background = 'var(--muted)'}
-            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+            disabled={saving}
+            className="rounded-lg border px-4 py-2 text-[13px] font-medium transition-colors disabled:opacity-50"
+            style={{ background: 'var(--glass-bg)', color: 'var(--foreground)', borderColor: 'var(--border)' }}
           >
-            <X className="w-5 h-5" />
+            Cancel
+          </button>
+          <button
+            type="button"
+            disabled={saving}
+            onClick={() => void submit()}
+            className="flex items-center justify-center gap-2 rounded-lg px-5 py-2 text-[13px] font-medium text-white transition-all disabled:opacity-50"
+            style={{ background: '#2563EB' }}
+          >
+            <Check className="h-3.5 w-3.5" />
+            {saving ? 'Saving…' : initialPerson ? 'Save changes' : 'Add person'}
           </button>
         </div>
+      }
+    >
+      <p className="mb-4 text-[12px] leading-relaxed" style={{ color: 'var(--muted-foreground)' }}>
+        Name, role, department, and how this person works with your org.
+      </p>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* Type Selection */}
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">Type *</label>
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => setFormData({ ...formData, type: 'Employee' })}
-                className={`flex-1 p-4 rounded-lg border-2 transition-all ${
-                  formData.type === 'Employee'
-                    ? 'border-primary bg-primary/5'
-                    : 'border-border hover:border-primary/50'
-                }`}
-              >
-                <p className="font-medium text-foreground">Employee</p>
-                <p className="text-xs text-muted-foreground">Full-time or part-time team member</p>
-              </button>
-              <button
-                type="button"
-                onClick={() => setFormData({ ...formData, type: 'Freelancer' })}
-                className={`flex-1 p-4 rounded-lg border-2 transition-all ${
-                  formData.type === 'Freelancer'
-                    ? 'border-primary bg-primary/5'
-                    : 'border-border hover:border-primary/50'
-                }`}
-              >
-                <p className="font-medium text-foreground">Freelancer</p>
-                <p className="text-xs text-muted-foreground">Contract or project-based</p>
-              </button>
-            </div>
-          </div>
-
-          {/* Basic Information */}
-          <div>
-            <h3 className="font-semibold text-foreground mb-4">Basic information</h3>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <BonsaiInput
-                  label="First Name"
-                  required
-                  value={formData.firstName}
-                  onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                  placeholder="John"
-                />
-                <BonsaiInput
-                  label="Last Name"
-                  required
-                  value={formData.lastName}
-                  onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                  placeholder="Doe"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <BonsaiInput
-                  label="Email"
-                  type="email"
-                  required
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="john.doe@company.com"
-                />
-                <BonsaiInput
-                  label="Phone"
-                  type="tel"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  placeholder="(555) 123-4567"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <BonsaiInput
-                  label="Role"
-                  required
-                  value={formData.role}
-                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                  placeholder="Senior Project Manager"
-                />
-                <BonsaiSelect
-                  label="Department *"
-                  value={formData.department}
-                  onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                  options={[
-                    { value: '', label: 'Select department' },
-                    { value: 'Operations', label: 'Operations' },
-                    { value: 'Design', label: 'Design' },
-                    { value: 'Engineering', label: 'Engineering' },
-                    { value: 'Sales', label: 'Sales' },
-                    { value: 'Marketing', label: 'Marketing' },
-                  ]}
-                  required
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Employment Details */}
-          {formData.type === 'Employee' && (
-            <div>
-              <h3 className="font-semibold text-foreground mb-4">Employment details</h3>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <BonsaiInput
-                    label="Employee ID"
-                    value={formData.employeeId}
-                    onChange={(e) => setFormData({ ...formData, employeeId: e.target.value })}
-                    placeholder="EMP-001"
-                  />
-                  <BonsaiInput
-                    label="Manager"
-                    value={formData.manager}
-                    onChange={(e) => setFormData({ ...formData, manager: e.target.value })}
-                    placeholder="Select manager"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <BonsaiInput
-                    label="Start Date"
-                    type="date"
-                    required
-                    value={formData.startDate}
-                    onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                  />
-                  <BonsaiInput
-                    label="Annual Salary"
-                    type="number"
-                    value={formData.salary}
-                    onChange={(e) => setFormData({ ...formData, salary: e.target.value })}
-                    placeholder="75000"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Freelancer Details */}
-          {formData.type === 'Freelancer' && (
-            <div>
-              <h3 className="font-semibold text-foreground mb-4">Freelancer details</h3>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <BonsaiInput
-                    label="Company (if applicable)"
-                    value={formData.company}
-                    onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                    placeholder="Design Studio LLC"
-                  />
-                  <BonsaiInput
-                    label="Hourly Rate"
-                    type="number"
-                    required
-                    value={formData.hourlyRate}
-                    onChange={(e) => setFormData({ ...formData, hourlyRate: e.target.value })}
-                    placeholder="150"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <BonsaiInput
-                    label="Contract Start"
-                    type="date"
-                    required
-                    value={formData.startDate}
-                    onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                  />
-                  <BonsaiInput
-                    label="Contract End"
-                    type="date"
-                    value={formData.endDate}
-                    onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Skills & Availability */}
-          <div>
-            <h3 className="font-semibold text-foreground mb-4">Skills & availability</h3>
-            <div className="space-y-4">
-              <BonsaiInput
-                label="Skills (comma-separated)"
-                value={formData.skills}
-                onChange={(e) => setFormData({ ...formData, skills: e.target.value })}
-                placeholder="Project Management, Agile, Leadership"
-              />
-
-              <BonsaiSelect
-                label="Availability"
-                value={formData.availability}
-                onChange={(e) => setFormData({ ...formData, availability: e.target.value })}
-                options={[
-                  { value: 'Available', label: 'Available' },
-                  { value: 'Busy', label: 'Busy' },
-                  { value: 'On Leave', label: 'On Leave' },
-                ]}
-              />
-            </div>
-          </div>
-
-          {/* Location */}
-          <div>
-            <h3 className="font-semibold text-foreground mb-4">Location</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <BonsaiInput
-                label="Location"
-                value={formData.location}
-                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                placeholder="San Francisco, CA"
-              />
-              <BonsaiSelect
-                label="Timezone"
-                value={formData.timezone}
-                onChange={(e) => setFormData({ ...formData, timezone: e.target.value })}
-                options={[
-                  { value: 'PST', label: 'PST - Pacific Time' },
-                  { value: 'MST', label: 'MST - Mountain Time' },
-                  { value: 'CST', label: 'CST - Central Time' },
-                  { value: 'EST', label: 'EST - Eastern Time' },
-                  { value: 'GMT', label: 'GMT - Greenwich Mean Time' },
-                ]}
-              />
-            </div>
-          </div>
-
-          {/* Status */}
-          <div>
-            <BonsaiSelect
-              label="Status"
-              value={formData.status}
-              onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-              options={[
-                { value: 'Active', label: 'Active' },
-                { value: 'Inactive', label: 'Inactive' },
-                { value: 'On Leave', label: 'On Leave' },
-              ]}
-            />
-          </div>
-
-          {/* Actions */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
-            <BonsaiButton variant="ghost" onClick={onClose} type="button">
-              Cancel
-            </BonsaiButton>
-            <BonsaiButton variant="primary" type="submit">
-              {initialPerson ? 'Save Changes' : 'Add Person'}
-            </BonsaiButton>
-          </div>
-        </form>
+      <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--muted-foreground)' }}>
+        Type
+      </p>
+      <div className="mb-6 grid grid-cols-2 gap-2">
+        {(['Employee', 'Freelancer'] as const).map((t) => (
+          <button
+            key={t}
+            type="button"
+            onClick={() => setType(t)}
+            className={cn(
+              'rounded-xl border-2 px-3 py-3 text-left transition-all',
+              type === t ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/40',
+            )}
+          >
+            <span className="text-[13px] font-semibold text-foreground">{t}</span>
+            <span className="mt-1 block text-[11px] text-muted-foreground">
+              {t === 'Employee' ? 'Payroll or staff' : 'Contractor / 1099'}
+            </span>
+          </button>
+        ))}
       </div>
-    </>
+
+      <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--muted-foreground)' }}>
+        Profile
+      </h3>
+      <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <FormField label="First name" required>
+          <GlassInput value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="Jane" />
+        </FormField>
+        <FormField label="Last name" required>
+          <GlassInput value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Doe" />
+        </FormField>
+      </div>
+      <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <FormField label="Email">
+          <GlassInput type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="jane@company.com" />
+        </FormField>
+        <FormField label="Phone">
+          <GlassInput type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+1 …" />
+        </FormField>
+      </div>
+      <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <FormField label="Role">
+          <GlassInput value={role} onChange={(e) => setRole(e.target.value)} placeholder="e.g. Project manager" />
+        </FormField>
+        <FormField label="Department">
+          <GlassInput value={department} onChange={(e) => setDepartment(e.target.value)} placeholder="e.g. Engineering" />
+        </FormField>
+      </div>
+      <FormField label="Start date">
+        <GlassInput type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+      </FormField>
+    </SlideDrawer>
   );
 }

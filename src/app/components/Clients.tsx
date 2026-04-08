@@ -51,10 +51,14 @@ export default function Clients() {
         credentials: 'include',
         body: JSON.stringify({
           name: client.name || 'Unnamed Client',
-          billing_address: client.address
-            ? { street: client.address, city: client.city, state: client.state }
-            : undefined,
-          payment_terms: client.paymentTerms || undefined,
+          billing_address:
+            typeof client.billing_address === 'string' && client.billing_address.trim()
+              ? client.billing_address.trim()
+              : client.address
+                ? [client.address, client.city, client.state].filter(Boolean).join(', ')
+                : undefined,
+          payment_terms: client.payment_terms ?? client.paymentTerms ?? undefined,
+          account_manager_id: client.account_manager_id || undefined,
         }),
       });
 
