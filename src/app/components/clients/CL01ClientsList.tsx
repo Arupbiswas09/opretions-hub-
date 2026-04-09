@@ -32,6 +32,8 @@ interface CL01ClientsListProps {
   dataRefreshVersion?: number;
 }
 
+const CLIENT_STATUSES: Client['status'][] = ['Active', 'Onboarding', 'Inactive', 'Archived'];
+
 function mapClientFromApi(r: Record<string, unknown>): Client {
   const name = String(r.name ?? '');
   const initials = name
@@ -42,6 +44,11 @@ function mapClientFromApi(r: Record<string, unknown>): Client {
     .slice(0, 2)
     .toUpperCase() || '?';
   const updated = r.updated_at ? String(r.updated_at).slice(0, 10) : '—';
+  const rawStatus = String(r.status ?? 'Active').trim();
+  const status: Client['status'] = CLIENT_STATUSES.includes(rawStatus as Client['status'])
+    ? (rawStatus as Client['status'])
+    : 'Active';
+  const industry = String(r.industry ?? '').trim() || '—';
   return {
     id: String(r.id),
     name,
@@ -50,8 +57,8 @@ function mapClientFromApi(r: Record<string, unknown>): Client {
     contactEmail: '—',
     emailVerified: false,
     tags: [],
-    status: 'Active',
-    industry: '—',
+    status,
+    industry,
     owner: '—',
     projects: 0,
     revenue: '—',
@@ -130,7 +137,7 @@ export function CL01ClientsList({ onClientClick, onCreateClient, dataRefreshVers
   const [localSearch, setLocalSearch] = useState('');
   const [globalSearch, setGlobalSearch] = useState('');
   const [selected, setSelected] = useState<string[]>([]);
-  const [sortField, setSortField] = useState<SortField | null>(null);
+  const [sortField, setSortField] = useState<SortField>('name');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [showFilterPanel, setShowFilterPanel] = useState(false);
   const [showBulkMenu, setShowBulkMenu] = useState(false);
@@ -199,7 +206,6 @@ export function CL01ClientsList({ onClientClick, onCreateClient, dataRefreshVers
 
   // Sort
   const sorted = [...filtered].sort((a, b) => {
-    if (!sortField) return 0;
     const av = a[sortField] || '';
     const bv = b[sortField] || '';
     const cmp = String(av).localeCompare(String(bv));
@@ -219,6 +225,14 @@ export function CL01ClientsList({ onClientClick, onCreateClient, dataRefreshVers
       setSortField(field);
       setSortDir('asc');
     }
+  };
+
+  const SORT_TOOLBAR_CYCLE: SortField[] = ['name', 'status', 'industry', 'lastActivity'];
+  const handleToolbarSortCycle = () => {
+    const i = SORT_TOOLBAR_CYCLE.indexOf(sortField);
+    const idx = i < 0 ? 0 : (i + 1) % SORT_TOOLBAR_CYCLE.length;
+    setSortField(SORT_TOOLBAR_CYCLE[idx]);
+    setSortDir('asc');
   };
 
   const SortIcon = ({ field }: { field: SortField }) => {
@@ -247,7 +261,7 @@ export function CL01ClientsList({ onClientClick, onCreateClient, dataRefreshVers
     <div>
       {/* ── Compact Toolbar ── */}
       <div
-        className="flex flex-wrap items-center gap-1.5 px-3 py-2 sm:px-5"
+        className="flex flex-wrap items-center gap-1.5 px-2 py-2 sm:px-5"
         style={{ borderBottom: '1px solid var(--border)' }}
       >
         {/* Inline Search (syncs with global) */}
@@ -343,18 +357,23 @@ export function CL01ClientsList({ onClientClick, onCreateClient, dataRefreshVers
           </AnimatePresence>
         </div>
 
-        {/* Sort */}
+        {/* Sort — cycles field; column headers toggle direction on same field */}
         <button
-          onClick={() => handleSort('name')}
-          className="flex items-center gap-1 px-2.5 py-[5px] rounded-lg text-[11px] font-medium"
+          type="button"
+          onClick={handleToolbarSortCycle}
+          title={`Sort: ${sortField} (${sortDir}) — click to change field`}
+          className="flex items-center gap-1 px-2.5 py-[5px] rounded-lg text-[11px] font-medium max-w-[200px] truncate"
           style={{
-            background: sortField ? 'rgba(37,99,235,0.10)' : 'var(--glass-bg)',
-            border: `1px solid ${sortField ? 'rgba(37,99,235,0.25)' : 'var(--border)'}`,
-            color: sortField ? 'var(--primary)' : 'var(--foreground)',
+            background: 'rgba(37,99,235,0.10)',
+            border: '1px solid rgba(37,99,235,0.25)',
+            color: 'var(--primary)',
           }}
         >
-          <SlidersHorizontal className="w-3 h-3" />
-          Sort
+          <SlidersHorizontal className="w-3 h-3 shrink-0" />
+          <span className="truncate">
+            Sort: {sortField === 'lastActivity' ? 'Activity' : sortField}
+            {sortDir === 'asc' ? ' ↑' : ' ↓'}
+          </span>
         </button>
 
         {/* Bulk actions */}
@@ -419,7 +438,7 @@ export function CL01ClientsList({ onClientClick, onCreateClient, dataRefreshVers
       </div>
 
       {/* ── Stats row ── */}
-      <div className="flex items-center gap-3 px-3 py-2 sm:px-5 overflow-x-auto" style={{ borderBottom: '1px solid var(--border)' }}>
+      <div className="flex items-center gap-2 overflow-x-auto px-2 py-2 sm:gap-3 sm:px-5" style={{ borderBottom: '1px solid var(--border)' }}>
         {[
           { label: 'Total', val: clients.length, color: '#2563EB' },
           { label: 'Active', val: clients.filter(c => c.status === 'Active').length, color: '#10B981' },
@@ -487,10 +506,18 @@ export function CL01ClientsList({ onClientClick, onCreateClient, dataRefreshVers
                     borderBottom: '1px solid var(--border)',
                   }}
                 >
-                  <td className="px-2.5 py-2.5" onClick={e => { e.stopPropagation(); toggleOne(client.id); }}>
-                    <input type="checkbox" checked={isSelected} onChange={() => toggleOne(client.id)}
-                      className="w-3.5 h-3.5 rounded accent-[color:var(--primary)]"
-                      style={{ borderColor: 'var(--border-strong)' }} />
+                  <td className="px-2.5 py-2.5" onClick={(e) => e.stopPropagation()}>
+                    {/* toggleOne only in onChange — not on td, or checkbox clicks double-toggle. */}
+                    <label className="flex cursor-pointer items-center justify-center py-0.5">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => toggleOne(client.id)}
+                        onClick={(e) => e.stopPropagation()}
+                        className="relative z-10 w-3.5 h-3.5 cursor-pointer rounded accent-[color:var(--primary)]"
+                        style={{ borderColor: 'var(--border-strong)' }}
+                      />
+                    </label>
                   </td>
                   <td className="px-3 py-2.5">
                     <div className="flex items-center gap-2.5">
@@ -574,7 +601,7 @@ export function CL01ClientsList({ onClientClick, onCreateClient, dataRefreshVers
 
       {/* Results count */}
       {sorted.length > 0 && (
-        <div className="px-3 py-2 sm:px-5 text-[10px] font-medium" style={{ color: 'var(--muted-foreground)', borderTop: '1px solid var(--border)' }}>
+        <div className="px-2 py-2 text-[10px] font-medium sm:px-5" style={{ color: 'var(--muted-foreground)', borderTop: '1px solid var(--border)' }}>
           Showing {sorted.length} of {clients.length} client{clients.length !== 1 ? 's' : ''}
           {search && <span> · Filtered by "{search}"</span>}
         </div>

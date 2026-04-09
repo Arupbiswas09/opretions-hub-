@@ -44,7 +44,7 @@ export function StatCard({
 
   return (
     <motion.div
-      className={`flex flex-col gap-1 px-4 py-5 sm:px-6 sm:py-6 rounded-xl ${className}`}
+      className={`flex flex-col gap-1 rounded-xl px-3 py-4 sm:px-6 sm:py-6 ${className}`}
       style={baseStyles[variant]}
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
@@ -57,7 +57,7 @@ export function StatCard({
           {label}
         </p>
       </div>
-      <p className="text-[32px] font-bold tracking-[-0.03em] leading-none mt-1.5 mb-2"
+      <p className="mt-1.5 mb-2 text-[26px] font-bold leading-none tracking-[-0.03em] lg:text-[32px]"
         style={{ color: 'var(--foreground)' }}>
         {value}
       </p>

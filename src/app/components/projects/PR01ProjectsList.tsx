@@ -147,9 +147,9 @@ export function PR01ProjectsList({ onProjectClick, onCreateProject, dataRefreshV
   };
 
   return (
-    <div className="px-3 py-4 sm:px-5">
+    <div className="px-2 py-3 sm:px-5 sm:py-4">
       {/* ── Stats row ── */}
-      <div className="flex items-center gap-4 mb-4 overflow-x-auto scrollbar-none">
+      <div className="mb-3 flex items-center gap-3 overflow-x-auto scrollbar-none sm:mb-4 sm:gap-4">
         {[
           { label: 'Total', value: stats.total, color: 'var(--foreground)' },
           { label: 'Active', value: stats.active, color: '#2563EB' },
@@ -157,15 +157,16 @@ export function PR01ProjectsList({ onProjectClick, onCreateProject, dataRefreshV
           { label: 'Done', value: stats.completed, color: '#059669' },
         ].map(s => (
           <div key={s.label} className="flex items-center gap-2 shrink-0">
-            <span className="text-[18px] font-bold tabular-nums" style={{ color: s.color }}>{s.value}</span>
+            <span className="text-[16px] font-bold tabular-nums sm:text-[18px]" style={{ color: s.color }}>{s.value}</span>
             <span className="text-[10px] font-medium uppercase tracking-wider" style={{ color: 'var(--muted-foreground)' }}>{s.label}</span>
           </div>
         ))}
       </div>
 
       {/* ── Toolbar ── */}
-      <div className="flex items-center gap-2 mb-3 flex-wrap">
-        <div className="flex items-center gap-1.5 rounded-lg px-2.5 py-[5px] flex-1 min-w-[140px] max-w-[260px]"
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <div
+          className="flex min-h-[36px] w-full min-w-0 basis-full items-center gap-1.5 rounded-lg px-2.5 py-[5px] sm:basis-auto sm:min-w-[160px] sm:max-w-[300px] sm:flex-1"
           style={{ background: 'var(--secondary)', border: '1px solid var(--border)' }}>
           <Search className="w-3 h-3 shrink-0" style={{ color: 'var(--muted-foreground)' }} />
           <input type="text" value={search} onChange={e => setSearch(e.target.value)}
@@ -197,7 +198,7 @@ export function PR01ProjectsList({ onProjectClick, onCreateProject, dataRefreshV
           {sortKey}
         </button>
 
-        <div className="flex-1" />
+        <div className="hidden flex-1 lg:block" />
 
         <div className="flex items-center gap-0.5 rounded-lg p-0.5"
           style={{ background: 'var(--secondary)', border: '1px solid var(--border)' }}>
@@ -214,7 +215,7 @@ export function PR01ProjectsList({ onProjectClick, onCreateProject, dataRefreshV
         </div>
 
         <button onClick={onCreateProject}
-          className="flex items-center gap-1 rounded-lg px-3 py-[5px] text-[11px] font-semibold text-white transition-all hover:opacity-90"
+          className="flex min-h-[36px] w-full items-center justify-center gap-1 rounded-lg px-3 py-[5px] text-[11px] font-semibold text-white transition-all hover:opacity-90 sm:w-auto"
           style={{ background: '#2563EB' }}>
           <Plus className="w-3.5 h-3.5" /> New Project
         </button>

@@ -54,7 +54,7 @@ function GlassPanel({ children, className = '', delay = 0 }: {
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.38, ease: EASE_OUT_EXPO }}
-      className={`rounded-2xl overflow-hidden ${className}`}
+      className={`dashboard-glass-surface rounded-2xl overflow-hidden ${className}`}
       style={{
         background: 'var(--glass-bg)',
         backdropFilter: 'blur(24px) saturate(180%)',
@@ -171,7 +171,7 @@ export function FI01FinanceDashboard({ onNavigateToInvoices, onNavigateToExpense
       >
         <div>
           <p className="eyebrow-label mb-1">Finance</p>
-          <h1 className="text-[28px] font-semibold tracking-[-0.025em]"
+          <h1 className="text-[22px] font-semibold tracking-[-0.025em] sm:text-[26px] lg:text-[28px]"
             style={{ color: 'var(--foreground)' }}>Overview</h1>
         </div>
         <BonsaiButton variant="ghost" size="sm" icon={<Download className="w-4 h-4" />}>
@@ -180,7 +180,7 @@ export function FI01FinanceDashboard({ onNavigateToInvoices, onNavigateToExpense
       </motion.div>
 
       {/* ── KPI Cards ── */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-3 xl:grid-cols-4">
         {KPI_CARDS.map((card, i) => {
           const Icon = card.icon;
           return (
@@ -192,7 +192,7 @@ export function FI01FinanceDashboard({ onNavigateToInvoices, onNavigateToExpense
               whileHover={{ y: -2 }}
               whileTap={{ scale: 0.98 }}
               onClick={card.onClick}
-              className="rounded-2xl p-5 text-left group transition-all glass-stat"
+              className="glass-stat group rounded-2xl p-4 text-left transition-all sm:p-5"
               style={card.urgent ? {
                 background: isDark ? 'rgba(248,113,113,0.08)' : 'rgba(254,242,242,0.65)',
                 border: isDark ? '1px solid rgba(248,113,113,0.20)' : '1px solid rgba(254,202,202,0.60)',

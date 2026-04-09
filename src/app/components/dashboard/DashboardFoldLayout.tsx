@@ -5,11 +5,11 @@ import { cn } from '../ui/utils';
 
 /** Outer shell: tighter vertical rhythm; pair with `hub-page-container` for width cap */
 export const dashboardFoldRootClass =
-  'hub-page-container w-full min-w-0 flex flex-col gap-3 py-3 sm:py-4 lg:gap-4';
+  'hub-page-container w-full min-w-0 flex flex-col gap-2.5 py-2 sm:gap-3 sm:py-4 lg:gap-4';
 
 /** Looser rhythm + more negative space (main home dashboard) */
 export const dashboardFoldRootRelaxedClass =
-  'hub-page-container w-full min-w-0 flex flex-col gap-4 py-4 sm:gap-5 sm:py-6 lg:gap-6';
+  'hub-page-container w-full min-w-0 flex flex-col gap-3 py-3 sm:gap-5 sm:py-6 lg:gap-6';
 
 /**
  * Bounded scroll region so long lists/charts live inside one panel instead of stretching the page.

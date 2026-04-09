@@ -70,7 +70,7 @@ function ChartTooltip({ active, payload, label }: any) {
 function Section({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   return (
     <div
-      className={`rounded-2xl overflow-hidden ${className}`}
+      className={`dashboard-glass-surface rounded-2xl overflow-hidden ${className}`}
       style={{
         background: 'var(--glass-bg)',
         backdropFilter: 'blur(20px) saturate(var(--glass-saturate))',
@@ -319,16 +319,16 @@ export default function Dashboard() {
       </motion.div>
 
       {/* KPI strip — number-first hierarchy, calmer density */}
-      <motion.div variants={item} className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <motion.div variants={item} className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 sm:gap-4">
         {[
           { label: 'Revenue', value: fmt(revenue), icon: <TrendingUp className="h-4 w-4 opacity-45" /> },
           { label: 'Billable', value: `${billableHours}h`, icon: <Clock className="h-4 w-4 opacity-45" /> },
           { label: 'Inbox', value: String(pendingApprovalsCount), icon: <Inbox className="h-4 w-4 opacity-45" /> },
           { label: 'Clients', value: String(kpi?.active_clients ?? 0), icon: <Users className="h-4 w-4 opacity-45" /> },
         ].map((k) => (
-          <div key={k.label} className="min-w-0 rounded-2xl px-4 py-4 sm:px-5 sm:py-5" style={glassKpiStyle}>
+          <div key={k.label} className="dashboard-glass-surface min-w-0 rounded-xl px-3 py-3 lg:rounded-2xl lg:px-5 lg:py-5" style={glassKpiStyle}>
             <div className="flex items-start justify-between gap-2">
-              <p className="text-[22px] font-semibold leading-none tabular-nums sm:text-[24px]" style={{ color: 'var(--foreground)' }}>
+              <p className="text-[18px] font-semibold leading-none tabular-nums sm:text-[24px]" style={{ color: 'var(--foreground)' }}>
                 {k.value}
               </p>
               <span className="shrink-0" style={{ color: 'var(--muted-foreground)' }}>

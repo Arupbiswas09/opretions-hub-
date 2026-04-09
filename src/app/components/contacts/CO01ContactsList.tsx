@@ -243,7 +243,7 @@ export function CO01ContactsList({
   return (
     <div>
       {/* ── Compact Toolbar ── */}
-      <div className="flex flex-wrap items-center gap-1.5 px-3 py-2 sm:px-5" style={{ borderBottom: '1px solid var(--border)' }}>
+      <div className="flex flex-wrap items-center gap-1.5 px-2 py-2 sm:px-5" style={{ borderBottom: '1px solid var(--border)' }}>
         {/* Search */}
         <div className="relative flex min-w-0 flex-1 basis-[180px] sm:max-w-[240px]">
           <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none" style={{ color: 'var(--muted-foreground)' }} />
@@ -394,7 +394,7 @@ export function CO01ContactsList({
       </div>
 
       {/* ── Stats row ── */}
-      <div className="flex items-center gap-3 px-3 py-2 sm:px-5 overflow-x-auto" style={{ borderBottom: '1px solid var(--border)' }}>
+      <div className="flex items-center gap-2 overflow-x-auto px-2 py-2 sm:gap-3 sm:px-5" style={{ borderBottom: '1px solid var(--border)' }}>
         {[
           { label: 'Total', val: contacts.length, color: '#2563EB' },
           { label: 'Consent Given', val: contacts.filter(c => c.consent === 'Given').length, color: '#10B981' },
@@ -448,9 +448,18 @@ export function CO01ContactsList({
                     className="cursor-pointer transition-colors group"
                     style={{ background: isSelected ? 'rgba(37,99,235,0.04)' : 'transparent', borderBottom: '1px solid var(--border)' }}
                   >
-                    <td className="px-2.5 py-2" onClick={e => { e.stopPropagation(); toggleOne(contact.id); }}>
-                      <input type="checkbox" checked={isSelected} onChange={() => toggleOne(contact.id)}
-                        className="w-3.5 h-3.5 rounded accent-[color:var(--primary)]" style={{ borderColor: 'var(--border-strong)' }} />
+                    <td className="px-2.5 py-2" onClick={(e) => e.stopPropagation()}>
+                      {/* toggleOne only in onChange — not on td, or checkbox clicks double-toggle. */}
+                      <label className="flex cursor-pointer items-center justify-center py-0.5">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleOne(contact.id)}
+                          onClick={(e) => e.stopPropagation()}
+                          className="relative z-10 w-3.5 h-3.5 cursor-pointer rounded accent-[color:var(--primary)]"
+                          style={{ borderColor: 'var(--border-strong)' }}
+                        />
+                      </label>
                     </td>
                     <td className="px-3 py-2">
                       <div className="flex items-center gap-2.5">
@@ -620,7 +629,7 @@ export function CO01ContactsList({
 
       {/* Footer count */}
       {sorted.length > 0 && (
-        <div className="px-3 py-2 sm:px-5 text-[10px] font-medium" style={{ color: 'var(--muted-foreground)', borderTop: '1px solid var(--border)' }}>
+        <div className="px-2 py-2 text-[10px] font-medium sm:px-5" style={{ color: 'var(--muted-foreground)', borderTop: '1px solid var(--border)' }}>
           Showing {sorted.length} of {contacts.length} contact{contacts.length !== 1 ? 's' : ''}
           {search && <span> · Filtered by &quot;{search}&quot;</span>}
         </div>

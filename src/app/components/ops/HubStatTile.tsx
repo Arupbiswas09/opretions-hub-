@@ -20,7 +20,10 @@ export function HubStatTile({ label, value, sub, delay = 0, className, ...props 
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay }}
-      className={cn('rounded-xl p-4', className)}
+      className={cn(
+        'hub-stat-tile-mobile rounded-xl p-3 lg:p-4',
+        className,
+      )}
       style={{
         background: 'var(--hub-stat-tile-bg)',
         backdropFilter: 'blur(20px) saturate(180%)',
@@ -34,7 +37,7 @@ export function HubStatTile({ label, value, sub, delay = 0, className, ...props 
         style={{ color: 'var(--foreground-muted)' }}>
         {label}
       </p>
-      <p className="text-[24px] font-bold tracking-[-0.02em] mt-1"
+      <p className="text-xl font-bold tracking-[-0.02em] mt-1 lg:text-[24px]"
         style={{ color: 'var(--foreground)' }}>
         {value}
       </p>

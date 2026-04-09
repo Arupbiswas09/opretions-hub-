@@ -12,18 +12,18 @@ export function TA01Dashboard({ onNavigateToJobs, onNavigateToCandidates }: TA01
   return (
     <div className={dashboardFoldRootClass}>
       <div>
-        <h1 className="text-2xl font-semibold text-foreground">Talent Dashboard</h1>
-        <p className="text-sm text-muted-foreground">Talent-on-Demand staffing overview</p>
+        <h1 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">Talent Dashboard</h1>
+        <p className="text-xs text-muted-foreground sm:text-sm">Talent-on-Demand staffing overview</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 gap-2 sm:gap-3 md:grid-cols-2 lg:grid-cols-4">
         <HubStatTile label="Active jobs" value="12" sub="+3 this month" delay={0} />
         <HubStatTile label="Talent pool" value="284" sub="58 active candidates" delay={0.05} />
         <HubStatTile label="Interviews" value="8" sub="This week" delay={0.1} />
         <HubStatTile label="Placements" value="5" sub="This month" delay={0.15} />
       </div>
 
-      <div className="hub-surface hub-surface-elevated p-6">
+      <div className="hub-surface hub-surface-elevated p-4 sm:p-6">
         <h3 className="font-semibold text-foreground mb-4">Jobs pipeline</h3>
         <div className="flex gap-3 overflow-x-auto pb-2">
           {[
@@ -34,20 +34,20 @@ export function TA01Dashboard({ onNavigateToJobs, onNavigateToCandidates }: TA01
           ].map((item) => (
             <div
               key={item.stage}
-              className="flex-1 min-w-[120px] p-4 rounded-xl border border-border bg-muted/40"
+              className="min-w-[100px] flex-1 rounded-xl border border-border bg-muted/40 p-3 sm:min-w-[120px] sm:p-4"
             >
               <p className="text-xs text-muted-foreground mb-1">{item.stage}</p>
-              <p className="text-2xl font-semibold text-foreground tabular-nums">{item.count}</p>
+              <p className="text-xl font-semibold tabular-nums text-foreground sm:text-2xl">{item.count}</p>
             </div>
           ))}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-2 sm:gap-3 md:grid-cols-2">
         <button
           type="button"
           onClick={onNavigateToJobs}
-          className="hub-surface hub-surface-elevated p-6 hover:bg-[color:var(--row-hover-bg)] transition-colors text-left rounded-xl"
+          className="hub-surface hub-surface-elevated rounded-xl p-4 text-left transition-colors hover:bg-[color:var(--row-hover-bg)] sm:p-6"
         >
           <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
             <Briefcase className="w-6 h-6 text-primary" />
@@ -59,7 +59,7 @@ export function TA01Dashboard({ onNavigateToJobs, onNavigateToCandidates }: TA01
         <button
           type="button"
           onClick={onNavigateToCandidates}
-          className="hub-surface hub-surface-elevated p-6 hover:bg-[color:var(--row-hover-bg)] transition-colors text-left rounded-xl"
+          className="hub-surface hub-surface-elevated rounded-xl p-4 text-left transition-colors hover:bg-[color:var(--row-hover-bg)] sm:p-6"
         >
           <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center mb-4 border border-border">
             <Users className="w-6 h-6 text-muted-foreground" />

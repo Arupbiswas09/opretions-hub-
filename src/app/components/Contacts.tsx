@@ -136,6 +136,13 @@ export default function Contacts() {
 
   return (
     <div className="min-h-full">
+      <p
+        className="px-3 pt-2.5 pb-1 text-[10px] leading-snug sm:px-5"
+        style={{ color: 'var(--muted-foreground)' }}
+      >
+        People at customer companies — separate from internal{' '}
+        <span style={{ color: 'var(--foreground)', fontWeight: 500 }}>Team</span> in the sidebar.
+      </p>
       {/* Breadcrumb-style sub-nav */}
       <div className="flex items-center gap-1 px-3 py-2 sm:px-5 overflow-x-auto" style={{ borderBottom: '1px solid var(--border)' }}>
         <button
@@ -147,7 +154,7 @@ export default function Contacts() {
             border: currentScreen === 'list' ? '1px solid rgba(37,99,235,0.20)' : '1px solid transparent',
           }}
         >
-          All Contacts
+          All CRM contacts
         </button>
         {selectedContact && (
           <>

@@ -41,18 +41,18 @@ export async function POST() {
 
     // ── Step 2: Clients ──
     const clientsData = [
-      { id: 'c0000000-0001-0000-0000-000000000001', org_id: orgId, name: 'Acme Corp', billing_address: { street: '100 Market St', city: 'San Francisco', state: 'CA', zip: '94105', country: 'US' }, payment_terms: 'Net 30' },
-      { id: 'c0000000-0001-0000-0000-000000000002', org_id: orgId, name: 'Tech Startup Inc', billing_address: { street: '55 Broadway', city: 'New York', state: 'NY', zip: '10006', country: 'US' }, payment_terms: 'Net 15' },
-      { id: 'c0000000-0001-0000-0000-000000000003', org_id: orgId, name: 'Local Retail Co', billing_address: { street: '789 Oak Ave', city: 'Austin', state: 'TX', zip: '73301', country: 'US' }, payment_terms: 'Net 30' },
-      { id: 'c0000000-0001-0000-0000-000000000004', org_id: orgId, name: 'Global Finance Ltd', billing_address: { street: '1 Canary Wharf', city: 'London', country: 'UK' }, payment_terms: 'Net 45' },
-      { id: 'c0000000-0001-0000-0000-000000000005', org_id: orgId, name: 'Zenith Healthcare', billing_address: { street: '200 Wellness Blvd', city: 'Chicago', state: 'IL', zip: '60601', country: 'US' }, payment_terms: 'Net 30' },
-      { id: 'c0000000-0001-0000-0000-000000000006', org_id: orgId, name: 'Nordic Design Studio', billing_address: { street: '15 Drottninggatan', city: 'Stockholm', country: 'SE' }, payment_terms: 'Net 30' },
-      { id: 'c0000000-0001-0000-0000-000000000007', org_id: orgId, name: 'Pacific Media Group', billing_address: { street: '88 Sunset Blvd', city: 'Los Angeles', state: 'CA', zip: '90028', country: 'US' }, payment_terms: 'Net 15' },
-      { id: 'c0000000-0001-0000-0000-000000000008', org_id: orgId, name: 'Quantum AI Labs', billing_address: { street: '1600 Amphitheatre Parkway', city: 'Mountain View', state: 'CA', zip: '94043', country: 'US' }, payment_terms: 'Net 30' },
-      { id: 'c0000000-0001-0000-0000-000000000009', org_id: orgId, name: 'Atlas Construction', billing_address: { street: '321 Builder Lane', city: 'Denver', state: 'CO', zip: '80202', country: 'US' }, payment_terms: 'Net 45' },
-      { id: 'c0000000-0001-0000-0000-000000000010', org_id: orgId, name: 'Emerald Education', billing_address: { street: '400 Campus Drive', city: 'Boston', state: 'MA', zip: '02101', country: 'US' }, payment_terms: 'Net 30' },
-      { id: 'c0000000-0001-0000-0000-000000000011', org_id: orgId, name: 'Sapphire Logistics', billing_address: { street: '500 Harbor Way', city: 'Seattle', state: 'WA', zip: '98101', country: 'US' }, payment_terms: 'Net 30' },
-      { id: 'c0000000-0001-0000-0000-000000000012', org_id: orgId, name: 'Crimson Sports Agency', billing_address: { street: '777 Arena Blvd', city: 'Miami', state: 'FL', zip: '33101', country: 'US' }, payment_terms: 'Net 15' },
+      { id: 'c0000000-0001-0000-0000-000000000001', org_id: orgId, name: 'Acme Corp', status: 'Active', industry: 'Technology', billing_address: { street: '100 Market St', city: 'San Francisco', state: 'CA', zip: '94105', country: 'US' }, payment_terms: 'Net 30' },
+      { id: 'c0000000-0001-0000-0000-000000000002', org_id: orgId, name: 'Tech Startup Inc', status: 'Active', industry: 'Technology', billing_address: { street: '55 Broadway', city: 'New York', state: 'NY', zip: '10006', country: 'US' }, payment_terms: 'Net 15' },
+      { id: 'c0000000-0001-0000-0000-000000000003', org_id: orgId, name: 'Local Retail Co', status: 'Active', industry: 'Retail', billing_address: { street: '789 Oak Ave', city: 'Austin', state: 'TX', zip: '73301', country: 'US' }, payment_terms: 'Net 30' },
+      { id: 'c0000000-0001-0000-0000-000000000004', org_id: orgId, name: 'Global Finance Ltd', status: 'Active', industry: 'Finance', billing_address: { street: '1 Canary Wharf', city: 'London', country: 'UK' }, payment_terms: 'Net 45' },
+      { id: 'c0000000-0001-0000-0000-000000000005', org_id: orgId, name: 'Zenith Healthcare', status: 'Active', industry: 'Healthcare', billing_address: { street: '200 Wellness Blvd', city: 'Chicago', state: 'IL', zip: '60601', country: 'US' }, payment_terms: 'Net 30' },
+      { id: 'c0000000-0001-0000-0000-000000000006', org_id: orgId, name: 'Nordic Design Studio', status: 'Active', industry: 'Design', billing_address: { street: '15 Drottninggatan', city: 'Stockholm', country: 'SE' }, payment_terms: 'Net 30' },
+      { id: 'c0000000-0001-0000-0000-000000000007', org_id: orgId, name: 'Pacific Media Group', status: 'Onboarding', industry: 'Media', billing_address: { street: '88 Sunset Blvd', city: 'Los Angeles', state: 'CA', zip: '90028', country: 'US' }, payment_terms: 'Net 15' },
+      { id: 'c0000000-0001-0000-0000-000000000008', org_id: orgId, name: 'Quantum AI Labs', status: 'Active', industry: 'Technology', billing_address: { street: '1600 Amphitheatre Parkway', city: 'Mountain View', state: 'CA', zip: '94043', country: 'US' }, payment_terms: 'Net 30' },
+      { id: 'c0000000-0001-0000-0000-000000000009', org_id: orgId, name: 'Atlas Construction', status: 'Inactive', industry: 'Construction', billing_address: { street: '321 Builder Lane', city: 'Denver', state: 'CO', zip: '80202', country: 'US' }, payment_terms: 'Net 45' },
+      { id: 'c0000000-0001-0000-0000-000000000010', org_id: orgId, name: 'Emerald Education', status: 'Active', industry: 'Education', billing_address: { street: '400 Campus Drive', city: 'Boston', state: 'MA', zip: '02101', country: 'US' }, payment_terms: 'Net 30' },
+      { id: 'c0000000-0001-0000-0000-000000000011', org_id: orgId, name: 'Sapphire Logistics', status: 'Active', industry: 'Logistics', billing_address: { street: '500 Harbor Way', city: 'Seattle', state: 'WA', zip: '98101', country: 'US' }, payment_terms: 'Net 30' },
+      { id: 'c0000000-0001-0000-0000-000000000012', org_id: orgId, name: 'Crimson Sports Agency', status: 'Archived', industry: 'Sports', billing_address: { street: '777 Arena Blvd', city: 'Miami', state: 'FL', zip: '33101', country: 'US' }, payment_terms: 'Net 15' },
     ];
     await db.from('clients').insert(clientsData);
 

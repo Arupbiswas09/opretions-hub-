@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Plus, Search, CheckSquare, AlertCircle, ThumbsUp, Inbox, Clock, Circle, ArrowRight, Tag,
@@ -15,6 +16,7 @@ import { dispatchQuickCreate, dispatchDataInvalidation } from '../../lib/hub-eve
 import { useUserRole } from '../../lib/UserRoleContext';
 import { createSupabaseBrowserClient, isSupabaseBrowserConfigured } from '../../lib/supabase/client';
 import { DetailDrawer, DrawerField, EmptyState } from './DetailDrawer';
+import { SlideDrawer, FormField, GlassInput, GlassTextarea, GlassSelect } from '../ui/Overlays';
 
 type WorkTab = 'tasks' | 'issues' | 'approvals' | 'requests';
 type Priority = 'critical' | 'high' | 'medium' | 'low';
@@ -545,7 +547,7 @@ function IssuesTab({ refreshVersion, canMutate }: { refreshVersion: number; canM
     }
   };
 
-  const openModal = () => {
+  const openIssueDrawer = () => {
     setTitle('');
     setDescription('');
     setItype('bug');
@@ -553,11 +555,6 @@ function IssuesTab({ refreshVersion, canMutate }: { refreshVersion: number; canM
     setIprojectId('');
     setModal(true);
   };
-
-  const formInputCls = 'w-full rounded-xl border px-3 py-2.5 text-[13px] outline-none transition-shadow focus:ring-2 focus:ring-primary/20';
-  const formInputStyle: React.CSSProperties = { background: 'var(--secondary)', borderColor: 'var(--border)', color: 'var(--foreground)' };
-  const formLabelCls = 'block text-[11px] font-semibold mb-1.5';
-  const formLabelStyle: React.CSSProperties = { color: 'var(--foreground)' };
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -574,11 +571,11 @@ function IssuesTab({ refreshVersion, canMutate }: { refreshVersion: number; canM
           ))}
         </div>
         <div className="ml-auto">
-          <BonsaiButton size="sm" type="button" onClick={() => canMutate && openModal()}><Plus className="mr-1 h-3.5 w-3.5" />New issue</BonsaiButton>
+          <BonsaiButton size="sm" type="button" onClick={() => canMutate && openIssueDrawer()}><Plus className="mr-1 h-3.5 w-3.5" />New issue</BonsaiButton>
         </div>
       </div>
       {filtered.length === 0 ? (
-        <EmptyState icon={AlertCircle} title="No issues found" description="Track bugs, feature requests, and improvements across your projects." action={canMutate ? <BonsaiButton size="sm" onClick={openModal}><Plus className="mr-1 h-3.5 w-3.5" />New issue</BonsaiButton> : undefined} />
+        <EmptyState icon={AlertCircle} title="No issues found" description="Track bugs, feature requests, and improvements across your projects." action={canMutate ? <BonsaiButton size="sm" onClick={openIssueDrawer}><Plus className="mr-1 h-3.5 w-3.5" />New issue</BonsaiButton> : undefined} />
       ) : (
       <div className="flex-1 overflow-y-auto">
         {filtered.map((issue) => {
@@ -630,111 +627,81 @@ function IssuesTab({ refreshVersion, canMutate }: { refreshVersion: number; canM
         </>)}
       </DetailDrawer>
 
-      <AnimatePresence>
-        {modal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
-            className="fixed inset-0 z-[90] flex items-center justify-center p-4"
-            style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}
-            onClick={() => setModal(false)}
-            role="presentation"
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.96, y: 12 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.96, y: 8 }}
-              transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-              className="w-full max-w-lg overflow-hidden rounded-2xl border shadow-2xl"
-              style={{
-                background: 'linear-gradient(165deg, color-mix(in srgb, var(--popover) 98%, var(--primary) 2%), var(--popover))',
-                borderColor: 'color-mix(in srgb, var(--border) 85%, var(--primary) 15%)',
-                boxShadow: '0 25px 80px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.04) inset',
-              }}
-              onClick={(e) => e.stopPropagation()}
-              role="dialog"
+      <SlideDrawer
+        open={modal}
+        onClose={() => setModal(false)}
+        wide
+        title="New issue"
+        subtitle="Report a bug, request a feature, or suggest an improvement"
+        footer={
+          <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+            <button
+              type="button"
+              onClick={() => setModal(false)}
+              disabled={submitting}
+              className="rounded-lg border px-4 py-2 text-[13px] font-medium transition-colors disabled:opacity-50"
+              style={{ background: 'var(--glass-bg)', color: 'var(--foreground)', borderColor: 'var(--border)' }}
             >
-              {/* Header */}
-              <div className="flex items-start gap-3 px-5 pt-5 pb-3 border-b" style={{ borderColor: 'var(--border)' }}>
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white shadow-md bg-gradient-to-br from-red-500 to-orange-600">
-                  <AlertCircle className="h-5 w-5" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h3 className="text-[16px] font-semibold tracking-tight" style={{ color: 'var(--foreground)' }}>New issue</h3>
-                  <p className="text-[12px] mt-0.5" style={{ color: 'var(--muted-foreground)' }}>Report a bug, request a feature, or suggest an improvement</p>
-                </div>
-                <button type="button" onClick={() => setModal(false)} className="rounded-lg p-1.5 transition-colors hover:bg-secondary shrink-0" style={{ color: 'var(--muted-foreground)' }}>
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-
-              {/* Body */}
-              <div className="px-5 py-4 space-y-4 max-h-[60vh] overflow-y-auto">
-                <div>
-                  <label className={formLabelCls} style={formLabelStyle}>Title</label>
-                  <input value={title} onChange={(e) => setTitle(e.target.value)} className={formInputCls} style={formInputStyle} placeholder="Brief summary of the issue" />
-                </div>
-                <div>
-                  <label className={formLabelCls} style={formLabelStyle}>Description</label>
-                  <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className={cn(formInputCls, 'resize-none')} style={formInputStyle} placeholder="Detailed description, steps to reproduce, expected behavior…" />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className={formLabelCls} style={formLabelStyle}>Type</label>
-                    <select value={itype} onChange={(e) => setItype(e.target.value as typeof itype)} className={cn(formInputCls, 'cursor-pointer')} style={formInputStyle}>
-                      <option value="bug">Bug</option>
-                      <option value="feature">Feature request</option>
-                      <option value="improvement">Improvement</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className={formLabelCls} style={formLabelStyle}>Priority</label>
-                    <select value={ipriority} onChange={(e) => setIpriority(e.target.value as Priority)} className={cn(formInputCls, 'cursor-pointer')} style={formInputStyle}>
-                      <option value="low">Low</option>
-                      <option value="medium">Medium</option>
-                      <option value="high">High</option>
-                      <option value="critical">Critical</option>
-                    </select>
-                  </div>
-                </div>
-                <div>
-                  <label className={formLabelCls} style={formLabelStyle}>Project (optional)</label>
-                  <select value={iprojectId} onChange={(e) => setIprojectId(e.target.value)} className={cn(formInputCls, 'cursor-pointer')} style={formInputStyle}>
-                    <option value="">— no project —</option>
-                    {projects.map((p) => (
-                      <option key={p.id} value={p.id}>{p.name}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Footer */}
-              <div className="flex items-center justify-end gap-2 px-5 py-4 border-t" style={{ borderColor: 'var(--border)' }}>
-                <button type="button" onClick={() => setModal(false)} className="px-4 py-2 rounded-xl text-[13px] font-medium transition-colors hover:bg-secondary" style={{ color: 'var(--muted-foreground)' }}>
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  disabled={submitting || !title.trim()}
-                  onClick={() => void submitIssue()}
-                  className="px-4 py-2 rounded-xl text-[13px] font-semibold text-white disabled:opacity-50 transition-opacity"
-                  style={{ background: '#2563EB' }}
-                >
-                  {submitting ? 'Saving…' : 'Create issue'}
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={submitting || !title.trim()}
+              onClick={() => void submitIssue()}
+              className="rounded-lg px-5 py-2 text-[13px] font-semibold text-white transition-opacity disabled:opacity-50"
+              style={{ background: '#2563EB' }}
+            >
+              {submitting ? 'Saving…' : 'Create issue'}
+            </button>
+          </div>
+        }
+      >
+        <FormField label="Title" required>
+          <GlassInput value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Brief summary of the issue" />
+        </FormField>
+        <FormField label="Description">
+          <GlassTextarea
+            rows={4}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Steps to reproduce, expected behavior…"
+          />
+        </FormField>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <FormField label="Type">
+            <GlassSelect value={itype} onChange={(e) => setItype(e.target.value as typeof itype)}>
+              <option value="bug">Bug</option>
+              <option value="feature">Feature request</option>
+              <option value="improvement">Improvement</option>
+            </GlassSelect>
+          </FormField>
+          <FormField label="Priority">
+            <GlassSelect value={ipriority} onChange={(e) => setIpriority(e.target.value as Priority)}>
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+              <option value="critical">Critical</option>
+            </GlassSelect>
+          </FormField>
+        </div>
+        <FormField label="Project (optional)">
+          <GlassSelect value={iprojectId} onChange={(e) => setIprojectId(e.target.value)}>
+            <option value="">No project</option>
+            {projects.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </GlassSelect>
+        </FormField>
+      </SlideDrawer>
     </div>
   );
 }
 
 function ApprovalsTab({ refreshVersion, canMutate }: { refreshVersion: number; canMutate: boolean }) {
   const [filter, setFilter] = useState<ApprovalStatus | 'all'>('all');
+  const [searchQ, setSearchQ] = useState('');
   const [rows, setRows] = useState<ApprovalRow[]>([]);
   const [detailAppr, setDetailAppr] = useState<ApprovalRow | null>(null);
 
@@ -771,7 +738,21 @@ function ApprovalsTab({ refreshVersion, canMutate }: { refreshVersion: number; c
   }, [load, refreshVersion]);
 
   const pending = rows.filter((a) => a.status === 'pending' || a.status === 'needs-info');
-  const filtered = filter === 'all' ? rows : rows.filter((a) => a.status === filter);
+  const filtered = useMemo(() => {
+    let list = filter === 'all' ? rows : rows.filter((a) => a.status === filter);
+    if (searchQ.trim()) {
+      const q = searchQ.toLowerCase();
+      list = list.filter(
+        (a) =>
+          a.title.toLowerCase().includes(q) ||
+          a.requestedBy.toLowerCase().includes(q) ||
+          a.type.toLowerCase().includes(q) ||
+          (a.client && a.client.toLowerCase().includes(q)) ||
+          (a.amount && a.amount.toLowerCase().includes(q)),
+      );
+    }
+    return list;
+  }, [rows, filter, searchQ]);
 
   const act = async (id: string, status: 'approved' | 'rejected') => {
     if (!canMutate) return;
@@ -802,8 +783,23 @@ function ApprovalsTab({ refreshVersion, canMutate }: { refreshVersion: number; c
           </div>
         </div>
       )}
-      <div className="flex flex-wrap items-center gap-2 border-b px-3 py-3 sm:gap-3 sm:px-5" style={{ borderBottom: '1px solid var(--border)' }}>
-        <div className="flex items-center gap-1">
+      <div className="flex flex-col gap-2 border-b px-3 py-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3 sm:px-5" style={{ borderBottom: '1px solid var(--border)' }}>
+        <div className="flex max-w-full flex-1 items-center gap-1.5 rounded-lg px-2.5 py-1.5 sm:max-w-xs" style={{ background: 'var(--secondary)', border: '1px solid var(--border)' }}>
+          <Search className="h-3.5 w-3.5 shrink-0" style={{ color: 'var(--muted-foreground)' }} />
+          <input
+            className="min-w-0 flex-1 bg-transparent text-[12px] outline-none"
+            style={{ color: 'var(--foreground)' }}
+            placeholder="Search approvals…"
+            value={searchQ}
+            onChange={(e) => setSearchQ(e.target.value)}
+          />
+          {searchQ && (
+            <button type="button" onClick={() => setSearchQ('')} className="shrink-0" style={{ color: 'var(--muted-foreground)' }} aria-label="Clear search">
+              <X className="h-3 w-3" />
+            </button>
+          )}
+        </div>
+        <div className="flex flex-wrap items-center gap-1">
           {(['all', 'pending', 'needs-info', 'approved', 'rejected'] as const).map((s) => (
             <button
               key={s}
@@ -872,6 +868,7 @@ function ApprovalsTab({ refreshVersion, canMutate }: { refreshVersion: number; c
 
 function RequestsTab({ refreshVersion, canMutate }: { refreshVersion: number; canMutate: boolean }) {
   const [filter, setFilter] = useState<RequestStatus | 'all'>('all');
+  const [searchRq, setSearchRq] = useState('');
   const [rows, setRows] = useState<RequestRow[]>([]);
   const [modal, setModal] = useState(false);
   const [detailReq, setDetailReq] = useState<RequestRow | null>(null);
@@ -915,7 +912,20 @@ function RequestsTab({ refreshVersion, canMutate }: { refreshVersion: number; ca
     void load();
   }, [load, refreshVersion]);
 
-  const filtered = filter === 'all' ? rows : rows.filter((r) => r.status === filter);
+  const filtered = useMemo(() => {
+    let list = filter === 'all' ? rows : rows.filter((r) => r.status === filter);
+    if (searchRq.trim()) {
+      const q = searchRq.toLowerCase();
+      list = list.filter(
+        (r) =>
+          r.title.toLowerCase().includes(q) ||
+          r.from.toLowerCase().includes(q) ||
+          r.type.toLowerCase().includes(q) ||
+          (r.client && r.client.toLowerCase().includes(q)),
+      );
+    }
+    return list;
+  }, [rows, filter, searchRq]);
 
   const submit = async () => {
     if (!canMutate || !subject.trim()) return;
@@ -953,8 +963,23 @@ function RequestsTab({ refreshVersion, canMutate }: { refreshVersion: number; ca
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="flex flex-wrap items-center gap-2 border-b px-3 py-3 sm:gap-3 sm:px-5" style={{ borderBottom: '1px solid var(--border)' }}>
-        <div className="flex items-center gap-1">
+      <div className="flex flex-col gap-2 border-b px-3 py-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3 sm:px-5" style={{ borderBottom: '1px solid var(--border)' }}>
+        <div className="flex max-w-full flex-1 items-center gap-1.5 rounded-lg px-2.5 py-1.5 sm:max-w-xs" style={{ background: 'var(--secondary)', border: '1px solid var(--border)' }}>
+          <Search className="h-3.5 w-3.5 shrink-0" style={{ color: 'var(--muted-foreground)' }} />
+          <input
+            className="min-w-0 flex-1 bg-transparent text-[12px] outline-none"
+            style={{ color: 'var(--foreground)' }}
+            placeholder="Search requests…"
+            value={searchRq}
+            onChange={(e) => setSearchRq(e.target.value)}
+          />
+          {searchRq && (
+            <button type="button" onClick={() => setSearchRq('')} className="shrink-0" style={{ color: 'var(--muted-foreground)' }} aria-label="Clear search">
+              <X className="h-3 w-3" />
+            </button>
+          )}
+        </div>
+        <div className="flex flex-wrap items-center gap-1">
           {(['all', 'open', 'in-progress', 'resolved'] as const).map((s) => (
             <button
               key={s}
@@ -967,7 +992,7 @@ function RequestsTab({ refreshVersion, canMutate }: { refreshVersion: number; ca
             </button>
           ))}
         </div>
-        <div className="ml-auto">
+        <div className="ml-auto flex sm:ml-0">
           <BonsaiButton size="sm" type="button" onClick={() => canMutate && setModal(true)}>
             <Plus className="mr-1 h-3.5 w-3.5" />
             New request
@@ -1022,86 +1047,56 @@ function RequestsTab({ refreshVersion, canMutate }: { refreshVersion: number; ca
           {detailReq.client && <DrawerField label="Client">{detailReq.client}</DrawerField>}
         </>)}
       </DetailDrawer>
-      <AnimatePresence>
-        {modal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
-            className="fixed inset-0 z-[90] flex items-center justify-center p-4"
-            style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}
-            onClick={() => setModal(false)}
-            role="presentation"
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.96, y: 12 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.96, y: 8 }}
-              transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-              className="w-full max-w-lg overflow-hidden rounded-2xl border shadow-2xl"
-              style={{
-                background: 'linear-gradient(165deg, color-mix(in srgb, var(--popover) 98%, var(--primary) 2%), var(--popover))',
-                borderColor: 'color-mix(in srgb, var(--border) 85%, var(--primary) 15%)',
-                boxShadow: '0 25px 80px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.04) inset',
-              }}
-              onClick={(e) => e.stopPropagation()}
-              role="dialog"
+
+      <SlideDrawer
+        open={modal}
+        onClose={() => setModal(false)}
+        wide
+        title="New request"
+        subtitle="Support, change, onboarding, or access — synced to support tickets"
+        footer={
+          <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+            <button
+              type="button"
+              onClick={() => setModal(false)}
+              disabled={submitting}
+              className="rounded-lg border px-4 py-2 text-[13px] font-medium transition-colors disabled:opacity-50"
+              style={{ background: 'var(--glass-bg)', color: 'var(--foreground)', borderColor: 'var(--border)' }}
             >
-              {/* Header */}
-              <div className="flex items-start gap-3 px-5 pt-5 pb-3 border-b" style={{ borderColor: 'var(--border)' }}>
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white shadow-md bg-gradient-to-br from-blue-500 to-indigo-600">
-                  <Inbox className="h-5 w-5" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h3 className="text-[16px] font-semibold tracking-tight" style={{ color: 'var(--foreground)' }}>New request</h3>
-                  <p className="text-[12px] mt-0.5" style={{ color: 'var(--muted-foreground)' }}>Submit a support, change, or access request</p>
-                </div>
-                <button type="button" onClick={() => setModal(false)} className="rounded-lg p-1.5 transition-colors hover:bg-secondary shrink-0" style={{ color: 'var(--muted-foreground)' }}>
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-
-              {/* Body */}
-              <div className="px-5 py-4 space-y-4 max-h-[60vh] overflow-y-auto">
-                <div>
-                  <label className="block text-[11px] font-semibold mb-1.5" style={{ color: 'var(--foreground)' }}>Type</label>
-                  <select value={rtype} onChange={(e) => setRtype(e.target.value as RequestRow['type'])} className="w-full rounded-xl border px-3 py-2.5 text-[13px] outline-none cursor-pointer transition-shadow focus:ring-2 focus:ring-primary/20" style={{ background: 'var(--secondary)', borderColor: 'var(--border)', color: 'var(--foreground)' }}>
-                    <option value="support">Support</option>
-                    <option value="change">Change</option>
-                    <option value="onboarding">Onboarding</option>
-                    <option value="access">Access</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-[11px] font-semibold mb-1.5" style={{ color: 'var(--foreground)' }}>Subject</label>
-                  <input value={subject} onChange={(e) => setSubject(e.target.value)} className="w-full rounded-xl border px-3 py-2.5 text-[13px] outline-none transition-shadow focus:ring-2 focus:ring-primary/20" style={{ background: 'var(--secondary)', borderColor: 'var(--border)', color: 'var(--foreground)' }} placeholder="Brief description of your request" />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-semibold mb-1.5" style={{ color: 'var(--foreground)' }}>Details</label>
-                  <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className="w-full rounded-xl border px-3 py-2.5 text-[13px] outline-none resize-none transition-shadow focus:ring-2 focus:ring-primary/20" style={{ background: 'var(--secondary)', borderColor: 'var(--border)', color: 'var(--foreground)' }} placeholder="Additional context, urgency, or specifics…" />
-                </div>
-              </div>
-
-              {/* Footer */}
-              <div className="flex items-center justify-end gap-2 px-5 py-4 border-t" style={{ borderColor: 'var(--border)' }}>
-                <button type="button" onClick={() => setModal(false)} className="px-4 py-2 rounded-xl text-[13px] font-medium transition-colors hover:bg-secondary" style={{ color: 'var(--muted-foreground)' }}>
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  disabled={submitting || !subject.trim()}
-                  onClick={() => void submit()}
-                  className="px-4 py-2 rounded-xl text-[13px] font-semibold text-white disabled:opacity-50 transition-opacity"
-                  style={{ background: '#2563EB' }}
-                >
-                  {submitting ? 'Submitting…' : 'Submit request'}
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={submitting || !subject.trim()}
+              onClick={() => void submit()}
+              className="rounded-lg px-5 py-2 text-[13px] font-semibold text-white transition-opacity disabled:opacity-50"
+              style={{ background: '#2563EB' }}
+            >
+              {submitting ? 'Submitting…' : 'Submit request'}
+            </button>
+          </div>
+        }
+      >
+        <FormField label="Type">
+          <GlassSelect value={rtype} onChange={(e) => setRtype(e.target.value as RequestRow['type'])}>
+            <option value="support">Support</option>
+            <option value="change">Change</option>
+            <option value="onboarding">Onboarding</option>
+            <option value="access">Access</option>
+          </GlassSelect>
+        </FormField>
+        <FormField label="Subject" required>
+          <GlassInput value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Brief description of your request" />
+        </FormField>
+        <FormField label="Details">
+          <GlassTextarea
+            rows={4}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Context, urgency, or specifics…"
+          />
+        </FormField>
+      </SlideDrawer>
     </div>
   );
 }
@@ -1110,6 +1105,8 @@ export default function WorkScreen() {
   const { persona } = useUserRole();
   const workRefresh = useHubDataInvalidation('tasks', 'issues', 'approvals', 'support_tickets', 'notifications', 'all');
   const [tab, setTab] = useState<WorkTab>('tasks');
+  /** Wait for /api/auth/me before mounting tabs — avoids flooding /api/* with 401 when there is no session. */
+  const [sessionGate, setSessionGate] = useState<'loading' | 'ok' | 'denied'>('loading');
   const [orgId, setOrgId] = useState<string | null>(null);
   const [counts, setCounts] = useState({ tasks: 0, issues: 0, approvals: 0, requests: 0 });
 
@@ -1118,11 +1115,16 @@ export default function WorkScreen() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const res = await fetch('/api/auth/me', { credentials: 'include' });
+      const res = await fetch('/api/auth/me', { credentials: 'include', cache: 'no-store' });
+      if (cancelled) return;
+      if (!res.ok) {
+        setSessionGate('denied');
+        return;
+      }
       const json = await res.json();
-      if (cancelled || !res.ok) return;
       const oid = json.profile?.org_id as string | undefined;
       if (oid) setOrgId(oid);
+      setSessionGate('ok');
     })();
     return () => {
       cancelled = true;
@@ -1130,14 +1132,17 @@ export default function WorkScreen() {
   }, []);
 
   useEffect(() => {
+    if (sessionGate !== 'ok') return;
     let cancelled = false;
     (async () => {
-      const [t, i, a, r] = await Promise.all([
-        fetch('/api/tasks?limit=500', { credentials: 'include' }).then((x) => x.json()),
-        fetch('/api/issues?limit=500', { credentials: 'include' }).then((x) => x.json()),
-        fetch('/api/approvals?limit=500', { credentials: 'include' }).then((x) => x.json()),
-        fetch('/api/support-tickets?limit=500', { credentials: 'include' }).then((x) => x.json()),
+      const opts = { credentials: 'include' as const, cache: 'no-store' as RequestCache };
+      const [tRes, iRes, aRes, rRes] = await Promise.all([
+        fetch('/api/tasks?limit=500', opts),
+        fetch('/api/issues?limit=500', opts),
+        fetch('/api/approvals?limit=500', opts),
+        fetch('/api/support-tickets?limit=500', opts),
       ]);
+      const [t, i, a, r] = await Promise.all([tRes.json(), iRes.json(), aRes.json(), rRes.json()]);
       if (cancelled) return;
       const taskRows = Array.isArray(t.data) ? t.data : [];
       const issueRows = Array.isArray(i.data) ? i.data : [];
@@ -1153,7 +1158,7 @@ export default function WorkScreen() {
     return () => {
       cancelled = true;
     };
-  }, [workRefresh]);
+  }, [workRefresh, sessionGate]);
 
   useEffect(() => {
     if (!orgId || !isSupabaseBrowserConfigured()) return;
@@ -1192,6 +1197,40 @@ export default function WorkScreen() {
     { id: 'approvals', label: 'Approvals', icon: ThumbsUp, count: counts.approvals },
     { id: 'requests', label: 'Requests', icon: Inbox, count: counts.requests },
   ];
+
+  if (sessionGate === 'loading') {
+    return (
+      <div className="flex h-full min-h-[12rem] flex-col items-center justify-center gap-2 px-6" style={{ background: 'var(--background)' }}>
+        <p className="text-[13px]" style={{ color: 'var(--muted-foreground)' }}>
+          Verifying session…
+        </p>
+      </div>
+    );
+  }
+
+  if (sessionGate === 'denied') {
+    return (
+      <div className="flex h-full min-h-[12rem] flex-col items-center justify-center gap-4 px-6 text-center" style={{ background: 'var(--background)' }}>
+        <p className="max-w-md text-[14px] font-medium" style={{ color: 'var(--foreground)' }}>
+          You need a signed-in session to load Work data.
+        </p>
+        <p className="max-w-md text-[12px] leading-relaxed" style={{ color: 'var(--muted-foreground)' }}>
+          Hub APIs return 401 when Supabase auth cookies are missing or expired. Sign in again, or for local dev set{' '}
+          <code className="rounded bg-secondary px-1 py-0.5 text-[11px]">HUB_BYPASS_AUTH=1</code> with{' '}
+          <code className="rounded bg-secondary px-1 py-0.5 text-[11px]">HUB_DEV_ORG_ID</code> and{' '}
+          <code className="rounded bg-secondary px-1 py-0.5 text-[11px]">HUB_DEV_USER_ID</code> in{' '}
+          <code className="rounded bg-secondary px-1 py-0.5 text-[11px]">.env.local</code> (see <code className="text-[11px]">.env.example</code>).
+        </p>
+        <Link
+          href="/login?next=/hub/work"
+          className="rounded-lg px-4 py-2 text-[13px] font-medium text-white"
+          style={{ background: '#2563EB' }}
+        >
+          Sign in
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-full min-h-0 flex-col" style={{ background: 'var(--background)' }}>

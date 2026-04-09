@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
 
   const { searchParams } = new URL(req.url);
   const page = Math.max(1, Number(searchParams.get('page')) || 1);
-  const limit = Math.min(100, Math.max(1, Number(searchParams.get('limit')) || 50));
+  const limit = Math.min(200, Math.max(1, Number(searchParams.get('limit')) || 50));
   const qSearch = searchParams.get('q')?.trim() || '';
   const sortRaw = searchParams.get('sort') || 'name';
   const ascending = searchParams.get('dir') === 'asc';
@@ -58,9 +58,21 @@ export async function POST(req: NextRequest) {
 
   const admin = getSupabaseAdmin();
   const billingRaw = body.billing_address != null ? String(body.billing_address).trim() : '';
+  const allowedStatus = ['Active', 'Onboarding', 'Inactive', 'Archived'] as const;
+  const statusRaw = String(body.status ?? 'Active').trim();
+  const status = allowedStatus.includes(statusRaw as (typeof allowedStatus)[number])
+    ? statusRaw
+    : 'Active';
+  const industry =
+    body.industry != null && String(body.industry).trim() !== ''
+      ? String(body.industry).trim()
+      : '';
+
   const row = {
     org_id: org.orgId,
     name,
+    status,
+    industry,
     billing_address: billingRaw ? { raw: billingRaw } : null,
     payment_terms: body.payment_terms != null ? String(body.payment_terms) : null,
     account_manager_id: typeof body.account_manager_id === 'string' ? body.account_manager_id : null,

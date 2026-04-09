@@ -1,5 +1,6 @@
 import { Client, WeightedConnectionPool } from '@elastic/elasticsearch';
 import { kMiddlewareEngine } from '@elastic/transport/lib/symbols';
+import { HUB_INDEX_MAPPINGS } from './search/hub-index-mappings';
 
 let client: Client | null | undefined;
 
@@ -95,15 +96,47 @@ export async function bonsaiSearch<T = Record<string, unknown>>(
   }
 }
 
+function isIndexNotFoundError(e: unknown): boolean {
+  const err = e as { meta?: { statusCode?: number; body?: { error?: { type?: string } } }; name?: string; message?: string };
+  if (err.meta?.statusCode === 404) return true;
+  const t = err.meta?.body?.error?.type ?? '';
+  if (t === 'index_not_found_exception') return true;
+  const msg = String(err.message ?? e);
+  return msg.includes('index_not_found_exception') || msg.includes('no such index');
+}
+
+/**
+ * Index a document. If the index does not exist (common on Bonsai when auto-create is restricted),
+ * creates it from {@link HUB_INDEX_MAPPINGS} and retries once.
+ */
 export async function bonsaiIndex(index: string, id: string, doc: Record<string, unknown>): Promise<boolean> {
   const c = getClient();
   if (!c) return false;
+
+  const doIndex = () => c!.index({ index, id, document: doc, refresh: false });
+
   try {
-    await c.index({ index, id, document: doc, refresh: false });
+    await doIndex();
     return true;
   } catch (e) {
-    console.error('[bonsaiIndex]', index, id, e);
-    return false;
+    if (!isIndexNotFoundError(e)) {
+      console.error('[bonsaiIndex]', index, id, e);
+      return false;
+    }
+    const mapping = HUB_INDEX_MAPPINGS[index];
+    if (!mapping) {
+      console.error('[bonsaiIndex] missing index and no mapping to auto-create:', index);
+      return false;
+    }
+    const created = await bonsaiCreateIndex(index, mapping);
+    if (!created) return false;
+    try {
+      await doIndex();
+      return true;
+    } catch (e2) {
+      console.error('[bonsaiIndex] retry after create failed', index, id, e2);
+      return false;
+    }
   }
 }
 

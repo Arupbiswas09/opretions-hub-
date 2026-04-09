@@ -18,12 +18,12 @@ const ALL_INDEXES = [IDX.contacts, IDX.deals, IDX.tasks, IDX.projects, IDX.peopl
 
 const TABS: { id: string; label: string; indexes: string[]; recordType?: string }[] = [
   { id: 'all', label: 'All', indexes: ALL_INDEXES },
-  { id: 'contacts', label: 'Contacts', indexes: [IDX.contacts], recordType: 'contact' },
+  { id: 'contacts', label: 'CRM contacts', indexes: [IDX.contacts], recordType: 'contact' },
   { id: 'clients', label: 'Clients', indexes: [IDX.contacts], recordType: 'client' },
   { id: 'deals', label: 'Deals', indexes: [IDX.deals] },
   { id: 'tasks', label: 'Tasks', indexes: [IDX.tasks] },
   { id: 'projects', label: 'Projects', indexes: [IDX.projects] },
-  { id: 'people', label: 'People', indexes: [IDX.people] },
+  { id: 'people', label: 'Team', indexes: [IDX.people] },
 ];
 
 function escapeReg(s: string) {

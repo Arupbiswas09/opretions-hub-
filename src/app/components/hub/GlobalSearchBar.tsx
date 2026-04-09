@@ -30,12 +30,12 @@ type Grouped = {
 };
 
 const GROUP_ORDER: { key: keyof Grouped; label: string }[] = [
-  { key: 'contacts', label: 'Contacts' },
+  { key: 'contacts', label: 'CRM contacts' },
   { key: 'clients', label: 'Clients' },
   { key: 'deals', label: 'Deals' },
   { key: 'tasks', label: 'Tasks' },
   { key: 'projects', label: 'Projects' },
-  { key: 'people', label: 'People' },
+  { key: 'people', label: 'Team' },
 ];
 
 function iconFor(t: string) {
@@ -191,7 +191,7 @@ export function GlobalSearchBar() {
     >
       <div
         className={cn(
-          'group flex h-10 w-full items-center gap-2 rounded-full border px-3 transition-[box-shadow,border-color] duration-200 sm:h-10 sm:px-4',
+          'hub-global-search-field group flex h-9 w-full items-center gap-2 rounded-full border px-2.5 transition-[box-shadow,border-color] duration-200 lg:h-10 sm:px-4',
           'bg-background/80 shadow-sm',
           'border-border/80',
           'focus-within:border-primary/35 focus-within:shadow-[0_0_0_3px_rgba(37,99,235,0.12)]',
@@ -225,7 +225,7 @@ export function GlobalSearchBar() {
           autoComplete="off"
           autoCorrect="off"
           spellCheck={false}
-          className="min-w-0 flex-1 bg-transparent text-[13px] outline-none placeholder:text-muted-foreground/75"
+          className="min-w-0 flex-1 bg-transparent text-[12px] outline-none placeholder:text-muted-foreground/75 lg:text-[13px]"
         />
         <kbd
           className="pointer-events-none hidden shrink-0 select-none rounded border border-border/80 bg-muted/50 px-1.5 py-0.5 font-mono text-[10px] font-medium text-muted-foreground sm:inline-block"

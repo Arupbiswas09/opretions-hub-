@@ -1113,3 +1113,104 @@ body::after {
   align-items: center;
   justify-content: center;
 }
+
+/* ════════════════════════════════════════════════════════════
+   MOBILE / TABLET ONLY (< 1024px) — readable chrome, solid sidebar
+   Does NOT apply at lg+ — desktop glass tokens stay as defined in :root / .dark
+════════════════════════════════════════════════════════════ */
+@media (max-width: 1023px) {
+  :root {
+    --glass-blur: 10px;
+    --glass-saturate: 150%;
+    --glass-bg: rgba(255, 255, 255, 0.96);
+    --glass-bg-strong: rgba(255, 255, 255, 0.99);
+    --glass-bg-ultra: rgba(255, 255, 255, 0.99);
+    --sidebar-glass: rgba(255, 255, 255, 0.98);
+    --sidebar-foreground: #0f172a;
+    --sidebar-divider: rgba(15, 23, 42, 0.12);
+    --nav-active-bg: rgba(37, 99, 235, 0.14);
+    --nav-active-color: #0f172a;
+    --nav-inactive-color: #475569;
+    --topbar-bg: rgba(240, 242, 245, 0.97);
+    --hub-stat-tile-bg: rgba(255, 255, 255, 0.96);
+    --hub-stat-tile-highlight: rgba(255, 255, 255, 0.55);
+    --dashboard-kpi-cell-bg: rgba(255, 255, 255, 0.96);
+    --card: rgba(255, 255, 255, 0.97);
+    --popover: rgba(255, 255, 255, 0.99);
+    --table-shell-bg: rgba(255, 255, 255, 0.97);
+  }
+
+  .dark {
+    --glass-blur: 8px;
+    --glass-bg: rgba(22, 26, 34, 0.97);
+    --glass-bg-strong: rgba(26, 30, 38, 0.98);
+    --glass-bg-ultra: rgba(30, 34, 42, 0.99);
+    --sidebar-glass: #161b22;
+    --sidebar-foreground: rgba(255, 255, 255, 0.92);
+    --sidebar-divider: rgba(255, 255, 255, 0.12);
+    --nav-active-bg: rgba(37, 99, 235, 0.28);
+    --nav-active-color: #ffffff;
+    --nav-inactive-color: rgba(255, 255, 255, 0.72);
+    --topbar-bg: rgba(11, 13, 18, 0.97);
+    --hub-stat-tile-bg: rgba(255, 255, 255, 0.09);
+    --hub-stat-tile-highlight: rgba(255, 255, 255, 0.08);
+    --dashboard-kpi-cell-bg: rgba(255, 255, 255, 0.07);
+    --card: rgba(255, 255, 255, 0.08);
+    --popover: rgba(22, 26, 34, 0.99);
+    --table-shell-bg: rgba(255, 255, 255, 0.06);
+  }
+
+  /* Sidebar: strip backdrop blur on nav rows (inline styles) so labels stay crisp */
+  [data-hub-sidebar] nav a,
+  [data-hub-sidebar] nav button {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  /* Top bar: lighter frosted layer (inline blur on header is strong on small screens) */
+  [data-hub-topbar] {
+    backdrop-filter: blur(10px) saturate(150%) !important;
+    -webkit-backdrop-filter: blur(10px) saturate(150%) !important;
+  }
+
+  /* Global search input strip */
+  .hub-global-search-field {
+    backdrop-filter: blur(6px) !important;
+    -webkit-backdrop-filter: blur(6px) !important;
+  }
+
+  /* Dashboard / list stat tiles using inline blur */
+  .dashboard-glass-surface,
+  .hub-stat-tile-mobile {
+    backdrop-filter: blur(8px) saturate(150%) !important;
+    -webkit-backdrop-filter: blur(8px) saturate(150%) !important;
+  }
+
+  .glass,
+  .glass-strong,
+  .glass-card,
+  .hub-surface {
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate)) !important;
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate)) !important;
+  }
+
+  .glass-card:hover,
+  .glass-stat:hover {
+    transform: none;
+  }
+
+  .glass-ultra {
+    backdrop-filter: blur(16px) saturate(160%) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(160%) !important;
+  }
+}
+
+/* Analytics charts — stable min height on all viewports (opt-in class) */
+.hub-chart-min-h {
+  min-height: 200px;
+}
+@media (min-width: 1024px) {
+  .hub-chart-min-h {
+    min-height: 260px;
+  }
+}

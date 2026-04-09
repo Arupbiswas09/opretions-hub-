@@ -229,7 +229,7 @@ export function SA01Dashboard({
       >
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.1em] mb-1 text-muted-foreground">Sales</p>
-          <h1 className="text-[28px] font-semibold tracking-[-0.025em] text-foreground">Pipeline overview</h1>
+          <h1 className="text-[22px] font-semibold tracking-[-0.025em] text-foreground sm:text-[26px] lg:text-[28px]">Pipeline overview</h1>
         </div>
         <BonsaiButton variant="primary" icon={<Plus className="w-4 h-4" />} onClick={onCreateDeal}>
           New Deal

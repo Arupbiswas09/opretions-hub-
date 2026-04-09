@@ -58,14 +58,31 @@ const MODULE_DEFAULT_HREF: Record<HubModule, string> = {
   timetracking: '/hub/timetracking',
 };
 
+/** Breadcrumb labels (sidebar uses the same wording). */
+const MODULE_BREADCRUMB_LABEL: Partial<Record<HubModule, string>> = {
+  contacts: 'CRM contacts',
+  people: 'Team',
+};
+
 const SUB_ROUTE_LABEL: Record<string, string> = {
   overview: 'Overview', deals: 'Deals', pipeline: 'Pipeline',
-  list: 'Projects', timesheets: 'Timesheets', approvals: 'Approvals',
+  list: 'Projects', timesheets: 'Timesheets',
   directory: 'Directory', invoices: 'Invoices', expenses: 'Expenses',
   jobs: 'Jobs', candidates: 'Candidates', referrals: 'Referrals',
   meetings: 'Meetings', proposals: 'Proposals', contracts: 'Contracts',
   timetracking: 'Time Tracking',
 };
+
+/** Disambiguate shared path segments (e.g. both Team and Projects use `…/approvals`). */
+function subRouteLabel(pathname: string, subSeg: string | undefined): string | null {
+  if (!subSeg) return null;
+  if (subSeg === 'approvals') {
+    if (pathname.startsWith('/hub/people')) return 'HR approvals';
+    if (pathname.startsWith('/hub/projects')) return 'Timesheet approvals';
+    return 'Approvals';
+  }
+  return SUB_ROUTE_LABEL[subSeg] ?? null;
+}
 
 function moduleFromPath(pathname: string): HubModule | null {
   const m = pathname.replace(/^\/hub\/?/, '').split('/')[0];
@@ -81,7 +98,7 @@ function portalLabelFromPath(pathname: string): string | null {
   return `${seg.charAt(0).toUpperCase() + seg.slice(1)} Portal`;
 }
 
-/* ── Sidebar row: link or action (e.g. notifications panel) ── */
+/* ── Sidebar row: nav link ── */
 function NavRow({
   label, icon: Icon, href, onClick, active, collapsed, onNavigate,
 }: {
@@ -128,7 +145,7 @@ function NavRow({
   );
   if (onClick) {
     return (
-      <button type="button" onClick={onClick} className={className} style={style}>
+      <button type="button" title={label} onClick={onClick} className={className} style={style}>
         {body}
       </button>
     );
@@ -136,6 +153,7 @@ function NavRow({
   return (
     <Link
       href={href!}
+      title={label}
       prefetch
       className={className}
       style={style}
@@ -158,25 +176,8 @@ function renderSidebarItem(
   item: HubSidebarItem,
   pathname: string,
   collapsed: boolean,
-  notifOpen: boolean,
-  onOpenNotif: () => void,
   onAfterNav?: () => void,
 ) {
-  if (item.kind === 'notifications') {
-    return (
-      <NavRow
-        key={item.label}
-        label={item.label}
-        icon={item.icon}
-        onClick={() => {
-          onOpenNotif();
-          onAfterNav?.();
-        }}
-        active={notifOpen}
-        collapsed={collapsed}
-      />
-    );
-  }
   const active = isSidebarLinkActive(pathname, item.href);
   return (
     <NavRow
@@ -293,7 +294,7 @@ export default function HubShell({ children }: { children: React.ReactNode }) {
           <button
             type="button"
             aria-label="Close navigation"
-            className="fixed inset-0 z-30 bg-black/50 backdrop-blur-[1px] lg:hidden"
+            className="fixed inset-0 z-30 bg-black/[0.58] lg:hidden"
             onClick={closeMobileNav}
           />
         )}
@@ -301,12 +302,16 @@ export default function HubShell({ children }: { children: React.ReactNode }) {
         {/* ── Sidebar ── */}
         {!isPortalView && (
           <aside
+            data-hub-sidebar
             className={cn(
               'flex flex-col flex-shrink-0',
               'max-lg:fixed max-lg:inset-y-0 max-lg:left-0 max-lg:z-40',
               'max-lg:transition-transform max-lg:duration-200 max-lg:ease-out',
+              'max-lg:pb-[max(0px,env(safe-area-inset-bottom))]',
+              'max-lg:shadow-[4px_0_24px_-4px_rgba(0,0,0,0.25)]',
+              'dark:max-lg:shadow-[4px_0_28px_-4px_rgba(0,0,0,0.65)]',
               !isLg && !mobileNavOpen && 'max-lg:-translate-x-full',
-              'lg:static lg:translate-x-0',
+              'lg:static lg:translate-x-0 lg:shadow-none',
             )}
             style={{
               width: sw,
@@ -341,14 +346,14 @@ export default function HubShell({ children }: { children: React.ReactNode }) {
             {/* Navigation — sections respect simulated persona */}
             <nav className="flex-1 px-2 py-1 overflow-y-auto space-y-[1px]">
               {canSection('top') && HUB_SIDEBAR_TOP.map(item =>
-                renderSidebarItem(item, pathname, collapsed, notifOpen, () => setNotifOpen(true), closeMobileNav),
+                renderSidebarItem(item, pathname, collapsed, closeMobileNav),
               )}
 
               {canSection('workspace') && (
                 <>
                   <SectionHeader label="Workspace" collapsed={collapsed} />
                   {HUB_SIDEBAR_WORKSPACE.map(item =>
-                    renderSidebarItem(item, pathname, collapsed, notifOpen, () => setNotifOpen(true), closeMobileNav),
+                    renderSidebarItem(item, pathname, collapsed, closeMobileNav),
                   )}
                 </>
               )}
@@ -357,7 +362,7 @@ export default function HubShell({ children }: { children: React.ReactNode }) {
                 <>
                   <SectionHeader label="Productivity" collapsed={collapsed} />
                   {HUB_SIDEBAR_PRODUCTIVITY.map(item =>
-                    renderSidebarItem(item, pathname, collapsed, notifOpen, () => setNotifOpen(true), closeMobileNav),
+                    renderSidebarItem(item, pathname, collapsed, closeMobileNav),
                   )}
                 </>
               )}
@@ -377,7 +382,7 @@ export default function HubShell({ children }: { children: React.ReactNode }) {
               {canSection('bottom') && (
                 <div style={{ borderTop: '1px solid var(--sidebar-divider)', marginTop: 8, paddingTop: 8 }}>
                   {HUB_SIDEBAR_BOTTOM.map(item =>
-                    renderSidebarItem(item, pathname, collapsed, notifOpen, () => setNotifOpen(true), closeMobileNav),
+                    renderSidebarItem(item, pathname, collapsed, closeMobileNav),
                   )}
                 </div>
               )}
@@ -403,6 +408,7 @@ export default function HubShell({ children }: { children: React.ReactNode }) {
 
           {/* ── Topbar — Bonsai style: breadcrumb left, actions right ── */}
           <header
+            data-hub-topbar
             className="sticky top-0 z-20 flex h-[52px] min-h-[52px] min-w-0 items-center gap-2 px-2 sm:gap-3 sm:px-4"
             style={{
               background: 'var(--topbar-bg)',
@@ -415,8 +421,10 @@ export default function HubShell({ children }: { children: React.ReactNode }) {
             {(() => {
               const segments = pathname.split('/').filter(Boolean);
               const subSeg = segments[2];
-              const subLabel = subSeg ? SUB_ROUTE_LABEL[subSeg] : null;
-              const modLabel = mod ? (mod.charAt(0).toUpperCase() + mod.slice(1)) : null;
+              const subLabel = subRouteLabel(pathname, subSeg);
+              const modLabel = mod
+                ? (MODULE_BREADCRUMB_LABEL[mod] ?? (mod.charAt(0).toUpperCase() + mod.slice(1)))
+                : null;
               return (
                 <div className="flex min-w-0 max-w-[min(100%,14rem)] flex-shrink-0 items-center gap-1.5 sm:max-w-[min(100%,18rem)] sm:gap-2 text-[12px] sm:text-[13px] md:max-w-[min(100%,22rem)]">
                   {!isPortalView && !isLg && (
